@@ -1,4 +1,4 @@
-import ProductCard from "@/components/product-card";
+import ProductCard from "@/components/products/product-card";
 import { products } from "@/data/products";
 
 interface RelatedProductsProps {
@@ -25,3 +25,5 @@ export default function RelatedProducts({
     </div>
   );
 }
+// component này nhận vào 2 props là category và currentProductId, sau đó lọc ra các sản phẩm có category giống với category của sản phẩm hiện tại và id khác với id của sản phẩm hiện tại, cuối cùng hiển thị 4 sản phẩm liên quan đó ra
+// component này sẽ được sử dụng trong trang chi tiết sản phẩm để hiển thị các sản phẩm liên quang

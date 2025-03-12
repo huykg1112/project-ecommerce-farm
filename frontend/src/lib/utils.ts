@@ -13,3 +13,5 @@ export function formatCurrency(amount: number): string {
     maximumFractionDigits: 0,
   }).format(amount);
 }
+
+// utils.ts này dùng để chứa các hàm tiện ích như formatCurrency để định dạng số tiền, cn để kết hợp các class name, ...

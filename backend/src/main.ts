@@ -15,7 +15,7 @@ async function bootstrap() {
     if (enableCors) {
       app.enableCors({
         origin: [
-          'http://localhost:3000',
+          'http://localhost:3000', // Cổng mặc định của React, cho phép gọi API từ React App
           'http://localhost:3001',
           'http://localhost:4200',
         ],

@@ -125,7 +125,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
       </CardContent>
       <CardFooter className="p-4 pt-0 flex items-center justify-between">
-        <div className="flex items-center">
+        <div className="flex flex-col justify-start items-start">
           <span className="font-bold text-lg">
             {formatCurrency(product.price)}
           </span>

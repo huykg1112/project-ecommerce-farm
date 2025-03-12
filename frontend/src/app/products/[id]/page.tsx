@@ -1,6 +1,6 @@
 "use client";
 
-import RelatedProducts from "@/components/related-products";
+import RelatedProducts from "@/components/products/related-products";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

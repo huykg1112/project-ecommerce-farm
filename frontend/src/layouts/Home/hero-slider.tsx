@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useCallback } from "react"
-import Image from "next/image"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const slides = [
   {
@@ -31,25 +31,25 @@ const slides = [
     buttonText: "Tìm hiểu thêm",
     buttonLink: "/category/hat-giong",
   },
-]
+];
 
 export default function HeroSlider() {
-  const [currentSlide, setCurrentSlide] = useState(0)
+  const [currentSlide, setCurrentSlide] = useState(0);
 
   const nextSlide = useCallback(() => {
-    setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1))
-  }, [])
+    setCurrentSlide((prev) => (prev === slides.length - 1 ? 0 : prev + 1));
+  }, []);
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1))
-  }
+    setCurrentSlide((prev) => (prev === 0 ? slides.length - 1 : prev - 1));
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
-      nextSlide()
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [nextSlide])
+      nextSlide();
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [nextSlide]);
 
   return (
     <div className="relative h-[300px] sm:h-[400px] md:h-[500px] overflow-hidden">
@@ -57,7 +57,9 @@ export default function HeroSlider() {
         <div
           key={slide.id}
           className={`absolute inset-0 transition-opacity duration-1000 hero-slide ${
-            index === currentSlide ? "opacity-100" : "opacity-0 pointer-events-none"
+            index === currentSlide
+              ? "opacity-100"
+              : "opacity-0 pointer-events-none"
           }`}
         >
           <Image
@@ -71,9 +73,15 @@ export default function HeroSlider() {
           <div className="absolute inset-0 flex items-center">
             <div className="container mx-auto px-4">
               <div className="max-w-xl text-white">
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">{slide.title}</h1>
+                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
+                  {slide.title}
+                </h1>
                 <p className="text-lg md:text-xl mb-6">{slide.description}</p>
-                <Button asChild size="lg" className="bg-primary hover:bg-primary-dark">
+                <Button
+                  asChild
+                  size="lg"
+                  className="bg-primary hover:bg-primary-dark"
+                >
                   <Link href={slide.buttonLink}>{slide.buttonText}</Link>
                 </Button>
               </div>
@@ -100,12 +108,14 @@ export default function HeroSlider() {
           <button
             key={index}
             onClick={() => setCurrentSlide(index)}
-            className={`w-3 h-3 rounded-full ${index === currentSlide ? "bg-white" : "bg-white/50"}`}
+            className={`w-3 h-3 rounded-full ${
+              index === currentSlide ? "bg-white" : "bg-white/50"
+            }`}
             aria-label={`Go to slide ${index + 1}`}
           />
         ))}
       </div>
     </div>
-  )
+  );
 }
-
+// components này dùng để hiển thị slider ảnh, mỗi ảnh sẽ có title, description và button để chuyển hướng đến trang khác
