@@ -1,14 +1,6 @@
 import { Input } from "@/components/ui/input";
+import { PasswordInputProps } from "@/interfaces";
 import { Eye, EyeOff } from "lucide-react";
-import type React from "react";
-
-interface PasswordInputProps {
-  id: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  showPassword: boolean;
-  toggleShowPassword: () => void;
-}
 
 export default function PasswordInput({
   id,

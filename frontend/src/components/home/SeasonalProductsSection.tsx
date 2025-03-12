@@ -1,10 +1,7 @@
 import ProductCard from "@/components/products/product-card";
 import { Button } from "@/components/ui/button";
+import { SeasonalProductsSectionProps } from "@/interfaces";
 import Link from "next/link";
-
-interface SeasonalProductsSectionProps {
-  products: any[];
-}
 
 export default function SeasonalProductsSection({
   products,

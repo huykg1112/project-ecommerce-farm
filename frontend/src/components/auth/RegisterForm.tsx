@@ -11,26 +11,9 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { RegisterFormProps } from "@/interfaces";
 import Link from "next/link";
-import type React from "react";
 import PasswordInput from "./PasswordInput";
-
-interface RegisterFormProps {
-  username: string;
-  setUsername: (value: string) => void;
-  email: string;
-  setEmail: (value: string) => void;
-  phone: string;
-  setPhone: (value: string) => void;
-  password: string;
-  setPassword: (value: string) => void;
-  showPassword: boolean;
-  setShowPassword: (value: boolean) => void;
-  error: string | string[] | null;
-  loading: boolean;
-  handleSubmit: (e: React.FormEvent) => void;
-  setActiveTab: (tab: string) => void;
-}
 
 export default function RegisterForm({
   username,
