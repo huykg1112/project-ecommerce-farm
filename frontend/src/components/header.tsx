@@ -18,6 +18,11 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useSelector } from "react-redux";
 
+// Thêm import
+import { useDispatch } from "react-redux";
+import { logoutUser } from "@/lib/features/user-slice";
+import type { AppDispatch } from "@/lib/store";
+
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [openCategory, setOpenCategory] = useState(false);
@@ -25,6 +30,9 @@ export default function Header() {
   const { totalItems } = useSelector((state: RootState) => state.cart);
   const { isAuthenticated } = useSelector((state: RootState) => state.user);
   const [searchValue, setSearchValue] = useState(""); // Thêm state cho giá trị tìm kiếm
+
+  // Thêm:
+  const dispatch = useDispatch<AppDispatch>();
 
   // Xử lý thay đổi màu nền header khi cuộn
   useEffect(() => {
@@ -59,6 +67,17 @@ export default function Header() {
   // Hàm xóa nội dung tìm kiếm
   const clearSearch = () => {
     setSearchValue("");
+  };
+
+  // Thêm hàm xử lý đăng xuất
+  const handleLogout = async () => {
+    try {
+      await dispatch(logoutUser());
+      // Có thể thêm thông báo thành công ở đây nếu cần
+    } catch (error) {
+      console.error("Đăng xuất thất bại:", error);
+      // Có thể hiển thị thông báo lỗi ở đây nếu cần
+    }
   };
 
   return (
@@ -208,20 +227,23 @@ export default function Header() {
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuItem asChild>
-                  <Link href="/profile">Profile</Link>
+                  <Link href="/profile">Tài khoản</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/settings">Settings</Link>
+                  <Link href="/orders">Đơn hàng</Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link href="/logout">Logout</Link>
+                  <Link href="/settings">Cài đặt</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>
+                  Đăng xuất
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
             <Link href="/login">
               <Button className="bg-[#599146] hover:bg-[#44703d] text-white text-base px-6 py-2">
-                Login
+                Đăng nhập
               </Button>
             </Link>
           )}

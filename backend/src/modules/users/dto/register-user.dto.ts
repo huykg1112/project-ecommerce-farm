@@ -30,7 +30,7 @@ export class RegisterUserDto {
 
   @IsOptional()
   @IsString()
-  @Matches(/^\+?[1-9]\d{1,14}$/, { message: 'Số điện thoại không hợp lệ' })
+  @Matches(/^\+?[0-9]\d{1,14}$/, { message: 'Số điện thoại không hợp lệ' })
   phone?: string;
 
   @IsOptional()

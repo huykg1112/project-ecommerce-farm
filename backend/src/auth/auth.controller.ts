@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Post,
   Request,
 } from '@nestjs/common';
@@ -31,7 +32,7 @@ export class AuthController {
 
   // Đăng xuất
 
-  @Post('logout')
+  @Delete('logout')
   async logout(@Request() req): Promise<{ message: string }> {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {

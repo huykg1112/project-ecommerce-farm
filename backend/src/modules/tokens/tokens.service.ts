@@ -23,6 +23,7 @@ export class TokensService {
     });
   }
 
+  // Lưu token
   async save(token: Token): Promise<Token> {
     return this.tokenRepository.save(token);
   }

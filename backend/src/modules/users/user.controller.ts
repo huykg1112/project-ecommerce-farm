@@ -50,8 +50,7 @@ export class UserController {
   ): Promise<Partial<User>> {
     // Partial<User> để trả về một phần của User
     const user = await this.userService.register(registerUserDto);
-    const { password, ...result } = user;
-    return result;
+    return { username: user.username, email: user.email };
   }
 
   @Put('profile')

@@ -1,50 +1,180 @@
-import { createSlice, type PayloadAction } from "@reduxjs/toolkit"
+import {
+  createAsyncThunk,
+  createSlice,
+  type PayloadAction,
+} from "@reduxjs/toolkit";
+import {
+  authService,
+  type LoginRequest,
+  type RegisterRequest,
+} from "../services/auth-service";
 
 export interface User {
-  id: string
-  name: string
-  email: string
-  phone?: string
-  address?: string
-  avatar?: string
-  role: "buyer" | "seller" | "admin"
+  id?: string;
+  username: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  avatar?: string;
+  role?: "buyer" | "seller" | "admin";
 }
 
 interface UserState {
-  currentUser: User | null
-  isAuthenticated: boolean
-  loading: boolean
+  currentUser: User | null;
+  isAuthenticated: boolean;
+  loading: boolean;
+  error: string | string[] | null;
 }
+
+// Kiểm tra xem đang ở phía client hay server
+const isClient = typeof window !== "undefined";
 
 const initialState: UserState = {
   currentUser: null,
-  isAuthenticated: false,
+  isAuthenticated: isClient ? authService.isAuthenticated() : false,
   loading: false,
-}
+  error: null,
+};
+
+// Async thunks
+export const loginUser = createAsyncThunk(
+  "user/login",
+  async (credentials: LoginRequest, { rejectWithValue }) => {
+    try {
+      const response = await authService.login(credentials);
+      // Giả định rằng chúng ta chỉ có username từ response
+      return { username: credentials.username } as User;
+    } catch (error: any) {
+      // Trả về message từ server
+      return rejectWithValue(error.message || "Đăng nhập thất bại");
+    }
+  }
+);
+
+export const registerUser = createAsyncThunk(
+  "user/register",
+  async (userData: RegisterRequest, { rejectWithValue }) => {
+    try {
+      const response = await authService.register(userData);
+      return response;
+    } catch (error: any) {
+      // Trả về message từ server
+      return rejectWithValue(error.message || "Đăng ký thất bại");
+    }
+  }
+);
+
+export const logoutUser = createAsyncThunk(
+  "user/logout",
+  async (_, { rejectWithValue }) => {
+    try {
+      await authService.logout();
+      return null;
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Đăng xuất thất bại");
+    }
+  }
+);
+
+export const refreshToken = createAsyncThunk(
+  "user/refreshToken",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await authService.refreshToken();
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Làm mới token thất bại");
+    }
+  }
+);
 
 const userSlice = createSlice({
   name: "user",
   initialState,
   reducers: {
     setUser: (state, action: PayloadAction<User>) => {
-      state.currentUser = action.payload
-      state.isAuthenticated = true
+      state.currentUser = action.payload;
+      state.isAuthenticated = true;
+      state.error = null;
     },
     clearUser: (state) => {
-      state.currentUser = null
-      state.isAuthenticated = false
+      state.currentUser = null;
+      state.isAuthenticated = false;
     },
     setLoading: (state, action: PayloadAction<boolean>) => {
-      state.loading = action.payload
+      state.loading = action.payload;
     },
     updateUserProfile: (state, action: PayloadAction<Partial<User>>) => {
       if (state.currentUser) {
-        state.currentUser = { ...state.currentUser, ...action.payload }
+        state.currentUser = { ...state.currentUser, ...action.payload };
       }
     },
+    clearError: (state) => {
+      state.error = null;
+    },
   },
-})
+  extraReducers: (builder) => {
+    builder
+      // Login
+      .addCase(loginUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentUser = action.payload;
+        state.isAuthenticated = true;
+      })
+      .addCase(loginUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string | string[];
+      })
+      // Register
+      .addCase(registerUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.loading = false;
+        // Không đăng nhập tự động sau khi đăng ký
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string | string[];
+      })
+      // Logout
+      .addCase(logoutUser.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.loading = false;
+        state.currentUser = null;
+        state.isAuthenticated = false;
+      })
+      .addCase(logoutUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string | string[];
+        // Vẫn đăng xuất người dùng ngay cả khi API gọi thất bại
+        state.currentUser = null;
+        state.isAuthenticated = false;
+      })
+      // Refresh Token
+      .addCase(refreshToken.fulfilled, (state) => {
+        // Token đã được cập nhật trong localStorage bởi authService
+        state.isAuthenticated = true;
+      })
+      .addCase(refreshToken.rejected, (state) => {
+        // Nếu refresh token thất bại, đăng xuất người dùng
+        state.currentUser = null;
+        state.isAuthenticated = false;
+        if (isClient) {
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+        }
+      });
+  },
+});
 
-export const { setUser, clearUser, setLoading, updateUserProfile } = userSlice.actions
-export default userSlice.reducer
-
+export const { setUser, clearUser, setLoading, updateUserProfile, clearError } =
+  userSlice.actions;
+export default userSlice.reducer;
