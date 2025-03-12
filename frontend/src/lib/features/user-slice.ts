@@ -1,5 +1,5 @@
 import {
-  createAsyncThunk,
+  createAsyncThunk, // Hàm tạo async thunks, đây là một hàm của Redux Toolkit giúp tạo ra các async thunks, dùng để xử lý các side effects như gọi API, xử lý bất đồng bộ, ...
   createSlice,
   type PayloadAction,
 } from "@reduxjs/toolkit";
@@ -42,6 +42,7 @@ export const loginUser = createAsyncThunk(
   async (credentials: LoginRequest, { rejectWithValue }) => {
     try {
       const response = await authService.login(credentials);
+      // console.log(localStorage.getItem("access_token"));
       // Giả định rằng chúng ta chỉ có username từ response
       return { username: credentials.username } as User;
     } catch (error: any) {
@@ -69,6 +70,7 @@ export const logoutUser = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       await authService.logout();
+      // console.log("Logout message");
       return null;
     } catch (error: any) {
       return rejectWithValue(error.message || "Đăng xuất thất bại");
@@ -178,3 +180,5 @@ const userSlice = createSlice({
 export const { setUser, clearUser, setLoading, updateUserProfile, clearError } =
   userSlice.actions;
 export default userSlice.reducer;
+// user-slice.ts này chứa slice của user trong Redux store, bao gồm các reducers và các async thunks để xử lý các action liên quan đến user như đăng nhập, đăng ký, đăng xuất, làm mới token, cập nhật thông tin user. Các reducers và
+// async thunks này được sử dụng trong các components và services khác trong ứng dụng để thực hiện các tác vụ liên quan đến user.

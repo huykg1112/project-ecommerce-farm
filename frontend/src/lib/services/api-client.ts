@@ -116,3 +116,12 @@ export const apiClient = {
     return this.fetch(endpoint, { ...options, method: "DELETE" });
   },
 };
+
+// Cách sử dụng:  apiClient.get('/posts')
+// apiClient.post('/posts', { title: 'Hello', content: 'World' })
+// apiClient.put('/posts/1', { title: 'Hello', content: 'World' })
+// apiClient.delete('/posts/1')
+// apiClient.fetch('/posts', { method: 'GET', requireAuth: true })
+// apiClient.fetch('/posts', { method: 'POST', requireAuth: true, body: { title: 'Hello', content: 'World' } })
+// apiClient.fetch('/posts/1', { method: 'PUT', requireAuth: true, body: { title: 'Hello', content: 'World' } })
+// apiClient.fetch('/posts/1', { method: 'DELETE', requireAuth: true })

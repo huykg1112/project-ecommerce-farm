@@ -39,7 +39,7 @@ export interface ApiError {
 const isClient = typeof window !== "undefined";
 
 // Service xử lý authentication
-const API_URL = "http://localhost:4200";
+export const API_URL = "http://localhost:4200";
 
 export const authService = {
   // Đăng nhập
@@ -64,7 +64,7 @@ export const authService = {
       localStorage.setItem("access_token", result.access_token);
       localStorage.setItem("refresh_token", result.refresh_token);
     }
-
+    //     console.log("login result", result);
     return result;
   },
 
@@ -89,12 +89,13 @@ export const authService = {
   // Đăng xuất
   async logout(): Promise<{ message: string }> {
     const token = isClient ? localStorage.getItem("access_token") : null;
+    //     console.log("token", token);
 
     try {
       const response = await fetch(`${API_URL}/auth/logout`, {
-        method: "POST",
+        method: "DELETE",
         headers: {
-          "Content-Type": "application/json",
+          //     "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       });
@@ -108,14 +109,20 @@ export const authService = {
       if (isClient) {
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
+        localStorage.removeItem("Authorization");
+        localStorage.removeItem("Refresh-token");
       }
+      // console.log("logout message", await response.json());
 
       return await response.json();
     } catch (error) {
       // Vẫn xóa token ngay cả khi API gọi thất bại
+      console.log("error", error);
       if (isClient) {
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
+        localStorage.removeItem("Authorization");
+        localStorage.removeItem("Refresh-token");
       }
       throw error;
     }

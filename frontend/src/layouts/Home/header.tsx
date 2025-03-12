@@ -1,38 +1,33 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { categories } from "@/data/categories";
-import type { RootState } from "@/lib/store";
 import { cn } from "@/lib/utils";
-import { Camera, Heart, Search, ShoppingCart, X } from "lucide-react"; // Thêm X
+import { Camera, Heart, Search, X } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { useSelector } from "react-redux";
 
-// Thêm import
-import { useDispatch } from "react-redux";
-import { logoutUser } from "@/lib/features/user-slice";
-import type { AppDispatch } from "@/lib/store";
+// Sử dụng dynamic import cho phần user authentication
+const UserAuthSection = dynamic(
+  () => import("../../components/auth/user-auth-section"),
+  {
+    ssr: false,
+  }
+);
+const CartButton = dynamic(
+  () => import("../../components/products/cart-button"),
+  {
+    ssr: false,
+  }
+);
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [openCategory, setOpenCategory] = useState(false);
   const categoryRef = useRef<HTMLLIElement>(null);
-  const { totalItems } = useSelector((state: RootState) => state.cart);
-  const { isAuthenticated } = useSelector((state: RootState) => state.user);
   const [searchValue, setSearchValue] = useState(""); // Thêm state cho giá trị tìm kiếm
-
-  // Thêm:
-  const dispatch = useDispatch<AppDispatch>();
 
   // Xử lý thay đổi màu nền header khi cuộn
   useEffect(() => {
@@ -67,17 +62,6 @@ export default function Header() {
   // Hàm xóa nội dung tìm kiếm
   const clearSearch = () => {
     setSearchValue("");
-  };
-
-  // Thêm hàm xử lý đăng xuất
-  const handleLogout = async () => {
-    try {
-      await dispatch(logoutUser());
-      // Có thể thêm thông báo thành công ở đây nếu cần
-    } catch (error) {
-      console.error("Đăng xuất thất bại:", error);
-      // Có thể hiển thị thông báo lỗi ở đây nếu cần
-    }
   };
 
   return (
@@ -195,58 +179,10 @@ export default function Header() {
               <span className="sr-only">Wishlist</span>
             </Button>
           </Link>
+          <CartButton isScrolled={isScrolled} />
 
-          <Link href="/cart">
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn("relative", isScrolled && "text-white")}
-            >
-              <ShoppingCart className="h-6 w-6" />
-              <span className="sr-only">Cart</span>
-              {totalItems > 0 && (
-                <Badge className="absolute -right-1 -top-1 h-5 w-5 rounded-full p-0 flex items-center justify-center">
-                  {totalItems}
-                </Badge>
-              )}
-            </Button>
-          </Link>
-
-          {isAuthenticated ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="relative h-10 w-10 rounded-full"
-                >
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src="/avatar.jpg" alt="User" />
-                    <AvatarFallback>US</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuItem asChild>
-                  <Link href="/profile">Tài khoản</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/orders">Đơn hàng</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href="/settings">Cài đặt</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleLogout}>
-                  Đăng xuất
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Link href="/login">
-              <Button className="bg-[#599146] hover:bg-[#44703d] text-white text-base px-6 py-2">
-                Đăng nhập
-              </Button>
-            </Link>
-          )}
+          {/* Sử dụng component UserAuthSection */}
+          <UserAuthSection isScrolled={isScrolled} />
         </div>
       </div>
     </header>
