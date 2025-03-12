@@ -1,69 +1,122 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
-import { useDispatch } from "react-redux"
-import { setUser } from "@/lib/features/user-slice"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { clearError, loginUser, registerUser } from "@/lib/features/user-slice";
+import type { AppDispatch, RootState } from "@/lib/store";
+import { Eye, EyeOff } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [name, setName] = useState("")
-  const [phone, setPhone] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
-  const dispatch = useDispatch()
+  // Login form state
+  const [loginUsername, setLoginUsername] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
 
+  // Register form state
+  const [registerUsername, setRegisterUsername] = useState("");
+  const [registerEmail, setRegisterEmail] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+  const [registerPhone, setRegisterPhone] = useState("");
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+
+  // UI state
+  const [activeTab, setActiveTab] = useState("login");
+
+  const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
+
+  // Get user state from Redux
+  const { loading, error, isAuthenticated } = useSelector(
+    (state: RootState) => state.user
+  );
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/");
+    }
+  }, [isAuthenticated, router]);
+
+  // Clear errors when switching tabs
+  useEffect(() => {
+    dispatch(clearError());
+  }, [activeTab, dispatch]);
+
+  // Handle login form submission
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
 
-    // Simulate API call
-    setTimeout(() => {
-      // Mock user data
-      dispatch(
-        setUser({
-          id: "u1",
-          name: "Nguyễn Văn A",
-          email: email,
-          role: "buyer",
-        }),
-      )
-      setIsLoading(false)
-      router.push("/")
-    }, 1500)
-  }
+    dispatch(
+      loginUser({
+        username: loginUsername,
+        password: loginPassword,
+      })
+    );
+  };
 
+  // Handle register form submission
   const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
 
-    // Simulate API call
-    setTimeout(() => {
-      // Mock user data
-      dispatch(
-        setUser({
-          id: "u2",
-          name: name,
-          email: email,
-          phone: phone,
-          role: "buyer",
-        }),
-      )
-      setIsLoading(false)
-      router.push("/")
-    }, 1500)
-  }
+    const result = await dispatch(
+      registerUser({
+        username: registerUsername,
+        email: registerEmail,
+        password: registerPassword,
+        phone: registerPhone,
+      })
+    );
+
+    if (registerUser.fulfilled.match(result)) {
+      // Registration successful, switch to login tab
+      setActiveTab("login");
+      // Pre-fill login form with registered username
+      setLoginUsername(registerUsername);
+      setLoginPassword("");
+    }
+  };
+
+  // Toggle password visibility
+  const toggleLoginPasswordVisibility = () => {
+    setShowLoginPassword(!showLoginPassword);
+  };
+
+  const toggleRegisterPasswordVisibility = () => {
+    setShowRegisterPassword(!showRegisterPassword);
+  };
+
+  // Format error messages for display
+  const formatErrorMessage = (error: string | string[]) => {
+    if (Array.isArray(error)) {
+      return (
+        <ul className="list-disc pl-5">
+          {error.map((err, index) => (
+            <li key={index}>{err}</li>
+          ))}
+        </ul>
+      );
+    }
+    return error;
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -71,7 +124,7 @@ export default function LoginPage() {
         <div className="flex justify-center mb-6">
           <Image src="/logo.svg" alt="Nông Sàn Logo" width={60} height={60} />
         </div>
-        <Tabs defaultValue="login" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="login">Đăng nhập</TabsTrigger>
             <TabsTrigger value="register">Đăng ký</TabsTrigger>
@@ -79,36 +132,61 @@ export default function LoginPage() {
           <TabsContent value="login">
             <Card>
               <CardHeader>
-                <CardTitle className="text-2xl text-center">Đăng nhập</CardTitle>
-                <CardDescription className="text-center">Đăng nhập để tiếp tục mua sắm trên Nông Sàn</CardDescription>
+                <CardTitle className="text-2xl text-center">
+                  Đăng nhập
+                </CardTitle>
+                <CardDescription className="text-center">
+                  Đăng nhập để tiếp tục mua sắm trên Nông Sàn
+                </CardDescription>
               </CardHeader>
               <CardContent>
+                {error && (
+                  <Alert variant="destructive" className="mb-4">
+                    <AlertDescription>
+                      {formatErrorMessage(error)}
+                    </AlertDescription>
+                  </Alert>
+                )}
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="username">Username</Label>
                     <Input
-                      id="email"
-                      type="email"
-                      placeholder="example@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
+                      id="username"
+                      type="text"
+                      placeholder="Nhập username"
+                      value={loginUsername}
+                      onChange={(e) => setLoginUsername(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="password">Mật khẩu</Label>
-                      <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+                      <Link
+                        href="/forgot-password"
+                        className="text-sm text-primary hover:underline"
+                      >
                         Quên mật khẩu?
                       </Link>
                     </div>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showLoginPassword ? "text" : "password"}
+                        value={loginPassword}
+                        onChange={(e) => setLoginPassword(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        onClick={toggleLoginPasswordVisibility}
+                      >
+                        {showLoginPassword ? (
+                          <EyeOff className="h-5 w-5" />
+                        ) : (
+                          <Eye className="h-5 w-5" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox id="remember" />
@@ -116,8 +194,12 @@ export default function LoginPage() {
                       Ghi nhớ đăng nhập
                     </Label>
                   </div>
-                  <Button type="submit" className="w-full bg-primary hover:bg-primary-dark" disabled={isLoading}>
-                    {isLoading ? "Đang đăng nhập..." : "Đăng nhập"}
+                  <Button
+                    type="submit"
+                    className="w-full bg-primary hover:bg-primary-dark"
+                    disabled={loading}
+                  >
+                    {loading ? "Đang đăng nhập..." : "Đăng nhập"}
                   </Button>
                 </form>
                 <div className="mt-6">
@@ -126,16 +208,30 @@ export default function LoginPage() {
                       <div className="w-full border-t border-gray-300" />
                     </div>
                     <div className="relative flex justify-center text-sm">
-                      <span className="bg-white px-2 text-gray-500">Hoặc đăng nhập với</span>
+                      <span className="bg-white px-2 text-gray-500">
+                        Hoặc đăng nhập với
+                      </span>
                     </div>
                   </div>
                   <div className="mt-6 grid grid-cols-2 gap-3">
                     <Button variant="outline" className="w-full">
-                      <Image src="/icons/google.svg" width={20} height={20} alt="Google" className="mr-2" />
+                      <Image
+                        src="/icons/google.svg"
+                        width={20}
+                        height={20}
+                        alt="Google"
+                        className="mr-2"
+                      />
                       Google
                     </Button>
                     <Button variant="outline" className="w-full">
-                      <Image src="/icons/facebook.svg" width={20} height={20} alt="Facebook" className="mr-2" />
+                      <Image
+                        src="/icons/facebook.svg"
+                        width={20}
+                        height={20}
+                        alt="Facebook"
+                        className="mr-2"
+                      />
                       Facebook
                     </Button>
                   </div>
@@ -147,19 +243,27 @@ export default function LoginPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-2xl text-center">Đăng ký</CardTitle>
-                <CardDescription className="text-center">Tạo tài khoản để trải nghiệm Nông Sàn</CardDescription>
+                <CardDescription className="text-center">
+                  Tạo tài khoản để trải nghiệm Nông Sàn
+                </CardDescription>
               </CardHeader>
               <CardContent>
+                {error && (
+                  <Alert variant="destructive" className="mb-4">
+                    <AlertDescription>
+                      {formatErrorMessage(error)}
+                    </AlertDescription>
+                  </Alert>
+                )}
                 <form onSubmit={handleRegister} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Họ và tên</Label>
+                    <Label htmlFor="register-username">Username</Label>
                     <Input
-                      id="name"
+                      id="register-username"
                       type="text"
-                      placeholder="Nguyễn Văn A"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      required
+                      placeholder="Nhập username"
+                      value={registerUsername}
+                      onChange={(e) => setRegisterUsername(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
@@ -168,60 +272,84 @@ export default function LoginPage() {
                       id="register-email"
                       type="email"
                       placeholder="example@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
+                      value={registerEmail}
+                      onChange={(e) => setRegisterEmail(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone">Số điện thoại</Label>
+                    <Label htmlFor="register-phone">Số điện thoại</Label>
                     <Input
-                      id="phone"
+                      id="register-phone"
                       type="tel"
                       placeholder="0912345678"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      required
+                      value={registerPhone}
+                      onChange={(e) => setRegisterPhone(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="register-password">Mật khẩu</Label>
-                    <Input
-                      id="register-password"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
+                    <div className="relative">
+                      <Input
+                        id="register-password"
+                        type={showRegisterPassword ? "text" : "password"}
+                        value={registerPassword}
+                        onChange={(e) => setRegisterPassword(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        onClick={toggleRegisterPasswordVisibility}
+                      >
+                        {showRegisterPassword ? (
+                          <EyeOff className="h-5 w-5" />
+                        ) : (
+                          <Eye className="h-5 w-5" />
+                        )}
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                      Mật khẩu phải có ít nhất 6 ký tự, bao gồm chữ hoa, chữ
+                      thường, số và ký tự đặc biệt.
+                    </p>
                   </div>
                   <div className="flex items-center space-x-2">
                     <Checkbox id="terms" required />
                     <Label htmlFor="terms" className="text-sm font-normal">
                       Tôi đồng ý với{" "}
-                      <Link href="/terms" className="text-primary hover:underline">
+                      <Link
+                        href="/terms"
+                        className="text-primary hover:underline"
+                      >
                         Điều khoản sử dụng
                       </Link>{" "}
                       và{" "}
-                      <Link href="/privacy" className="text-primary hover:underline">
+                      <Link
+                        href="/privacy"
+                        className="text-primary hover:underline"
+                      >
                         Chính sách bảo mật
                       </Link>
                     </Label>
                   </div>
-                  <Button type="submit" className="w-full bg-primary hover:bg-primary-dark" disabled={isLoading}>
-                    {isLoading ? "Đang đăng ký..." : "Đăng ký"}
+                  <Button
+                    type="submit"
+                    className="w-full bg-primary hover:bg-primary-dark"
+                    disabled={loading}
+                  >
+                    {loading ? "Đang đăng ký..." : "Đăng ký"}
                   </Button>
                 </form>
               </CardContent>
               <CardFooter className="flex justify-center">
                 <p className="text-sm text-gray-600">
                   Bạn đã có tài khoản?{" "}
-                  <Link
-                    href="#"
+                  <button
+                    type="button"
                     className="text-primary hover:underline"
-                    onClick={() => document.getElementById("login-tab")?.click()}
+                    onClick={() => setActiveTab("login")}
                   >
                     Đăng nhập
-                  </Link>
+                  </button>
                 </p>
               </CardFooter>
             </Card>
@@ -229,6 +357,5 @@ export default function LoginPage() {
         </Tabs>
       </div>
     </div>
-  )
+  );
 }
-
