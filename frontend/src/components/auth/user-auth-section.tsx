@@ -1,22 +1,19 @@
 "use client";
 
-import { useSelector, useDispatch } from "react-redux";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { UserAuthSectionProps } from "@/interfaces";
 import { logoutUser } from "@/lib/features/user-slice";
 import type { AppDispatch, RootState } from "@/lib/store";
 import { cn } from "@/lib/utils";
-
-interface UserAuthSectionProps {
-  isScrolled: boolean;
-}
+import Link from "next/link";
+import { useDispatch, useSelector } from "react-redux";
 
 export default function UserAuthSection({ isScrolled }: UserAuthSectionProps) {
   const { isAuthenticated } = useSelector((state: RootState) => state.user);

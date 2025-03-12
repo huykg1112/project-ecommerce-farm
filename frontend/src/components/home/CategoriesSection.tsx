@@ -1,10 +1,7 @@
 import CategoryCard from "@/components/products/category-card";
 import { Button } from "@/components/ui/button";
+import { CategoriesSectionProps } from "@/interfaces";
 import Link from "next/link";
-
-interface CategoriesSectionProps {
-  categories: any[];
-}
 
 export default function CategoriesSection({
   categories,

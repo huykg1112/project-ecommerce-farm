@@ -10,22 +10,10 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LoginFormProps } from "@/interfaces";
 import Link from "next/link";
-import type React from "react";
 import PasswordInput from "./PasswordInput";
 import SocialLoginButtons from "./SocialLoginButtons";
-
-interface LoginFormProps {
-  username: string;
-  setUsername: (value: string) => void;
-  password: string;
-  setPassword: (value: string) => void;
-  showPassword: boolean;
-  setShowPassword: (value: boolean) => void;
-  error: string | string[] | null;
-  loading: boolean;
-  handleSubmit: (e: React.FormEvent) => void;
-}
 
 export default function LoginForm({
   username,

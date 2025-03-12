@@ -1,10 +1,7 @@
 import ProductCard from "@/components/products/product-card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-
-interface FeaturedProductsSectionProps {
-  products: any[];
-}
+import { FeaturedProductsSectionProps } from "@/interfaces";
 
 export default function FeaturedProductsSection({
   products,
