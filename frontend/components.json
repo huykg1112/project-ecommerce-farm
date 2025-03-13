@@ -18,7 +18,11 @@
     "hooks": "@/src/hooks",
     "layouts": "@/src/layouts",
     "styles": "@/src/styles",
-    "types": "@/src/types"
+    "types": "@/src/types",
+    "pages": "@/src/pages",
+    "assets": "@/src/assets",
+    "icons": "@/src/assets/icons",
+    "config": "@/src/config"
   },
   "iconLibrary": "lucide"
 }

@@ -8,7 +8,7 @@ import SeasonalProductsSection from "@/components/home/SeasonalProductsSection";
 import WhyChooseUsSection from "@/components/home/WhyChooseUsSection";
 import { categories } from "@/data/categories";
 import { products } from "@/data/products";
-import HeroSlider from "@/layouts/Home/hero-slider";
+import HeroSlider from "@/layouts/home/hero-slider";
 
 export default function Home() {
   // Filter featured products

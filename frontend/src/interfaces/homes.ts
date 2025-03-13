@@ -13,3 +13,13 @@ export interface NewProductsSectionProps {
 export interface SeasonalProductsSectionProps {
   products: any[];
 }
+
+interface WhyChooseUsCard {
+  title: string;
+  icon: any;
+  description: string;
+}
+export interface WhyChooseUsSectionData {
+  title: string;
+  cards: WhyChooseUsCard[];
+}

@@ -91,9 +91,9 @@ export default function Header() {
                   <Link
                     href={item.href}
                     className={cn(
-                      "text-base font-medium flex items-center transition-colors duration-200",
+                      "text-lg font-medium flex items-center transition-all duration-200",
                       isScrolled ? "text-white" : "text-gray-700",
-                      "hover:text-[#599146] relative"
+                      "hover:text-[#599146] relative group"
                     )}
                   >
                     {item.name}
