@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import Image from "next/image";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 
 const slides = [
   {
     id: 1,
-    image: "/images/hero-1.jpg",
+    image:
+      "https://hongthaigroup.com/wp-content/uploads/2022/10/Giai-phap-che-bien-nong-san.jpg",
     title: "Sản phẩm nông nghiệp tươi ngon",
     description: "Trực tiếp từ nông trại đến bàn ăn của bạn",
     buttonText: "Mua ngay",
@@ -17,7 +18,8 @@ const slides = [
   },
   {
     id: 2,
-    image: "/images/hero-2.jpg",
+    image:
+      "https://www.pos365.vn/storage/app/media/2022/7/cua-hang-vat-tu-nong-nghiep/cua-hang-vat-tu-nong-nghiep-1-2.jpg",
     title: "Vật tư nông nghiệp chất lượng cao",
     description: "Đầy đủ các loại vật tư, phân bón, thuốc bảo vệ thực vật",
     buttonText: "Khám phá",
@@ -25,7 +27,8 @@ const slides = [
   },
   {
     id: 3,
-    image: "/images/hero-3.jpg",
+    image:
+      "https://www.lisado.vn/wp-content/uploads/2018/01/uu-diem-cua-hat-giong-chat-luong-cao-min.jpg",
     title: "Hạt giống chất lượng",
     description: "Đa dạng các loại hạt giống, đảm bảo tỷ lệ nảy mầm cao",
     buttonText: "Tìm hiểu thêm",
@@ -52,7 +55,7 @@ export default function HeroSlider() {
   }, [nextSlide]);
 
   return (
-    <div className="relative h-[300px] sm:h-[400px] md:h-[500px] overflow-hidden">
+    <div className="relative h-[400px] sm:h-[500px] md:h-[600px] overflow-hidden">
       {slides.map((slide, index) => (
         <div
           key={slide.id}
