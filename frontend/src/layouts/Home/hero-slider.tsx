@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  HeroImage1,
+  HeroImage2,
+  HeroImage3,
+  HeroImage4,
+} from "@/assets/images/hero-img";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
@@ -9,8 +15,7 @@ import { useCallback, useEffect, useState } from "react";
 const slides = [
   {
     id: 1,
-    image:
-      "https://hongthaigroup.com/wp-content/uploads/2022/10/Giai-phap-che-bien-nong-san.jpg",
+    image: HeroImage1,
     title: "Sản phẩm nông nghiệp tươi ngon",
     description: "Trực tiếp từ nông trại đến bàn ăn của bạn",
     buttonText: "Mua ngay",
@@ -18,21 +23,27 @@ const slides = [
   },
   {
     id: 2,
-    image:
-      "https://www.pos365.vn/storage/app/media/2022/7/cua-hang-vat-tu-nong-nghiep/cua-hang-vat-tu-nong-nghiep-1-2.jpg",
+    image: HeroImage2,
     title: "Vật tư nông nghiệp chất lượng cao",
     description: "Đầy đủ các loại vật tư, phân bón, thuốc bảo vệ thực vật",
     buttonText: "Khám phá",
-    buttonLink: "/category/vat-tu",
+    buttonLink: "/products?category=Vật%20tư%20nông%20nghiệp",
   },
   {
     id: 3,
-    image:
-      "https://www.lisado.vn/wp-content/uploads/2018/01/uu-diem-cua-hat-giong-chat-luong-cao-min.jpg",
+    image: HeroImage3,
     title: "Hạt giống chất lượng",
     description: "Đa dạng các loại hạt giống, đảm bảo tỷ lệ nảy mầm cao",
     buttonText: "Tìm hiểu thêm",
-    buttonLink: "/category/hat-giong",
+    buttonLink: "/products?category=Hạt%20giống",
+  },
+  {
+    id: 4,
+    image: HeroImage4,
+    title: "Sản phẩm chế biến sạch",
+    description: "Sản phẩm chế biến từ nguyên liệu sạch, an toàn",
+    buttonText: "Xem ngay",
+    buttonLink: "/products?category=Sản%20phẩm%20chế%20biến",
   },
 ];
 

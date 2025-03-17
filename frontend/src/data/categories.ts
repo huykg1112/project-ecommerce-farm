@@ -1,45 +1,53 @@
+import {
+  HeroImage1,
+  HeroImage2,
+  HeroImage3,
+  HeroImage4,
+  PhanBon,
+  TraiCay,
+} from "@/assets/images/hero-img";
+
 export const categories = [
   {
     id: "c1",
     name: "Rau củ",
-    image: "/images/categories/rau-cu.svg",
+    image: HeroImage1,
     slug: "rau-cu",
     productCount: 120,
   },
   {
     id: "c2",
     name: "Trái cây",
-    image: "/images/categories/trai-cay.svg",
+    image: TraiCay,
     slug: "trai-cay",
     productCount: 95,
   },
   {
     id: "c3",
     name: "Hạt giống",
-    image: "/images/categories/hat-giong.svg",
+    image: HeroImage3,
     slug: "hat-giong",
     productCount: 78,
   },
   {
     id: "c4",
     name: "Vật tư nông nghiệp",
-    image: "/images/categories/vat-tu.svg",
+    image: HeroImage2,
     slug: "vat-tu",
     productCount: 150,
   },
   {
     id: "c5",
     name: "Sản phẩm chế biến",
-    image: "/images/categories/che-bien.svg",
+    image: HeroImage4,
     slug: "che-bien",
     productCount: 85,
   },
   {
     id: "c6",
     name: "Phân bón",
-    image: "/images/categories/phan-bon.svg",
+    image: PhanBon,
     slug: "phan-bon",
     productCount: 62,
   },
-]
-
+];

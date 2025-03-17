@@ -10,13 +10,16 @@ import { Badge } from "@/components/ui/badge";
 import { categories } from "@/data/categories";
 import { products } from "@/data/products";
 import { FilterState, SortOption } from "@/types/products";
+import { X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
 
 export default function ProductsPage() {
   const searchParams = useSearchParams();
-  const categoryParam = searchParams.get("category");
+  const [categoryParam, setCategoryParam] = useState<string | null>(null);
+  useEffect(() => {
+    setCategoryParam(searchParams.get("category"));
+  }, [searchParams]);
 
   // Giá trị mặc định cho bộ lọc
   const initialFilters: FilterState = {
@@ -170,6 +173,7 @@ export default function ProductsPage() {
 
   // Xóa tất cả bộ lọc
   const clearAllFilters = () => {
+    setCategoryParam(null);
     setFilters(initialFilters);
     setSearchTerm("");
   };

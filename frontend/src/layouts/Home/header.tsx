@@ -1,12 +1,15 @@
 "use client";
 
+import Logo from "@/assets/logo/logoFarme2.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { categories } from "@/data/categories";
 import { cn } from "@/lib/utils";
 import { Camera, Heart, Search, X } from "lucide-react";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 // Sử dụng dynamic import cho phần user authentication
@@ -27,9 +30,9 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [openCategory, setOpenCategory] = useState(false);
   const categoryRef = useRef<HTMLLIElement>(null);
-  const [searchValue, setSearchValue] = useState(""); // Thêm state cho giá trị tìm kiếm
+  const [searchValue, setSearchValue] = useState("");
+  const pathname = usePathname();
 
-  // Xử lý thay đổi màu nền header khi cuộn
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
@@ -38,7 +41,6 @@ export default function Header() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Đóng dropdown khi click ra ngoài
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -53,7 +55,7 @@ export default function Header() {
   }, []);
 
   const mainNavItems = [
-    { name: "Trang Chủ", href: "/" },
+    { name: "Trang Chủ", href: "/home" },
     { name: "Sản phẩm", href: "/products" },
     { name: "Blog", href: "/blog" },
     { name: "Liên hệ", href: "/contact" },
@@ -68,58 +70,61 @@ export default function Header() {
     <header
       className={cn(
         "sticky top-0 z-50 w-full transition-colors duration-300",
-        isScrolled ? "bg-[#90c577] shadow-md" : "bg-white border-b"
+        isScrolled ? "bg-[#7baa66] shadow-md" : "bg-[#f1f1f1f1] border-b"
       )}
     >
-      <div className="container flex h-20 items-center justify-between">
-        <div className="flex items-center space-x-10">
-          <Link href="/" className="flex items-center space-x-2">
-            <span
-              className={cn(
-                "font-bold text-2xl",
-                isScrolled ? "text-white" : "text-primary"
-              )}
-            >
-              Farme
-            </span>
+      <div className="container flex h-[90px] items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2 ml-4">
+            <Image
+              src={Logo}
+              alt="Farme Logo"
+              width={130}
+              className="object-contain"
+              priority
+            />
           </Link>
 
-          <nav className="hidden md:flex">
+          <nav className="hidden md:flex pt-2">
             <ul className="flex space-x-8">
-              {mainNavItems.map((item, index) => (
-                <li key={index}>
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      "text-lg font-medium flex items-center transition-all duration-200",
-                      isScrolled ? "text-white" : "text-gray-700",
-                      "hover:text-[#599146] relative group"
-                    )}
-                  >
-                    {item.name}
-                    <span
+              {mainNavItems.map((item, index) => {
+                const isActive = pathname === item.href; // Kiểm tra trang hiện tại
+                return (
+                  <li key={index}>
+                    <Link
+                      href={item.href}
                       className={cn(
-                        "absolute bottom-0 left-0 w-full h-0.5 bg-[#599146] transform scale-x-0 origin-left transition-transform duration-300 ease-in-out group-hover:scale-x-100",
-                        isScrolled && "bg-white"
+                        "text-xl font-semibold flex items-center transition-all duration-200 relative group",
+                        isScrolled ? "text-white" : "text-gray-700",
+                        isActive ? "text-[#599146]" : "hover:text-[#599146]"
                       )}
-                    />
-                  </Link>
+                    >
+                      {item.name}
+                      <span
+                        className={cn(
+                          "absolute bottom-0 left-0 w-full h-0.5 bg-[#599146] transform scale-x-0 origin-left transition-transform duration-300 ease-in-out",
+                          isActive ? "scale-x-100" : "group-hover:scale-x-100",
+                          isScrolled && "bg-[#477e35]"
+                        )}
+                      />
+                    </Link>
 
-                  {openCategory && (
-                    <div className="absolute top-full left-0 mt-2 w-64 bg-white shadow-lg rounded-md border py-3 z-50 animate-in slide-in-from-top-2">
-                      {categories.map((category) => (
-                        <Link
-                          key={category.id}
-                          href={`/category/${category.slug}`}
-                          className="block px-4 py-2 text-base text-gray-700 hover:bg-[#90c577] hover:text-white transition-colors"
-                        >
-                          {category.name}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </li>
-              ))}
+                    {openCategory && (
+                      <div className="absolute top-full left-0 mt-2 w-64 bg-white shadow-lg rounded-md border py-3 z-50 animate-in slide-in-from-top-2">
+                        {categories.map((category) => (
+                          <Link
+                            key={category.id}
+                            href={`/category/${category.slug}`}
+                            className="block px-4 py-2 text-base text-gray-700 hover:bg-[#90c577] hover:text-white transition-colors"
+                          >
+                            {category.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </nav>
         </div>
@@ -134,7 +139,7 @@ export default function Header() {
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
                 className={cn(
-                  "w-full pl-12 pr-20 py-3 rounded-full border-gray-300", // Tăng pr-14 lên pr-20 để tạo không gian
+                  "w-full pl-12 pr-20 py-3 rounded-full border-gray-300",
                   "focus:outline-none focus:border-[#599146] focus:ring-2 focus:ring-[#599146] focus:ring-opacity-50"
                 )}
               />
@@ -146,7 +151,7 @@ export default function Header() {
                     className="p-2 hover:bg-gray-100 rounded-full"
                     onClick={clearSearch}
                   >
-                    <X className="h-5 w-5 text-[#599146]" /> {/* Màu #599146 */}
+                    <X className="h-5 w-5 text-[#599146]" />
                   </Button>
                 )}
                 <Button
@@ -154,16 +159,14 @@ export default function Header() {
                   size="icon"
                   className="p-2 hover:bg-gray-100 rounded-full"
                 >
-                  <Camera className="h-5 w-5 text-[#599146]" />{" "}
-                  {/* Màu #599146 */}
+                  <Camera className="h-5 w-5 text-[#599146]" />
                 </Button>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="p-2 hover:bg-gray-100 rounded-full"
                 >
-                  <Search className="h-5 w-5 text-[#599146]" />{" "}
-                  {/* Màu #599146 */}
+                  <Search className="h-5 w-5 text-[#599146]" />
                 </Button>
               </div>
             </div>
@@ -181,7 +184,6 @@ export default function Header() {
           </Link>
           <CartButton isScrolled={isScrolled} />
 
-          {/* Sử dụng component UserAuthSection */}
           <UserAuthSection isScrolled={isScrolled} />
         </div>
       </div>

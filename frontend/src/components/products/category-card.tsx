@@ -17,18 +17,19 @@ interface CategoryCardProps {
 export default function CategoryCard({ category }: CategoryCardProps) {
   return (
     <Link href={`/products?category=${encodeURIComponent(category.name)}`}>
-      <Card className="overflow-hidden border-none shadow-md category-card">
-        <CardContent className="p-4 flex flex-col items-center text-center">
-          <div className="w-16 h-16 md:w-20 md:h-20 relative mb-3">
-            <Image
-              src={category.image || "/placeholder.svg"}
-              alt={category.name}
-              fill
-              className="object-contain"
-            />
-          </div>
-          <h3 className="font-medium text-sm md:text-base">{category.name}</h3>
-          <p className="text-xs text-gray-500 mt-1">
+      <Card className="overflow-hidden border-none shadow-md rounded-lg category-card relative h-40">
+        <Image
+          src={category.image || "/placeholder.svg"}
+          alt={category.name}
+          layout="fill"
+          objectFit="cover"
+          className="transition-opacity duration-300 category-card-bg"
+        />
+        <CardContent className="relative flex flex-col items-center justify-center h-full text-center p-4 z-10">
+          <h3 className="font-semibold text-base md:text-lg transition-all duration-300 category-card-title">
+            {category.name}
+          </h3>
+          <p className="font-medium text-sm transition-all duration-300 category-card-count">
             {category.productCount} sản phẩm
           </p>
         </CardContent>
