@@ -83,12 +83,42 @@
 }
 
 .category-card {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.category-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+.category-card-bg {
+  opacity: 1;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.category-card:hover .category-card-bg {
+  transform: scale(1.1); /* Zoom ảnh to hơn 1.1 lần */
+  opacity: 0.7; /* Mờ đi một chút */
+}
+
+.category-card-title {
+  color: #ffffff;
+  font-size: 1.25rem;
+  transition: transform 0.3s ease, color 0.3s ease;
+  display: inline-block;
+}
+
+.category-card-count {
+  color: #ffffff;
+  font-size: 1rem;
+  transition: transform 0.3s ease, color 0.3s ease;
+  display: inline-block;
+}
+
+.category-card:hover .category-card-title {
+  transform: scale(1.3);
+  color: #000000;
+}
+
+.category-card:hover .category-card-count {
+  transform: scale(1.2);
+  color: #000000;
 }
 
 .product-card {

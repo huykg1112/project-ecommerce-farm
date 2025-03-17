@@ -1,3 +1,4 @@
+import { FarmSeller } from "@/assets/images/hero-img";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
@@ -81,7 +82,7 @@ export default function BecomePartnerSection() {
           </div>
           <div className="relative h-[400px] rounded-lg overflow-hidden">
             <Image
-              src="/images/become-seller.jpg"
+              src={FarmSeller}
               alt="Trở thành đối tác"
               fill
               className="object-cover"

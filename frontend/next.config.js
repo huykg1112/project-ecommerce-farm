@@ -1,5 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async redirects() {
+    return [
+      {
+        source: "/", // Đường dẫn gốc
+        destination: "/home", // Chuyển hướng đến /home
+        permanent: true, // Chuyển hướng vĩnh viễn (status code 308)
+      },
+    ];
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -16,4 +25,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig; // Sử dụng module.exports thay vì export default
+module.exports = nextConfig;

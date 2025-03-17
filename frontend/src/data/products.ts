@@ -5,7 +5,8 @@ export const products = [
     price: 15000,
     originalPrice: 18000,
     discount: 17,
-    image: "/images/products/rau-cai-ngot.jpg",
+    image:
+      "https://product.hstatic.net/200000423303/product/cai_ngot_huu_co_cbec648b32644f609c65236a87ffdc82.png",
     rating: 4.5,
     ratingCount: 120,
     seller: {
@@ -22,7 +23,8 @@ export const products = [
     price: 35000,
     originalPrice: 40000,
     discount: 12,
-    image: "/images/products/ca-chua.jpg",
+    image:
+      "https://storage.googleapis.com/sc_pcm_product/prod/2024/6/17/409281-8936114401193.jpg",
     rating: 4.7,
     ratingCount: 89,
     seller: {
@@ -39,7 +41,8 @@ export const products = [
     price: 75000,
     originalPrice: 85000,
     discount: 12,
-    image: "/images/products/tao-fuji.jpg",
+    image:
+      "https://file.hstatic.net/200000439247/article/tao_fuji_be77e8054173413494c97f613c8e82d3.jpg",
     rating: 4.8,
     ratingCount: 156,
     seller: {
@@ -54,7 +57,8 @@ export const products = [
     id: "p4",
     name: "Hạt giống cà rốt",
     price: 25000,
-    image: "/images/products/hat-giong-ca-rot.jpg",
+    image:
+      "https://product.hstatic.net/200000722083/product/23_89f2813bd5df426cb420103ef337f3e5.png",
     rating: 4.3,
     ratingCount: 42,
     seller: {
@@ -70,7 +74,8 @@ export const products = [
     price: 120000,
     originalPrice: 150000,
     discount: 20,
-    image: "/images/products/phan-bon.jpg",
+    image:
+      "https://vuonbabylon.vn/wp-content/uploads/2020/08/Phan-huu-co-vi-sinh-cao-cap-dau-trau-HCMK-7.png",
     rating: 4.6,
     ratingCount: 78,
     seller: {
@@ -85,7 +90,8 @@ export const products = [
     id: "p6",
     name: "Mật ong rừng nguyên chất",
     price: 220000,
-    image: "/images/products/mat-ong.jpg",
+    image:
+      "https://trungsoncare.com/images/detailed/28/mat-ong-nguyen-chat-rung-nhiet-doi-700g.png",
     rating: 4.9,
     ratingCount: 203,
     seller: {
@@ -100,7 +106,8 @@ export const products = [
     id: "p7",
     name: "Bơ sáp Đắk Lắk",
     price: 65000,
-    image: "/images/products/bo-sap.jpg",
+    image:
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcShm_KHT1RkNREmvBRiKuBHQqxa82u0Y0_k8A&s",
     rating: 4.7,
     ratingCount: 112,
     seller: {
@@ -116,7 +123,7 @@ export const products = [
     price: 85000,
     originalPrice: 95000,
     discount: 11,
-    image: "/images/products/dua-luoi.jpg",
+    image: "https://minhphuongfruit.com/upload/hinhthem/dualuoitaki-4524.jpg",
     rating: 4.5,
     ratingCount: 67,
     seller: {
@@ -131,7 +138,8 @@ export const products = [
     id: "p9",
     name: "Thuốc bảo vệ thực vật sinh học",
     price: 180000,
-    image: "/images/products/thuoc-bvtv.jpg",
+    image:
+      "https://khuvuonmini.com/asset/upload/image/sh01-sh07.png?v=20190410",
     rating: 4.4,
     ratingCount: 53,
     seller: {
@@ -145,7 +153,8 @@ export const products = [
     id: "p10",
     name: "Hạt giống rau muống",
     price: 15000,
-    image: "/images/products/hat-giong-rau-muong.jpg",
+    image:
+      "https://product.hstatic.net/1000269461/product/53_5a0574f07af0422eb0ad55b2a3ba9a60_master.png",
     rating: 4.2,
     ratingCount: 38,
     seller: {
@@ -161,7 +170,8 @@ export const products = [
     price: 350000,
     originalPrice: 400000,
     discount: 12,
-    image: "/images/products/nam-linh-chi.jpg",
+    image:
+      "https://bizweb.dktcdn.net/100/432/216/products/nam-linh-chi-voi-tac-dung-va-cach-dung-nam-linh-chi-dung-1988f3a8-5c06-4514-92e5-1d87c074ae79.jpg?v=1641044950440",
     rating: 4.8,
     ratingCount: 92,
     seller: {
@@ -176,7 +186,8 @@ export const products = [
     id: "p12",
     name: "Xoài cát Hòa Lộc",
     price: 95000,
-    image: "/images/products/xoai-cat.jpg",
+    image:
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDncVNH69HcQA17H4OHkkymQAN_gK3aQ6Mzg&s",
     rating: 4.6,
     ratingCount: 105,
     seller: {
