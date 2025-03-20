@@ -51,6 +51,7 @@ export class TokensService {
       })
       .execute(); // Thực thi truy vấn
     if (result.affected === 0) {
+      console.log(result.affected);
       console.warn(`No tokens deleted for user ${userId}`); // Lý do: Log cảnh báo nếu không có token nào bị xóa
     }
   }

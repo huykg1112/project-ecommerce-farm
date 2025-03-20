@@ -17,6 +17,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { User } from './entities/user.entity';
+import { UserProfileSerializer } from './serializers';
 import { UserService } from './user.service';
 // import { RequirePermission } from 'src/auth/require-permission.decorator';
 
@@ -25,14 +26,18 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get('profile')
-  async getProfile(@Req() req): Promise<Omit<User, 'password'>> {
+  async getProfile(@Req() req): Promise<UserProfileSerializer> {
     const userId: string = req.user.id as string;
     // console.log(req.user);
-    return this.userService.findById(userId);
+    const user = await this.userService.findById(userId);
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+    return UserProfileSerializer.serialize(user);
   }
 
   @Get(':id')
-  async getUserById(@Param('id') id: string): Promise<Omit<User, 'password'>> {
+  async getUserById(@Param('id') id: string): Promise<UserProfileSerializer> {
     if (!isUUID(id)) {
       throw new NotFoundException(`Invalid ID format`);
     }
@@ -40,7 +45,7 @@ export class UserController {
     if (!user) {
       throw new NotFoundException(`User with id ${id} not found`);
     }
-    return user;
+    return UserProfileSerializer.serialize(user);
   }
 
   @Public()

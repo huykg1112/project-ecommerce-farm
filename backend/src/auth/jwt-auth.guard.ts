@@ -9,7 +9,6 @@ import { Reflector } from '@nestjs/core';
 import { JwtService } from '@nestjs/jwt';
 import { TokensService } from '../modules/tokens/tokens.service';
 import { UserService } from '../modules/users/user.service';
-import { IS_PUBLIC_KEY } from '../public.decorator'; // Import key mặc định
 
 interface JwtPayload {
   sub: string;
@@ -23,17 +22,15 @@ export class JwtAuthGuard implements CanActivate {
     private readonly configService: ConfigService,
     private readonly tokenService: TokensService,
     private readonly userService: UserService,
-    private readonly reflector: Reflector,
+    private readonly reflector: Reflector, // Sử dụng reflector để lấy metadata, dùng để kiểm tra route có phải public hay không
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    // Lấy IS_PUBLIC_KEY từ .env, nếu không có thì dùng giá trị mặc định từ auth.decorator.ts
-    const publicKey =
-      this.configService.get<string>('IS_PUBLIC_KEY') ?? IS_PUBLIC_KEY;
+    const publicKey = this.configService.get<string>('IS_PUBLIC_KEY');
 
     // Kiểm tra metadata với key từ .env
     const isPublic = this.reflector.getAllAndOverride<boolean>(publicKey, [
-      context.getHandler(),
+      context.getHandler(), // Lấy handler của route, dung để kiểm tra metadata của route
       context.getClass(),
     ]);
     if (isPublic) {
@@ -50,8 +47,7 @@ export class JwtAuthGuard implements CanActivate {
     const token = authHeader.split(' ')[1];
 
     try {
-      const secret =
-        this.configService.get<string>('JWT_SECRET') ?? 'mysecretkey';
+      const secret = this.configService.get<string>('JWT_SECRET');
       const decoded: JwtPayload = this.jwtService.verify(token, { secret });
 
       if (!decoded || !decoded.sub) {
