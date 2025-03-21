@@ -45,20 +45,35 @@ This project combines a robust backend with **NestJS** (TypeScript) for efficien
 
 ecommerce-farm/
 ├── backend/              # Backend (NestJS)
+
 │   ├── src/              # Source code
+
 │   ├── test/             # Tests
+
 │   ├── .env              # Environment variables
+
 │   ├── package.json      # Dependencies and scripts
+
 │   └── README.md         # Backend docs
+
 ├── frontend/             # Frontend (Next.js)
+
 │   ├── src/              # Source code
+
 │   ├── public/           # Static assets
+
 │   ├── .env.local        # Local environment variables
+
 │   ├── package.json      # Dependencies and scripts
+
 │   └── README.md         # Frontend docs
+
 ├── .gitignore            # Git ignore file
+
 ├── README.md             # Project overview
+
 └── package.json          # Root scripts
+
 
 ## Getting Started
 
