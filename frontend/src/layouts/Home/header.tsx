@@ -4,13 +4,15 @@ import Logo from "@/assets/logo/logoFarme2.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { categories } from "@/data/categories";
+import { RootState } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { Camera, Heart, Search, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useSelector } from "react-redux";
 
 // Sử dụng dynamic import cho phần user authentication
 const UserAuthSection = dynamic(
@@ -25,6 +27,8 @@ const CartButton = dynamic(
     ssr: false,
   }
 );
+const MobileMenu = dynamic(() => import("./mobile-menu"), { ssr: false });
+const SearchModal = dynamic(() => import("./search-modal"), { ssr: false });
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -32,6 +36,9 @@ export default function Header() {
   const categoryRef = useRef<HTMLLIElement>(null);
   const [searchValue, setSearchValue] = useState("");
   const pathname = usePathname();
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const router = useRouter();
+  const { isAuthenticated } = useSelector((state: RootState) => state.user);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -66,6 +73,19 @@ export default function Header() {
     setSearchValue("");
   };
 
+  const handleWishlistClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    if (!isAuthenticated) {
+      // Nếu chưa đăng nhập, chuyển hướng đến trang đăng nhập
+      router.push("/login");
+      return;
+    }
+
+    // Nếu đã đăng nhập, chuyển hướng đến trang yêu thích
+    router.push("/wishlist");
+  };
+
   return (
     <header
       className={cn(
@@ -74,6 +94,9 @@ export default function Header() {
       )}
     >
       <div className="container flex h-[90px] items-center justify-between">
+        <div className="md:hidden">
+          <MobileMenu isScrolled={isScrolled} />
+        </div>
         <div className="flex items-center space-x-2">
           <Link href="/" className="flex items-center space-x-2 ml-4">
             <Image
@@ -172,21 +195,33 @@ export default function Header() {
             </div>
           </div>
 
-          <Link href="/wishlist">
+          <Button
+            variant="ghost"
+            size="icon"
+            className={cn("md:hidden", isScrolled && "text-white")}
+            onClick={() => setSearchModalOpen(true)}
+          >
+            <Search className="h-6 w-6" />
+          </Button>
+          <Link href="/wishlist" className="hidden sm:block">
             <Button
               variant="ghost"
               size="icon"
               className={cn("relative", isScrolled && "text-white")}
+              onClick={handleWishlistClick}
             >
               <Heart className="h-6 w-6" />
               <span className="sr-only">Wishlist</span>
             </Button>
           </Link>
-          <CartButton isScrolled={isScrolled} />
+          <div className="hidden sm:block">
+            <CartButton isScrolled={isScrolled} />
+          </div>
 
           <UserAuthSection isScrolled={isScrolled} />
         </div>
       </div>
+      <SearchModal isOpen={searchModalOpen} onOpenChange={setSearchModalOpen} />
     </header>
   );
 }

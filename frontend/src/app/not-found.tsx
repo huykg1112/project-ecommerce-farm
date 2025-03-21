@@ -1,3 +1,4 @@
+import Img404 from "@/assets/images/page404/page404.jpeg";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import Link from "next/link";
@@ -5,9 +6,9 @@ import Link from "next/link";
 export default function NotFound() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 text-center">
-      <div className="relative w-64 h-64 mb-8">
+      <div className="relative w-80 h-80 mb-8">
         <Image
-          src="/images/404-plant.svg"
+          src={Img404}
           alt="404 Not Found"
           fill
           className="object-contain"

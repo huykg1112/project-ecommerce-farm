@@ -58,7 +58,7 @@ export default function UserAuthSection({ isScrolled }: UserAuthSectionProps) {
   }
 
   return (
-    <Link href="/login">
+    <Link href="/login" className="hidden sm:block">
       <Button
         className={cn(
           "bg-[#599146] hover:bg-[#44703d] text-white text-base px-6 py-2"
