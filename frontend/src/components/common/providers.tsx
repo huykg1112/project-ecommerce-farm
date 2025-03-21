@@ -1,8 +1,10 @@
 "use client";
 
-import type React from "react";
-import { ThemeProvider } from "next-themes"; // ThemeProvider là một component từ thư viện next-themes, dùng để cung cấp chế độ sáng/tối cho ứng dụng
+import { CartAnimationProvider } from "@/lib/cart/cart-animation-context";
+import { ToastProvider } from "@/lib/toast-provider";
+import { ThemeProvider } from "next-themes";
 import dynamic from "next/dynamic";
+import type React from "react";
 
 // Sử dụng dynamic import cho Redux Provider để tránh lỗi localStorage trong SSR
 const DynamicReduxProvider = dynamic(
@@ -14,7 +16,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <DynamicReduxProvider>
       <ThemeProvider attribute="class" defaultTheme="light">
-        {children}
+        <ToastProvider>
+          <CartAnimationProvider>{children}</CartAnimationProvider>
+        </ToastProvider>
       </ThemeProvider>
     </DynamicReduxProvider>
   );

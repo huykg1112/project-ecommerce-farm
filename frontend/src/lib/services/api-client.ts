@@ -1,5 +1,5 @@
+import { store } from "../cart/store";
 import { logoutUser, refreshToken } from "../features/user-slice";
-import { store } from "../store";
 import { authService } from "./auth-service";
 
 const API_URL = "http://localhost:4200";

@@ -3,15 +3,16 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { useAuthAction } from "@/lib/auth/use-auth-action";
+import { useCartAnimation } from "@/lib/cart/cart-animation-context";
 import { addToCart } from "@/lib/features/cart-slice";
-import { RootState } from "@/lib/store";
+import { showToast } from "@/lib/toast-provider";
 import { formatCurrency } from "@/lib/utils";
 import { Heart, ShoppingCart, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useRef, useState } from "react";
+import { useDispatch } from "react-redux";
 
 interface Product {
   id: string;
@@ -38,46 +39,65 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const dispatch = useDispatch();
-  const router = useRouter();
-  const { isAuthenticated } = useSelector((state: RootState) => state.user);
+  const { requireAuth } = useAuthAction();
+  const { startAnimation } = useCartAnimation();
+  const productRef = useRef<HTMLDivElement>(null);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault(); // Ngăn chặn chuyển hướng đến trang chi tiết sản phẩm
 
-    if (!isAuthenticated) {
-      // Nếu chưa đăng nhập, chuyển hướng đến trang đăng nhập
-      router.push("/login");
-      return;
-    }
+    // Kiểm tra đăng nhập trước khi thêm vào giỏ hàng
+    requireAuth(() => {
+      // Thêm vào giỏ hàng
+      dispatch(
+        addToCart({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          quantity: 1,
+          image: product.image,
+          sellerId: product.seller.id,
+          sellerName: product.seller.name,
+        })
+      );
 
-    dispatch(
-      addToCart({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        quantity: 1,
-        image: product.image,
-        sellerId: product.seller.id,
-        sellerName: product.seller.name,
-      })
-    );
+      // Lấy vị trí của sản phẩm để bắt đầu animation
+      if (productRef.current) {
+        const rect = productRef.current.getBoundingClientRect();
+        const sourcePosition = {
+          x: rect.left + rect.width / 2 - 32, // Căn giữa
+          y: rect.top + rect.height / 2 - 32,
+        };
+
+        // Bắt đầu animation
+        startAnimation(product.image, product.name, sourcePosition);
+      }
+
+      // Hiển thị thông báo
+      showToast.success(`Đã thêm ${product.name} vào giỏ hàng!`);
+    });
   };
 
   const toggleWishlist = (e: React.MouseEvent) => {
     e.preventDefault(); // Ngăn chặn chuyển hướng đến trang chi tiết sản phẩm
 
-    if (!isAuthenticated) {
-      // Nếu chưa đăng nhập, chuyển hướng đến trang đăng nhập
-      router.push("/login");
-      return;
-    }
-
-    setIsWishlisted(!isWishlisted);
-    // Thêm logic xử lý yêu thích ở đây (có thể dispatch một action)
+    // Kiểm tra đăng nhập trước khi thêm vào yêu thích
+    requireAuth(() => {
+      setIsWishlisted(!isWishlisted);
+      // Hiển thị thông báo
+      if (!isWishlisted) {
+        showToast.success(`Đã thêm ${product.name} vào danh sách yêu thích!`);
+      } else {
+        showToast.info(`Đã xóa ${product.name} khỏi danh sách yêu thích!`);
+      }
+    });
   };
 
   return (
-    <Card className="overflow-hidden product-card border-none shadow-md">
+    <Card
+      className="overflow-hidden product-card border-none shadow-md"
+      ref={productRef}
+    >
       <div className="relative">
         <Link href={`/products/${product.id}`}>
           <div className="aspect-square overflow-hidden">

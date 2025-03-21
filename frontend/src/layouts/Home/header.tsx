@@ -4,7 +4,7 @@ import Logo from "@/assets/logo/logoFarme2.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { categories } from "@/data/categories";
-import { RootState } from "@/lib/store";
+import { RootState } from "@/lib/cart/store";
 import { cn } from "@/lib/utils";
 import { Camera, Heart, Search, X } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -214,7 +214,7 @@ export default function Header() {
               <span className="sr-only">Wishlist</span>
             </Button>
           </Link>
-          <div className="hidden sm:block">
+          <div className="hidden sm:block cart-button-header">
             <CartButton isScrolled={isScrolled} />
           </div>
 

@@ -9,8 +9,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UserAuthSectionProps } from "@/interfaces";
+import type { AppDispatch, RootState } from "@/lib/cart/store";
 import { logoutUser } from "@/lib/features/user-slice";
-import type { AppDispatch, RootState } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useDispatch, useSelector } from "react-redux";

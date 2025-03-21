@@ -8,7 +8,10 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { products } from "@/data/products";
+import { useAuthAction } from "@/lib/auth/use-auth-action";
+import { useCartAnimation } from "@/lib/cart/cart-animation-context";
 import { addToCart } from "@/lib/features/cart-slice";
+import { showToast } from "@/lib/toast-provider";
 import { formatCurrency } from "@/lib/utils";
 import {
   Heart,
@@ -24,15 +27,18 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 
 export default function ProductPage() {
   const { id } = useParams();
-  const dispatch = useDispatch();
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const dispatch = useDispatch();
+  const { requireAuth } = useAuthAction();
+  const productRef = useRef<HTMLDivElement>(null);
+  const { startAnimation } = useCartAnimation();
 
   // Tìm sản phẩm theo ID
   const product = products.find((p) => p.id === id) || products[0];
@@ -55,22 +61,46 @@ export default function ProductPage() {
     setQuantity(quantity + 1);
   };
 
-  const handleAddToCart = () => {
-    dispatch(
-      addToCart({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        quantity: quantity,
-        image: product.image,
-        sellerId: product.seller.id,
-        sellerName: product.seller.name,
-      })
-    );
-  };
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault(); // Ngăn chặn chuyển hướng đến trang chi tiết sản phẩm
 
-  const toggleWishlist = () => {
-    setIsWishlisted(!isWishlisted);
+    // Kiểm tra đăng nhập trước khi thêm vào giỏ hàng
+    requireAuth(() => {
+      dispatch(
+        addToCart({
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          quantity: 1,
+          image: product.image,
+          sellerId: product.seller.id,
+          sellerName: product.seller.name,
+        })
+      );
+      // Lấy vị trí của sản phẩm để bắt đầu animation
+      if (productRef.current) {
+        const rect = productRef.current.getBoundingClientRect();
+        const sourcePosition = {
+          x: rect.left + rect.width / 2 - 32, // Căn giữa
+          y: rect.top + rect.height / 2 - 32,
+        };
+
+        // Bắt đầu animation
+        startAnimation(product.image, product.name, sourcePosition);
+      }
+
+      // Hiển thị thông báo
+      showToast.success(`Đã thêm ${product.name} vào giỏ hàng!`);
+    });
+  };
+  const toggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault(); // Ngăn chặn chuyển hướng đến trang chi tiết sản phẩm
+
+    // Kiểm tra đăng nhập trước khi thêm vào yêu thích
+    requireAuth(() => {
+      setIsWishlisted(!isWishlisted);
+      // Thêm logic xử lý yêu thích ở đây (có thể dispatch một action)
+    });
   };
 
   return (
@@ -91,7 +121,7 @@ export default function ProductPage() {
       </div>
       <div className="grid md:grid-cols-2 gap-8 mb-12">
         {/* Hình ảnh sản phẩm */}
-        <div>
+        <div ref={productRef}>
           <div className="relative aspect-square mb-4 border rounded-lg overflow-hidden">
             <Image
               src={productImages[activeImage] || "/placeholder.svg"}

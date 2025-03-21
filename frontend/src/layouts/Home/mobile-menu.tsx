@@ -12,8 +12,8 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { categories } from "@/data/categories";
+import type { AppDispatch, RootState } from "@/lib/cart/store";
 import { logoutUser } from "@/lib/features/user-slice";
-import type { AppDispatch, RootState } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import {
   FileText,

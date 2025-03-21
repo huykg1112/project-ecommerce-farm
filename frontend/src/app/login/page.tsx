@@ -1,12 +1,13 @@
 "use client";
 
+import Logo from "@/assets/logo/logoFarme2.png";
 import LoginForm from "@/components/auth/LoginForm";
 import RegisterForm from "@/components/auth/RegisterForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { AppDispatch, RootState } from "@/lib/cart/store";
 import { clearError, loginUser, registerUser } from "@/lib/features/user-slice";
-import type { AppDispatch, RootState } from "@/lib/store";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -29,6 +30,8 @@ export default function LoginPage() {
 
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
 
   // Get user state from Redux
   const { loading, error, isAuthenticated } = useSelector(
@@ -38,9 +41,9 @@ export default function LoginPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      router.push("/");
+      router.push(callbackUrl);
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, router, callbackUrl]);
 
   // Clear errors when switching tabs
   useEffect(() => {
@@ -50,12 +53,16 @@ export default function LoginPage() {
   // Handle login form submission
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    dispatch(
+    const result = await dispatch(
       loginUser({
         username: loginUsername,
         password: loginPassword,
       })
     );
+    if (loginUser.fulfilled.match(result)) {
+      // Đăng nhập thành công, chuyển hướng đến callbackUrl
+      router.push(callbackUrl);
+    }
   };
 
   // Handle register form submission
@@ -80,7 +87,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md">
         <div className="flex justify-center mb-6">
-          <Image src="/logo.svg" alt="Nông Sàn Logo" width={60} height={60} />
+          <Image src={Logo} alt="Nông Sàn Logo" width={400} height={400} />
         </div>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6">

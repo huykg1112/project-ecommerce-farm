@@ -1,6 +1,6 @@
 "use client";
 
-import { store } from "@/lib/store";
+import { store } from "@/lib/cart/store";
 import type React from "react";
 import { Provider } from "react-redux";
 
