@@ -54,6 +54,7 @@
     "react-hook-form": "^7.54.1",
     "react-redux": "latest",
     "react-resizable-panels": "^2.1.7",
+    "react-toastify": "^11.0.5",
     "recharts": "^2.15.1",
     "redux": "latest",
     "sonner": "^1.7.1",
