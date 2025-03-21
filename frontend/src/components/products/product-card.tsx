@@ -4,12 +4,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { addToCart } from "@/lib/features/cart-slice";
+import { RootState } from "@/lib/store";
 import { formatCurrency } from "@/lib/utils";
 import { Heart, ShoppingCart, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 
 interface Product {
   id: string;
@@ -36,8 +38,18 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const [isWishlisted, setIsWishlisted] = useState(false);
   const dispatch = useDispatch();
+  const router = useRouter();
+  const { isAuthenticated } = useSelector((state: RootState) => state.user);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault(); // Ngăn chặn chuyển hướng đến trang chi tiết sản phẩm
+
+    if (!isAuthenticated) {
+      // Nếu chưa đăng nhập, chuyển hướng đến trang đăng nhập
+      router.push("/login");
+      return;
+    }
+
     dispatch(
       addToCart({
         id: product.id,
@@ -51,8 +63,17 @@ export default function ProductCard({ product }: ProductCardProps) {
     );
   };
 
-  const toggleWishlist = () => {
+  const toggleWishlist = (e: React.MouseEvent) => {
+    e.preventDefault(); // Ngăn chặn chuyển hướng đến trang chi tiết sản phẩm
+
+    if (!isAuthenticated) {
+      // Nếu chưa đăng nhập, chuyển hướng đến trang đăng nhập
+      router.push("/login");
+      return;
+    }
+
     setIsWishlisted(!isWishlisted);
+    // Thêm logic xử lý yêu thích ở đây (có thể dispatch một action)
   };
 
   return (

@@ -6,6 +6,7 @@ import type { RootState } from "@/lib/store";
 import { cn } from "@/lib/utils";
 import { ShoppingCart } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 
 interface CartButtonProps {
@@ -14,6 +15,21 @@ interface CartButtonProps {
 
 export default function CartButton({ isScrolled }: CartButtonProps) {
   const { totalItems } = useSelector((state: RootState) => state.cart);
+  const { isAuthenticated } = useSelector((state: RootState) => state.user);
+  const router = useRouter();
+
+  const handleCartClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+
+    if (!isAuthenticated) {
+      // Nếu chưa đăng nhập, chuyển hướng đến trang đăng nhập
+      router.push("/login");
+      return;
+    }
+
+    // Nếu đã đăng nhập, chuyển hướng đến trang giỏ hàng
+    router.push("/cart");
+  };
 
   return (
     <Link href="/cart">
@@ -21,6 +37,7 @@ export default function CartButton({ isScrolled }: CartButtonProps) {
         variant="ghost"
         size="icon"
         className={cn("relative", isScrolled && "text-white")}
+        onClick={handleCartClick}
       >
         <ShoppingCart className="h-6 w-6" />
         <span className="sr-only">Cart</span>
