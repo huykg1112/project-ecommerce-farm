@@ -90,7 +90,7 @@ export default function MobileMenu({ isScrolled }: MobileMenuProps) {
     },
     {
       name: "Đơn hàng",
-      href: "/orders",
+      href: "/cart",
       icon: <Package className="h-5 w-5 mr-2" />,
       requireAuth: true,
     },
