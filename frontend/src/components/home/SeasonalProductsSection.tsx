@@ -21,7 +21,7 @@ export default function SeasonalProductsSection({
         </div>
         <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory">
           {products.map((product) => (
-            <div className="flex-shrink-0 w-64 sm:w-72 md:w-80 lg:w-96 max-w-[360px] max-w-[360px] ">
+            <div className="flex-shrink-0 w-64 sm:w-72 md:w-80 lg:w-96 max-w-[360px]">
               <ProductCard product={product} />
             </div>
           ))}
