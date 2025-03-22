@@ -57,7 +57,7 @@ export const authService = {
       throw errorData;
     }
 
-    const result: LoginResponse = await response.json();
+    const result: LoginResponse = await response.json(); // Chuyển response thành dạng JSON
 
     // Lưu token vào localStorage (chỉ ở phía client)
     if (isClient) {

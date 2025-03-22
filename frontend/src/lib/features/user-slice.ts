@@ -1,3 +1,4 @@
+import { UpdateProfileDto, UserProfile } from "@/types/user";
 import {
   createAsyncThunk, // Hàm tạo async thunks, đây là một hàm của Redux Toolkit giúp tạo ra các async thunks, dùng để xử lý các side effects như gọi API, xử lý bất đồng bộ, ...
   createSlice,
@@ -8,6 +9,7 @@ import {
   type LoginRequest,
   type RegisterRequest,
 } from "../services/auth-service";
+import { userService } from "../services/user-service";
 
 export interface User {
   id?: string;
@@ -16,7 +18,8 @@ export interface User {
   phone?: string;
   address?: string;
   avatar?: string;
-  role?: "buyer" | "seller" | "admin";
+  roleName?: string;
+  fullName?: string;
 }
 
 interface UserState {
@@ -24,6 +27,9 @@ interface UserState {
   isAuthenticated: boolean;
   loading: boolean;
   error: string | string[] | null;
+  profile: UserProfile | null;
+  profileLoading: boolean;
+  profileError: string | null;
 }
 
 // Kiểm tra xem đang ở phía client hay server
@@ -34,6 +40,9 @@ const initialState: UserState = {
   isAuthenticated: isClient ? authService.isAuthenticated() : false,
   loading: false,
   error: null,
+  profile: null,
+  profileLoading: false,
+  profileError: null,
 };
 
 // Async thunks
@@ -68,6 +77,7 @@ export const registerUser = createAsyncThunk(
 export const logoutUser = createAsyncThunk(
   "user/logout",
   async (_, { rejectWithValue }) => {
+    // _là tham số không sử dụng
     try {
       await authService.logout();
       // console.log("Logout message");
@@ -86,6 +96,33 @@ export const refreshToken = createAsyncThunk(
       return response;
     } catch (error: any) {
       return rejectWithValue(error.message || "Làm mới token thất bại");
+    }
+  }
+);
+
+export const fetchUserProfile = createAsyncThunk(
+  "user/fetchProfile",
+  async (_, { rejectWithValue }) => {
+    try {
+      const profile = await userService.getProfile();
+      return profile;
+    } catch (error: any) {
+      return rejectWithValue(
+        error.message || "Không thể tải thông tin người dùng"
+      );
+    }
+  }
+);
+export const updateUserProfile = createAsyncThunk(
+  "user/updateProfile",
+  async (profileData: UpdateProfileDto, { rejectWithValue }) => {
+    try {
+      const response = await userService.updateProfile(profileData);
+      // Sau khi cập nhật thành công, lấy lại thông tin profile mới
+      const updatedProfile = await userService.getProfile();
+      return updatedProfile;
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Cập nhật thông tin thất bại");
     }
   }
 );
@@ -173,12 +210,66 @@ const userSlice = createSlice({
           localStorage.removeItem("access_token");
           localStorage.removeItem("refresh_token");
         }
+      })
+      // Fetch Profile
+      .addCase(fetchUserProfile.pending, (state) => {
+        state.profileLoading = true;
+        state.profileError = null;
+      })
+      .addCase(fetchUserProfile.fulfilled, (state, action) => {
+        state.profileLoading = false;
+        state.profile = action.payload;
+        // Cập nhật currentUser với thông tin từ profile
+        if (state.currentUser) {
+          state.currentUser = {
+            ...state.currentUser,
+            id: action.payload.id,
+            email: action.payload.email,
+            phone: action.payload.phone,
+            address: action.payload.address,
+            avatar: action.payload.avatar,
+            roleName: action.payload.roleName,
+            fullName: action.payload.fullName,
+          };
+        }
+      })
+      .addCase(fetchUserProfile.rejected, (state, action) => {
+        state.profileLoading = false;
+        state.profileError = action.payload as string;
+      })
+      // Update Profile
+      .addCase(updateUserProfile.pending, (state) => {
+        state.profileLoading = true;
+        state.profileError = null;
+      })
+      .addCase(updateUserProfile.fulfilled, (state, action) => {
+        state.profileLoading = false;
+        state.profile = action.payload;
+        // Cập nhật currentUser với thông tin từ profile
+        if (state.currentUser) {
+          state.currentUser = {
+            ...state.currentUser,
+            email: action.payload.email,
+            phone: action.payload.phone,
+            address: action.payload.address,
+            fullName: action.payload.fullName,
+          };
+        }
+      })
+      .addCase(updateUserProfile.rejected, (state, action) => {
+        state.profileLoading = false;
+        state.profileError = action.payload as string;
       });
   },
 });
 
-export const { setUser, clearUser, setLoading, updateUserProfile, clearError } =
-  userSlice.actions;
+export const {
+  setUser,
+  clearUser,
+  setLoading,
+  updateUserProfile: updateUserProfileAction,
+  clearError,
+} = userSlice.actions;
 export default userSlice.reducer;
 // user-slice.ts này chứa slice của user trong Redux store, bao gồm các reducers và các async thunks để xử lý các action liên quan đến user như đăng nhập, đăng ký, đăng xuất, làm mới token, cập nhật thông tin user. Các reducers và
 // async thunks này được sử dụng trong các components và services khác trong ứng dụng để thực hiện các tác vụ liên quan đến user.

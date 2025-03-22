@@ -5,8 +5,11 @@ export const products = [
     price: 15000,
     originalPrice: 18000,
     discount: 17,
-    image:
+    images: [
       "https://product.hstatic.net/200000423303/product/cai_ngot_huu_co_cbec648b32644f609c65236a87ffdc82.png",
+      "https://example.com/images/cai-ngot-2.jpg",
+      "https://example.com/images/cai-ngot-3.jpg",
+    ],
     rating: 4.5,
     ratingCount: 120,
     seller: {
@@ -23,8 +26,11 @@ export const products = [
     price: 35000,
     originalPrice: 40000,
     discount: 12,
-    image:
+    images: [
       "https://storage.googleapis.com/sc_pcm_product/prod/2024/6/17/409281-8936114401193.jpg",
+      "https://example.com/images/ca-chua-2.jpg",
+      "https://example.com/images/ca-chua-3.jpg",
+    ],
     rating: 4.7,
     ratingCount: 89,
     seller: {
@@ -41,8 +47,11 @@ export const products = [
     price: 75000,
     originalPrice: 85000,
     discount: 12,
-    image:
+    images: [
       "https://file.hstatic.net/200000439247/article/tao_fuji_be77e8054173413494c97f613c8e82d3.jpg",
+      "https://example.com/images/tao-fuji-2.jpg",
+      "https://example.com/images/tao-fuji-3.jpg",
+    ],
     rating: 4.8,
     ratingCount: 156,
     seller: {
@@ -57,8 +66,10 @@ export const products = [
     id: "p4",
     name: "Hạt giống cà rốt",
     price: 25000,
-    image:
+    images: [
       "https://product.hstatic.net/200000722083/product/23_89f2813bd5df426cb420103ef337f3e5.png",
+      "https://example.com/images/hat-giong-ca-rot-2.jpg",
+    ],
     rating: 4.3,
     ratingCount: 42,
     seller: {
@@ -74,8 +85,11 @@ export const products = [
     price: 120000,
     originalPrice: 150000,
     discount: 20,
-    image:
+    images: [
       "https://vuonbabylon.vn/wp-content/uploads/2020/08/Phan-huu-co-vi-sinh-cao-cap-dau-trau-HCMK-7.png",
+      "https://example.com/images/phan-bon-2.jpg",
+      "https://example.com/images/phan-bon-3.jpg",
+    ],
     rating: 4.6,
     ratingCount: 78,
     seller: {
@@ -90,8 +104,10 @@ export const products = [
     id: "p6",
     name: "Mật ong rừng nguyên chất",
     price: 220000,
-    image:
+    images: [
       "https://trungsoncare.com/images/detailed/28/mat-ong-nguyen-chat-rung-nhiet-doi-700g.png",
+      "https://example.com/images/mat-ong-2.jpg",
+    ],
     rating: 4.9,
     ratingCount: 203,
     seller: {
@@ -106,8 +122,11 @@ export const products = [
     id: "p7",
     name: "Bơ sáp Đắk Lắk",
     price: 65000,
-    image:
+    images: [
       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcShm_KHT1RkNREmvBRiKuBHQqxa82u0Y0_k8A&s",
+      "https://example.com/images/bo-sap-2.jpg",
+      "https://example.com/images/bo-sap-3.jpg",
+    ],
     rating: 4.7,
     ratingCount: 112,
     seller: {
@@ -123,7 +142,10 @@ export const products = [
     price: 85000,
     originalPrice: 95000,
     discount: 11,
-    image: "https://minhphuongfruit.com/upload/hinhthem/dualuoitaki-4524.jpg",
+    images: [
+      "https://minhphuongfruit.com/upload/hinhthem/dualuoitaki-4524.jpg",
+      "https://example.com/images/dua-luoi-2.jpg",
+    ],
     rating: 4.5,
     ratingCount: 67,
     seller: {
@@ -138,8 +160,11 @@ export const products = [
     id: "p9",
     name: "Thuốc bảo vệ thực vật sinh học",
     price: 180000,
-    image:
+    images: [
       "https://khuvuonmini.com/asset/upload/image/sh01-sh07.png?v=20190410",
+      "https://example.com/images/thuoc-sinh-hoc-2.jpg",
+      "https://example.com/images/thuoc-sinh-hoc-3.jpg",
+    ],
     rating: 4.4,
     ratingCount: 53,
     seller: {
@@ -153,8 +178,10 @@ export const products = [
     id: "p10",
     name: "Hạt giống rau muống",
     price: 15000,
-    image:
+    images: [
       "https://product.hstatic.net/1000269461/product/53_5a0574f07af0422eb0ad55b2a3ba9a60_master.png",
+      "https://example.com/images/hat-giong-rau-muong-2.jpg",
+    ],
     rating: 4.2,
     ratingCount: 38,
     seller: {
@@ -170,8 +197,11 @@ export const products = [
     price: 350000,
     originalPrice: 400000,
     discount: 12,
-    image:
+    images: [
       "https://bizweb.dktcdn.net/100/432/216/products/nam-linh-chi-voi-tac-dung-va-cach-dung-nam-linh-chi-dung-1988f3a8-5c06-4514-92e5-1d87c074ae79.jpg?v=1641044950440",
+      "https://example.com/images/nam-linh-chi-2.jpg",
+      "https://example.com/images/nam-linh-chi-3.jpg",
+    ],
     rating: 4.8,
     ratingCount: 92,
     seller: {
@@ -186,8 +216,11 @@ export const products = [
     id: "p12",
     name: "Xoài cát Hòa Lộc",
     price: 95000,
-    image:
+    images: [
       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTDncVNH69HcQA17H4OHkkymQAN_gK3aQ6Mzg&s",
+      "https://example.com/images/xoai-cat-2.jpg",
+      "https://example.com/images/xoai-cat-3.jpg",
+    ],
     rating: 4.6,
     ratingCount: 105,
     seller: {
