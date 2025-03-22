@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function CartLoading() {
+export default function Loading() {
   return (
     <div className="container py-8">
       <div className="mb-6">

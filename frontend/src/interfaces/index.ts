@@ -10,3 +10,4 @@ export * from "./tokens";
 export * from "./users";
 export * from "./auths";
 export * from "./homes";
+export * from "./product_detail";
