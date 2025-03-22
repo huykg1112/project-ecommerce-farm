@@ -20,7 +20,7 @@ interface Product {
   price: number;
   originalPrice?: number;
   discount?: number;
-  image: string;
+  images: string[];
   rating: number;
   ratingCount: number;
   seller: {
@@ -55,7 +55,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           name: product.name,
           price: product.price,
           quantity: 1,
-          image: product.image,
+          image: product.images[0],
           sellerId: product.seller.id,
           sellerName: product.seller.name,
         })
@@ -70,7 +70,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         };
 
         // Bắt đầu animation
-        startAnimation(product.image, product.name, sourcePosition);
+        startAnimation(product.images[0], product.name, sourcePosition);
       }
 
       // Hiển thị thông báo
@@ -102,7 +102,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <Link href={`/products/${product.id}`}>
           <div className="aspect-square overflow-hidden">
             <Image
-              src={product.image || "/placeholder.svg"}
+              src={product.images[0] || "/placeholder.svg"}
               alt={product.name}
               width={300}
               height={300}

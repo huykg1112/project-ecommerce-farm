@@ -1,6 +1,6 @@
 import { Providers } from "@/components/common/providers";
-import Footer from "@/layouts/home/footer";
-import Header from "@/layouts/home/header";
+import Footer from "@/layouts/Home/footer";
+import Header from "@/layouts/Home/header";
 import "@/styles/globals.css";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
