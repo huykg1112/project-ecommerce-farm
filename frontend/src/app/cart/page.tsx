@@ -1,32 +1,32 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useSelector, useDispatch } from "react-redux";
+import ProductCard from "@/components/products/product-card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { products } from "@/data/products";
+import { withAuth } from "@/lib/auth/with-auth";
+import type { AppDispatch, RootState } from "@/lib/cart/store";
 import {
-  Trash2,
+  clearCart,
+  removeFromCart,
+  updateQuantity,
+} from "@/lib/features/cart-slice";
+import { showToast } from "@/lib/toast-provider";
+import { formatCurrency } from "@/lib/utils";
+import {
+  ArrowRight,
+  ChevronLeft,
   Minus,
   Plus,
   ShoppingBag,
-  ArrowRight,
-  ChevronLeft,
+  Trash2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
-import {
-  removeFromCart,
-  updateQuantity,
-  clearCart,
-} from "@/lib/features/cart-slice";
-import { formatCurrency } from "@/lib/utils";
-import { withAuth } from "@/lib/auth/with-auth";
-import { products } from "@/data/products";
-import type { RootState, AppDispatch } from "@/lib/cart/store";
-import { showToast } from "@/lib/toast-provider";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 function CartPage() {
   const { items, totalItems, totalAmount } = useSelector(
@@ -49,7 +49,7 @@ function CartPage() {
   useEffect(() => {
     // Lấy ngẫu nhiên 4 sản phẩm từ danh sách sản phẩm
     const shuffled = [...products].sort(() => 0.5 - Math.random());
-    setRecommendedProducts(shuffled.slice(0, 4));
+    setRecommendedProducts(shuffled.slice(0, 8));
   }, []);
 
   // Xử lý thay đổi số lượng sản phẩm
@@ -142,26 +142,7 @@ function CartPage() {
             <h2 className="text-xl font-bold mb-6">Có thể bạn sẽ thích</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
               {recommendedProducts.map((product) => (
-                <Link key={product.id} href={`/products/${product.id}`}>
-                  <Card className="overflow-hidden hover:shadow-md transition-shadow">
-                    <div className="aspect-square relative">
-                      <Image
-                        src={product.image || "/placeholder.svg"}
-                        alt={product.name}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                    <CardContent className="p-4">
-                      <h3 className="font-medium line-clamp-2">
-                        {product.name}
-                      </h3>
-                      <p className="font-bold mt-2 text-primary">
-                        {formatCurrency(product.price)}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </Link>
+                <ProductCard product={product} />
               ))}
             </div>
           </div>
@@ -360,30 +341,25 @@ function CartPage() {
         </div>
       </div>
 
+      {/* {recommendedProducts.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-xl font-bold mb-6">Có thể bạn sẽ thích</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {recommendedProducts.map((product) => (
+                <ProductCard product={product} />
+              ))}
+            </div>
+          </div>
+        )} */}
       {/* Sản phẩm đề xuất */}
       {recommendedProducts.length > 0 && (
         <div className="mt-12">
           <h2 className="text-xl font-bold mb-6">Có thể bạn sẽ thích</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory">
             {recommendedProducts.map((product) => (
-              <Link key={product.id} href={`/products/${product.id}`}>
-                <Card className="overflow-hidden hover:shadow-md transition-shadow">
-                  <div className="aspect-square relative">
-                    <Image
-                      src={product.image || "/placeholder.svg"}
-                      alt={product.name}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <CardContent className="p-4">
-                    <h3 className="font-medium line-clamp-2">{product.name}</h3>
-                    <p className="font-bold mt-2 text-primary">
-                      {formatCurrency(product.price)}
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
+              <div className="flex-shrink-0 w-64 sm:w-72 md:w-80 lg:w-96 max-w-[360px] ">
+                <ProductCard product={product} />
+              </div>
             ))}
           </div>
         </div>
