@@ -9,7 +9,8 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { withAuth } from "@/lib/auth/with-auth";
 import type { AppDispatch, RootState } from "@/lib/cart/store";
-import { clearCart } from "@/lib/features/cart-slice";
+import type { CartItem } from "@/lib/features/cart-slice";
+import { removeFromCart } from "@/lib/features/cart-slice";
 import { formatCurrency } from "@/lib/utils";
 import {
   ChevronLeft,
@@ -22,44 +23,77 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 function CheckoutPage() {
-  const { items, totalItems, totalAmount } = useSelector(
-    (state: RootState) => state.cart
-  );
+  const { items } = useSelector((state: RootState) => state.cart);
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
 
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<CartItem[]>([]);
 
-  // Tính toán phí vận chuyển và tổng thanh toán
+  // Lấy danh sách sản phẩm được chọn từ localStorage
+  useEffect(() => {
+    const selectedIds = JSON.parse(
+      localStorage.getItem("selectedCartItems") || "[]"
+    ) as string[];
+    const filteredItems = items.filter((item) => selectedIds.includes(item.id));
+    setSelectedItems(filteredItems);
+
+    // Nếu không có sản phẩm nào được chọn, chuyển hướng về trang giỏ hàng
+    if (filteredItems.length === 0 && items.length > 0) {
+      router.push("/cart");
+    }
+  }, [items, router]);
+
+  // Tính toán tổng tiền
+  const totalAmount = selectedItems.reduce(
+    (total, item) => total + item.price * item.quantity,
+    0
+  );
+
+  // Tính phí vận chuyển và tổng thanh toán
   const shippingFee = totalAmount > 300000 ? 0 : 30000;
   const finalTotal = totalAmount + shippingFee;
 
   // Xử lý đặt hàng
-  const handlePlaceOrder = () => {
-    setIsSubmitting(true);
+  const handlePlaceOrder = async () => {
+    try {
+      setIsSubmitting(true);
 
-    // Giả lập API call
-    setTimeout(() => {
-      // Xóa giỏ hàng sau khi đặt hàng thành công
-      dispatch(clearCart());
+      // Giả lập API call
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      // Chuyển hướng đến trang xác nhận đơn hàng
+      // Lưu danh sách sản phẩm đã xóa để xử lý sau khi chuyển hướng
+      const itemsToRemove = [...selectedItems];
+
+      // Chuyển hướng đến trang xác nhận đơn hàng trước
       router.push("/checkout/success");
 
+      // Xóa danh sách sản phẩm đã chọn khỏi localStorage
+      // Đặt trong setTimeout để đảm bảo chuyển hướng đã hoàn tất
+      setTimeout(() => {
+        localStorage.removeItem("selectedCartItems");
+
+        // Xóa các sản phẩm đã chọn khỏi giỏ hàng
+        itemsToRemove.forEach((item) => {
+          dispatch(removeFromCart(item.id));
+        });
+      }, 500);
+    } catch (error) {
+      console.error("Error during checkout:", error);
       setIsSubmitting(false);
-    }, 2000);
+    }
   };
 
-  // Nếu giỏ hàng trống, chuyển hướng về trang giỏ hàng
-  if (items.length === 0) {
+  // Nếu không có sản phẩm nào được chọn, chuyển hướng về trang giỏ hàng
+  if (selectedItems.length === 0) {
     return (
       <div className="container py-12 text-center">
-        <p className="mb-4">Giỏ hàng của bạn đang trống.</p>
+        <p className="mb-4">Bạn chưa chọn sản phẩm nào để thanh toán.</p>
         <Button asChild>
           <Link href="/cart">Quay lại giỏ hàng</Link>
         </Button>
@@ -224,7 +258,7 @@ function CheckoutPage() {
               <div className="space-y-4">
                 {/* Danh sách sản phẩm */}
                 <div className="space-y-3">
-                  {items.map((item) => (
+                  {selectedItems.map((item) => (
                     <div key={item.id} className="flex justify-between">
                       <div className="flex-1">
                         <span className="font-medium">{item.name}</span>

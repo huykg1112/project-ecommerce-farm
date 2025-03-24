@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 // Danh sách các route cần đăng nhập
 const authRoutes = [
@@ -9,6 +9,7 @@ const authRoutes = [
   "/orders",
   "/settings",
   "/checkout",
+  "/checkout/success",
 ];
 
 // Danh sách các API route cần đăng nhập
