@@ -83,6 +83,7 @@ export const authService = {
       if (isClient) {
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
+        localStorage.removeItem("Authorization");
       }
 
       return await response.json();
@@ -91,6 +92,7 @@ export const authService = {
       if (isClient) {
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
+        localStorage.removeItem("Authorization");
       }
       throw error;
     }
