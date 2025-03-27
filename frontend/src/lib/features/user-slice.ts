@@ -1,14 +1,11 @@
+import { LoginRequest, RegisterRequest } from "@/interfaces";
 import { UpdateProfileDto, UserProfile } from "@/types/user";
 import {
   createAsyncThunk, // Hàm tạo async thunks, đây là một hàm của Redux Toolkit giúp tạo ra các async thunks, dùng để xử lý các side effects như gọi API, xử lý bất đồng bộ, ...
   createSlice,
   type PayloadAction,
 } from "@reduxjs/toolkit";
-import {
-  authService,
-  type LoginRequest,
-  type RegisterRequest,
-} from "../services/auth-service";
+import { authService } from "../services/auth-service";
 import { userService } from "../services/user-service";
 
 export interface User {
@@ -209,6 +206,7 @@ const userSlice = createSlice({
         if (isClient) {
           localStorage.removeItem("access_token");
           localStorage.removeItem("refresh_token");
+          localStorage.removeItem("Authorization");
         }
       })
       // Fetch Profile

@@ -42,11 +42,6 @@ function CheckoutPage() {
     ) as string[];
     const filteredItems = items.filter((item) => selectedIds.includes(item.id));
     setSelectedItems(filteredItems);
-
-    // Nếu không có sản phẩm nào được chọn, chuyển hướng về trang giỏ hàng
-    if (filteredItems.length === 0 && items.length > 0) {
-      router.push("/cart");
-    }
   }, [items, router]);
 
   // Tính toán tổng tiền

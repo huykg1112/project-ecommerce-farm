@@ -566,3 +566,4 @@ function CartPage() {
 
 // Bảo vệ trang bằng HOC
 export default withAuth(CartPage);
+// export default CartPage;

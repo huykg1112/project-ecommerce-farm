@@ -24,6 +24,7 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Kiểm tra xem route hiện tại có cần đăng nhập không
+  //protect
   const isAuthRoute = authRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
@@ -64,9 +65,3 @@ export const config = {
     "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 };
-
-//cách dùng middleware:
-// Path: frontend/pages/cart.tsx
-// import { withAuth } from "@/lib/auth/with-auth";
-//
-// export default withAuth(function CartPage() { ... });
