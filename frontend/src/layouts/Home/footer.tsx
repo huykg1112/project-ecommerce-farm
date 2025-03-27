@@ -144,17 +144,15 @@ export default function Footer() {
             <ul className="space-y-3 text-sm">
               <li className="flex items-start">
                 <MapPin className="h-5 w-5 mr-2 shrink-0" />
-                <span>
-                  123 Đường Nông Nghiệp, Quận Nông Thôn, TP. Hồ Chí Minh
-                </span>
+                <span>123 Đường Nông Nghiệp, Quận Nông Dân, TP. Nông Thôn</span>
               </li>
               <li className="flex items-center">
                 <Phone className="h-5 w-5 mr-2 shrink-0" />
-                <span>1900 1234 56</span>
+                <span>0334114244</span>
               </li>
               <li className="flex items-center">
                 <Mail className="h-5 w-5 mr-2 shrink-0" />
-                <span>hotro@nongsan.vn</span>
+                <span>huyth.dev@gmail.com</span>
               </li>
             </ul>
             <div className="mt-4">
@@ -176,7 +174,7 @@ export default function Footer() {
       <div className="border-t border-gray-700">
         <div className="container py-6 flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-gray-300">
-            © 2023 Nông Sàn. Tất cả các quyền được bảo lưu.
+            © 2025 Nông Sàn. Tất cả các quyền được bảo lưu.
           </p>
           <div className="flex space-x-4 mt-4 md:mt-0">
             <Link
