@@ -24,6 +24,7 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Kiểm tra xem route hiện tại có cần đăng nhập không
+  //protect
   const isAuthRoute = authRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
