@@ -12,3 +12,4 @@ export * from "./roles";
 export * from "./sellers";
 export * from "./tokens";
 export * from "./users";
+export * from "./stores";

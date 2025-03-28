@@ -66,6 +66,7 @@ export default function Header() {
     { name: "Sản phẩm", href: "/products" },
     { name: "Blog", href: "/blog" },
     { name: "Liên hệ", href: "/contact" },
+    { name: "Cưa hàng & Đại lý", href: "/stores" },
   ];
 
   // Hàm xóa nội dung tìm kiếm
