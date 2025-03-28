@@ -87,6 +87,13 @@ export default function Header() {
     router.push("/wishlist");
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchValue.trim()) {
+      router.push(`/products?search=${encodeURIComponent(searchValue.trim())}`);
+    }
+  };
+
   return (
     <header
       className={cn(
@@ -166,6 +173,13 @@ export default function Header() {
                   "w-full pl-12 pr-20 py-3 rounded-full border-gray-300",
                   "focus:outline-none focus:border-[#599146] focus:ring-2 focus:ring-[#599146] focus:ring-opacity-50"
                 )}
+                //bắt đầu tìm kiếm khi nhấn Enter
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSearch(e);
+                  }
+                }}
+                autoComplete="off"
               />
               <div className="absolute right-3 top-1/2 -translate-y-1/2 flex space-x-2">
                 {searchValue && (
@@ -189,6 +203,7 @@ export default function Header() {
                   variant="ghost"
                   size="icon"
                   className="p-2 hover:bg-gray-100 rounded-full"
+                  onClick={handleSearch}
                 >
                   <Search className="h-5 w-5 text-[#599146]" />
                 </Button>
