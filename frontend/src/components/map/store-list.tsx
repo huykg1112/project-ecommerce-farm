@@ -22,7 +22,6 @@ const StoreList = ({
   mapInstance,
   initialSearchTerm,
 }: StoreListProps) => {
-  console.log("initialSearchTerm", initialSearchTerm);
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm || "");
   const [filteredStores, setFilteredStores] = useState<Store[]>(stores);
   const [activeFilter, setActiveFilter] = useState<string | null>(null);
