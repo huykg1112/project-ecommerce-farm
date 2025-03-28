@@ -29,12 +29,21 @@ export default function ProductsPage() {
     sellers: [],
     onSale: false,
   };
+  const initSearchTerm = searchParams.get("search") || "";
 
   // State cho bộ lọc và sắp xếp
   const [filters, setFilters] = useState<FilterState>(initialFilters);
   const [sort, setSort] = useState<SortOption>("featured");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    if (initSearchTerm) {
+      setSearchTerm(initSearchTerm);
+    } else {
+      setSearchTerm("");
+    }
+  }, [initSearchTerm]);
 
   // Cập nhật filters khi categoryParam thay đổi
   useEffect(() => {
