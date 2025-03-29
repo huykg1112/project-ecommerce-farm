@@ -1,7 +1,9 @@
+import { store } from "@/lib/cart/store";
+import { refreshToken } from "@/lib/features/user-slice";
+import { isTokenExpired } from "@/lib/utils";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-// Danh sách các route cần đăng nhập
 const authRoutes = [
   "/cart",
   "/wishlist",
@@ -12,7 +14,6 @@ const authRoutes = [
   "/checkout/success",
 ];
 
-// Danh sách các API route cần đăng nhập
 const authApiRoutes = [
   "/api/cart",
   "/api/wishlist",
@@ -20,11 +21,9 @@ const authApiRoutes = [
   "/api/orders",
 ];
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Kiểm tra xem route hiện tại có cần đăng nhập không
-  //protect
   const isAuthRoute = authRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
@@ -33,35 +32,55 @@ export function middleware(request: NextRequest) {
     pathname.startsWith(route)
   );
 
-  // Lấy token từ localStorage
-  const token = localStorage.getItem("access_token") || null;
+  // Chỉ chạy ở phía client
+  if (typeof window !== "undefined") {
+    let token = localStorage.getItem("access_token");
 
-  // Nếu là route cần đăng nhập và không có token
-  if ((isAuthRoute || isAuthApiRoute) && !token) {
-    // Nếu là API route, trả về lỗi 401
-    if (isAuthApiRoute) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Nếu có token và route yêu cầu xác thực
+    if (token && (isAuthRoute || isAuthApiRoute)) {
+      // Kiểm tra token hết hạn
+      if (isTokenExpired(token)) {
+        try {
+          // Thử refresh token
+          const refreshResult = await store.dispatch(refreshToken()).unwrap();
+          token = refreshResult.access_token;
+          localStorage.setItem("access_token", token);
+        } catch (error) {
+          // Nếu refresh thất bại, xóa token và redirect
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+
+          if (isAuthApiRoute) {
+            return NextResponse.json(
+              { error: "Unauthorized" },
+              { status: 401 }
+            );
+          }
+
+          const url = new URL("/login", request.url);
+          url.searchParams.set("callbackUrl", encodeURI(request.url));
+          return NextResponse.redirect(url);
+        }
+      }
     }
 
-    // Nếu là route thông thường, chuyển hướng đến trang đăng nhập
-    // Lưu lại URL hiện tại để sau khi đăng nhập có thể quay lại
-    const url = new URL("/login", request.url);
-    url.searchParams.set("callbackUrl", encodeURI(request.url));
-    return NextResponse.redirect(url);
+    // Nếu không có token và route yêu cầu xác thực
+    if (!token && (isAuthRoute || isAuthApiRoute)) {
+      if (isAuthApiRoute) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      const url = new URL("/login", request.url);
+      url.searchParams.set("callbackUrl", encodeURI(request.url));
+      return NextResponse.redirect(url);
+    }
   }
 
   return NextResponse.next();
 }
 
-// Chỉ áp dụng middleware cho các route cụ thể
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    "/((?!_next/static|_next/image|favicon.ico).*)",
-  ],
+  // Chỉ chạy middleware cho các route không phải là static file
+  // và không phải là favicon.ico
+  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
