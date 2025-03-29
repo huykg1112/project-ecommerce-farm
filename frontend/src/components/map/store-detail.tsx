@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Store } from "@/interfaces";
+import { Store, StoreDetailProps } from "@/interfaces";
 import {
   Clock,
   Globe,
@@ -12,11 +12,6 @@ import {
   Phone,
   Star,
 } from "lucide-react";
-
-interface StoreDetailProps {
-  store: Store;
-  onClose: () => void;
-}
 
 const StoreDetail = ({ store, onClose }: StoreDetailProps) => {
   const handleGetDirections = () => {

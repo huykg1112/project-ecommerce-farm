@@ -1,6 +1,6 @@
 "use client";
 
-import { Store } from "@/interfaces";
+import { GoogleMapComponentProps, Store } from "@/interfaces";
 import {
   GoogleMap,
   InfoWindowF,
@@ -10,13 +10,6 @@ import {
 import { Loader2, Navigation } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "../ui/button";
-
-interface GoogleMapComponentProps {
-  stores: Store[];
-  selectedStore: Store | null;
-  onStoreSelect: (store: Store) => void;
-  onLoad?: (map: google.maps.Map) => void;
-}
 
 const mapContainerStyle = {
   width: "100%",

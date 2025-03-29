@@ -1,16 +1,9 @@
 "use client";
 
+import { AddToCartAnimationProps } from "@/interfaces";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-
-interface AddToCartAnimationProps {
-  productImage: string;
-  productName: string;
-  sourcePosition: { x: number; y: number };
-  targetPosition: { x: number; y: number };
-  onAnimationComplete: () => void;
-}
 
 export default function AddToCartAnimation({
   productImage,

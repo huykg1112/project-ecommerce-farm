@@ -41,10 +41,12 @@ export function decodeJWT(
 
 // Kiểm tra token có hết hạn chưa
 export function isTokenExpired(token: string): boolean {
-  const decodedToken = decodeJWT(token);
-  if (!decodedToken || !decodedToken.exp) return true;
-
-  // exp là thời gian hết hạn tính bằng giây
-  const currentTime = Math.floor(Date.now() / 1000);
-  return decodedToken.exp < currentTime;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    const exp = payload.exp;
+    const now = Math.floor(Date.now() / 1000);
+    return exp && exp < now;
+  } catch (e) {
+    return true;
+  }
 }

@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  NotFoundException,
-  Param,
-  UseGuards,
-} from '@nestjs/common';
-import { JwtAuthGuard } from '@root/src/auth/jwt-auth.guard';
+import { Controller, Get, NotFoundException, Param } from '@nestjs/common';
 import { validate as isUUID } from 'uuid'; // Lý do: Thêm kiểm tra UUID
 import { TokensService } from './tokens.service';
 

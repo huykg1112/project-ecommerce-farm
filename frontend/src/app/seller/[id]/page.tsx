@@ -70,7 +70,11 @@ export default function SellerPage() {
             <p className="text-gray-600 mb-4">{seller.productCount} sản phẩm</p>
             <div className="flex items-center text-gray-600 mb-2">
               <MapPin className="h-5 w-5 mr-2" />
-              <span>123 Đường ABC, Quận XYZ, TP. Hồ Chí Minh</span>
+              <Link href={`/stores?searchStores=${seller.name}`}>
+                <span className="hover:text-green-500 ">
+                  123 Đường ABC, Quận XYZ, TP. Hồ Chí Minh
+                </span>
+              </Link>
             </div>
             <div className="flex items-center text-gray-600 mb-2">
               <Phone className="h-5 w-5 mr-2" />
