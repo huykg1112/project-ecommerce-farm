@@ -16,12 +16,12 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { withAuth } from "@/lib/auth/with-auth";
 import type { AppDispatch } from "@/lib/cart/store";
 import { logoutUser } from "@/lib/features/user-slice";
 import { userService } from "@/lib/services/user-service";
 import { showToast } from "@/lib/toast-provider";
 
+import { ChangePasswordDto, UpdateProfileDto, UserProfile } from "@/interfaces";
 import {
   Heart,
   LogOut,
@@ -37,7 +37,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
-import { ChangePasswordDto, UpdateProfileDto, UserProfile } from "@/interfaces";
 
 function ProfilePage() {
   const router = useRouter();
@@ -168,7 +167,8 @@ function ProfilePage() {
   const handleLogout = async () => {
     try {
       await dispatch(logoutUser());
-      // Có thể thêm thông báo thành công ở đây nếu cần
+      showToast.success("Đăng xuất thành công");
+      router.push("/");
     } catch (error) {
       console.error("Đăng xuất thất bại:", error);
       // Có thể hiển thị thông báo lỗi ở đây nếu cần

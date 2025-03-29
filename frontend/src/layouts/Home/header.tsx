@@ -64,9 +64,9 @@ export default function Header() {
   const mainNavItems = [
     { name: "Trang Chủ", href: "/home" },
     { name: "Sản phẩm", href: "/products" },
+    { name: "Cưa hàng & Đại lý", href: "/stores" },
     { name: "Blog", href: "/blog" },
     { name: "Liên hệ", href: "/contact" },
-    { name: "Cưa hàng & Đại lý", href: "/stores" },
   ];
 
   // Hàm xóa nội dung tìm kiếm
