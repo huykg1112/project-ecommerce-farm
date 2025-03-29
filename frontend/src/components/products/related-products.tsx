@@ -1,10 +1,6 @@
 import ProductCard from "@/components/products/product-card";
 import { products } from "@/data/products";
-
-interface RelatedProductsProps {
-  category: string;
-  currentProductId: string;
-}
+import { RelatedProductsProps } from "@/interfaces";
 
 export default function RelatedProducts({
   category,

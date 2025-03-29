@@ -12,6 +12,7 @@ export interface Product {
   batches?: ProductBatch[];
   categories?: Category[];
 }
+
 export interface ProductImage {
   id: string;
   url: string;

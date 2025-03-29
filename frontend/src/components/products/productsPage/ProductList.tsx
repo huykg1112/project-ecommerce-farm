@@ -1,11 +1,7 @@
 import ProductCard from "@/components/products/product-card";
 import { Button } from "@/components/ui/button";
+import { ProductListProps } from "@/interfaces";
 import Image from "next/image";
-
-interface ProductListProps {
-  sortedProducts: any[];
-  clearAllFilters: () => void;
-}
 
 export default function ProductList({
   sortedProducts,

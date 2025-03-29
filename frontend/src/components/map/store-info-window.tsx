@@ -3,11 +3,7 @@
 import { Store } from "@/interfaces";
 import { Star } from "lucide-react";
 
-interface StoreInfoWindowProps {
-  store: Store;
-}
-
-const StoreInfoWindow = ({ store }: StoreInfoWindowProps) => {
+const StoreInfoWindow = ({ store }: { store: Store }) => {
   return (
     <div className="p-2 max-w-[250px]">
       <h3 className="font-semibold text-sm">{store.name}</h3>

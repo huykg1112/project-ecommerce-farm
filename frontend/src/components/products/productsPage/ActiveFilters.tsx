@@ -1,10 +1,5 @@
 import { Button } from "@/components/ui/button";
-
-interface ActiveFiltersProps {
-  activeFilters: JSX.Element[];
-  clearAllFilters: () => void;
-  isMobile?: boolean;
-}
+import { ActiveFiltersProps } from "@/interfaces";
 
 export default function ActiveFilters({
   activeFilters,

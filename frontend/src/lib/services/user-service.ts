@@ -1,8 +1,4 @@
-import type {
-  ChangePasswordDto,
-  UpdateProfileDto,
-  UserProfile,
-} from "@/types/user";
+import { ChangePasswordDto, UpdateProfileDto, UserProfile } from "@/interfaces";
 import { authService } from "./auth-service";
 
 const API_URL = "http://localhost:4200";

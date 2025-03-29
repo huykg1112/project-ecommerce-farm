@@ -1,5 +1,9 @@
-import { LoginRequest, RegisterRequest } from "@/interfaces";
-import { UpdateProfileDto, UserProfile } from "@/types/user";
+import {
+  LoginRequest,
+  RegisterRequest,
+  UpdateProfileDto,
+  UserProfile,
+} from "@/interfaces";
 import {
   createAsyncThunk, // Hàm tạo async thunks, đây là một hàm của Redux Toolkit giúp tạo ra các async thunks, dùng để xử lý các side effects như gọi API, xử lý bất đồng bộ, ...
   createSlice,

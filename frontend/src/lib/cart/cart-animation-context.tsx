@@ -1,15 +1,7 @@
 "use client";
 
+import { CartAnimationContextType } from "@/interfaces";
 import React, { createContext, useContext, useState } from "react";
-
-interface CartAnimationContextType {
-  startAnimation: (
-    productImage: string,
-    productName: string,
-    sourcePosition: { x: number; y: number }
-  ) => void;
-  isAnimating: boolean;
-}
 
 const CartAnimationContext = createContext<
   CartAnimationContextType | undefined

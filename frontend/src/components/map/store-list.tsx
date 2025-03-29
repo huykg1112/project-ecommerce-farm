@@ -2,18 +2,10 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Store } from "@/interfaces";
+import { Store, StoreListProps } from "@/interfaces";
 
 import { MapPin, Phone, Search, Star } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-
-interface StoreListProps {
-  stores: Store[];
-  onStoreSelect: (store: Store) => void;
-  selectedStore: Store | null;
-  mapInstance?: google.maps.Map | null;
-  initialSearchTerm?: string;
-}
 
 const StoreList = ({
   stores,

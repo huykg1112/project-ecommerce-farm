@@ -21,11 +21,7 @@ import type { AppDispatch } from "@/lib/cart/store";
 import { logoutUser } from "@/lib/features/user-slice";
 import { userService } from "@/lib/services/user-service";
 import { showToast } from "@/lib/toast-provider";
-import type {
-  ChangePasswordDto,
-  UpdateProfileDto,
-  UserProfile,
-} from "@/types/user";
+
 import {
   Heart,
   LogOut,
@@ -41,6 +37,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
+import { ChangePasswordDto, UpdateProfileDto, UserProfile } from "@/interfaces";
 
 function ProfilePage() {
   const router = useRouter();

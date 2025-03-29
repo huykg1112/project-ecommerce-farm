@@ -5,13 +5,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SortSelectProps } from "@/interfaces";
 import { SortOption } from "@/types/products";
-
-interface SortSelectProps {
-  sort: SortOption;
-  setSort: (value: SortOption) => void;
-  width?: string;
-}
 
 export default function SortSelect({
   sort,
