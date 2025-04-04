@@ -34,7 +34,7 @@ This project combines a robust backend with **NestJS** (TypeScript) for efficien
 
 ## Tech Stack
 
-- **Backend**: NestJS, TypeScript, TypeORM (or Prisma), PostgreSQL.
+- **Backend**: NestJS, TypeScript, TypeORM (or Prisma), PostgreSQL, OAuth Mail.
 - **Frontend**: Next.js, TypeScript, Tailwind CSS, Shadcn/UI, Redux.
 - **Tools**: Node.js, npm, concurrently, Git.
 - **Styling**: Tailwind CSS, PostCSS.
