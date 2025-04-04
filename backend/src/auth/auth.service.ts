@@ -7,6 +7,7 @@ import { User } from '../modules/users/entities/user.entity';
 import { UserService } from '../modules/users/user.service';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { MailsService } from '../modules/mails/mails.service';
 
 @Injectable()
 export class AuthService {
@@ -14,6 +15,7 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly tokenService: TokensService, // Inject TokenService
     private readonly jwtService: JwtService,
+    private readonly mailService: MailsService,
   ) {}
 
   async validateUser(
@@ -115,6 +117,80 @@ export class AuthService {
     const token = await this.tokenService.findByAccessToken(accessToken);
     if (token) {
       await this.tokenService.deleteByAccessToken(accessToken); // Xóa token
+    }
+  }
+  async googleLogin(req) {
+    if (!req.user) {
+      throw new UnauthorizedException('No user from google');
+    }
+
+    let user = await this.userService.findByEmail(req.user.email);
+
+    if (!user) {
+      // Tạo user mới nếu chưa tồn tại
+      user = await this.userService.createUserGoogle(
+        req.user.email,
+        `${req.user.firstName} ${req.user.lastName}`,
+        true, // Google email đã được verify
+      );
+
+      // Gửi email xác thực cho lần đăng nhập đầu
+      const verifyToken = this.jwtService.sign(
+        { email: user.email },
+        { expiresIn: '1d' },
+      );
+      await this.mailService.sendVerificationEmail(user.email, verifyToken);
+    }
+
+    return this.login({ username: user.username, password: user.password });
+  }
+
+  async verifyEmail(token: string) {
+    try {
+      const decoded = this.jwtService.verify(token);
+      const user = await this.userService.findByEmail(decoded.email);
+
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      user.isVerified = true;
+      await this.userService.saveUser(user);
+
+      return { message: 'Email verified successfully' };
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired token');
+    }
+  }
+
+  async forgotPassword(email: string) {
+    const user = await this.userService.findByEmail(email);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const resetToken = this.jwtService.sign(
+      { email: user.email },
+      { expiresIn: '1h' },
+    );
+
+    await this.mailService.sendPasswordResetEmail(email, resetToken);
+    return { message: 'Password reset email sent' };
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    try {
+      const decoded = this.jwtService.verify(token);
+      const user = await this.userService.findByEmail(decoded.email);
+
+      if (!user) {
+        throw new UnauthorizedException('User not found');
+      }
+
+      await this.userService.changePassword(user.id, '', newPassword, '');
+      return { message: 'Password reset successfully' };
+    } catch (error) {
+      throw new UnauthorizedException('Invalid or expired token');
     }
   }
 }

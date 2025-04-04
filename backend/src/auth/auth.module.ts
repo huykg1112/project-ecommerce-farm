@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { MailsModule } from '../modules/mails/mails.module';
 import { User } from '../modules/users/entities/user.entity';
 import { UserModule } from '../modules/users/user.module';
 import { AuthController } from './auth.controller';
@@ -13,6 +14,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
   imports: [
     UserModule,
     TokensModule, // Cung cấp TokenService
+    MailsModule,
     TypeOrmModule.forFeature([User]),
     JwtModule.registerAsync({
       imports: [ConfigModule],

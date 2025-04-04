@@ -56,6 +56,16 @@ export class UserService {
     }
     return user;
   }
+  async findByEmail(email: string): Promise<User> {
+    const user = await this.userRepository.findOne({
+      where: { email },
+      relations: ['role'],
+    });
+    if (!user) {
+      throw new NotFoundException(`Không tìm thấy user với email ${email}`);
+    }
+    return user;
+  }
 
   async saveUser(user: User): Promise<User> {
     return this.userRepository.save(user);
@@ -206,5 +216,34 @@ export class UserService {
     }
     user.role = roleClient;
     return this.userRepository.save(user);
+  }
+  async createUserGoogle(
+    email: string,
+    fullName: string,
+    isVerified: boolean,
+  ): Promise<User> {
+    // Kiểm tra xem người dùng đã tồn tại hay chưa
+    const existingUser = await this.findByEmail(email);
+    if (existingUser) {
+      throw new BadRequestException('Người dùng đã tồn tại');
+    }
+    let role = await this.rolesService.findByName('Client');
+    if (!role) {
+      const createRoleDto: CreateRoleDto = {
+        name: 'Client',
+        description: 'Vai trò mặc định cho khách hàng',
+      };
+      role = await this.rolesService.createRole(createRoleDto);
+    }
+    const newUser = this.userRepository.create({
+      email,
+      username: email,
+      password: '',
+      isVerified,
+      isActive: true,
+      role,
+    });
+
+    return this.userRepository.save(newUser); // Lưu người dùng vào cơ sở dữ liệu
   }
 }
