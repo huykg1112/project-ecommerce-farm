@@ -1,7 +1,19 @@
 import { Button } from "@/components/ui/button";
+import { AppDispatch } from "@/lib/cart/store";
+// import { googleLoginUser } from "@/lib/features/user-slice";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
 
-export default function SocialLoginButtons() {
+interface SocialLoginButtonsProps {
+  handleGoogleLogin: () => void;
+}
+
+export default function SocialLoginButtons({
+  handleGoogleLogin,
+}: SocialLoginButtonsProps) {
+  const router = useRouter();
+  const dispatch = useDispatch<AppDispatch>();
   return (
     <div className="mt-6">
       <div className="relative">
@@ -15,7 +27,11 @@ export default function SocialLoginButtons() {
         </div>
       </div>
       <div className="mt-6 grid grid-cols-2 gap-3">
-        <Button variant="outline" className="w-full">
+        <Button
+          variant="outline"
+          className="w-full"
+          onClick={handleGoogleLogin}
+        >
           <Image
             src="/icons/google.svg"
             width={20}

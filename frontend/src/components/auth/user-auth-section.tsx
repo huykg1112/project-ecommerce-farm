@@ -13,16 +13,20 @@ import type { AppDispatch, RootState } from "@/lib/cart/store";
 import { logoutUser } from "@/lib/features/user-slice";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+
 import { useDispatch, useSelector } from "react-redux";
 
 export default function UserAuthSection({ isScrolled }: UserAuthSectionProps) {
   const { isAuthenticated } = useSelector((state: RootState) => state.user);
   const dispatch = useDispatch<AppDispatch>();
+  const router = useRouter();
 
   // Hàm xử lý đăng xuất
   const handleLogout = async () => {
     try {
       await dispatch(logoutUser());
+      router.push("/login");
       // Có thể thêm thông báo thành công ở đây nếu cần
     } catch (error) {
       console.error("Đăng xuất thất bại:", error);

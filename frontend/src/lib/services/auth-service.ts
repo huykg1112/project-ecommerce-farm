@@ -17,6 +17,7 @@ const isClient = typeof window !== "undefined";
 const API_URL = "http://localhost:4200";
 
 export const authService = {
+  API_URL,
   // Đăng nhập
   async login(data: LoginRequest): Promise<LoginResponse> {
     const response = await fetch(`${API_URL}/auth/login`, {
@@ -155,6 +156,33 @@ export const authService = {
   removeToken(): void {
     if (isClient) {
       localStorage.removeItem("access_token");
+    }
+  },
+  // Kiểm tra trạng thái đăng nhập sau khi đăng nhập Google
+  async checkGoogleLoginStatus(): Promise<{ isAuthenticated: boolean }> {
+    try {
+      // Gọi API để kiểm tra trạng thái đăng nhập
+      console.log("Checking Google login status...");
+
+      const response = await fetch(`${API_URL}/users/profile/`, {
+        method: "GET",
+        credentials: "include", // Quan trọng để gửi cookie
+      });
+
+      if (!response.ok) {
+        return { isAuthenticated: false };
+      }
+
+      const userData = await response.json();
+      console.log("User data:", userData);
+
+      // Nếu có dữ liệu người dùng, có thể lấy token từ cookie hoặc response header
+      // Tùy thuộc vào cách backend triển khai
+
+      return { isAuthenticated: true };
+    } catch (error) {
+      console.error("Error checking Google login status:", error);
+      return { isAuthenticated: false };
     }
   },
 };

@@ -25,6 +25,7 @@ export default function LoginForm({
   error,
   loading,
   handleSubmit,
+  handleGoogleLogin,
 }: LoginFormProps) {
   const formatErrorMessage = (error: string | string[]) => {
     if (Array.isArray(error)) {
@@ -96,7 +97,7 @@ export default function LoginForm({
             {loading ? "Đang đăng nhập..." : "Đăng nhập"}
           </Button>
         </form>
-        <SocialLoginButtons />
+        <SocialLoginButtons handleGoogleLogin={handleGoogleLogin} />
       </CardContent>
     </Card>
   );

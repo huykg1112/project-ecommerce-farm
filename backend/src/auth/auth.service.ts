@@ -2,12 +2,12 @@ import { TokensService } from '@modules/tokens/tokens.service'; // Thêm TokenSe
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { MailsService } from '../modules/mails/mails.service';
 import { Token } from '../modules/tokens/entities/token.entity';
 import { User } from '../modules/users/entities/user.entity';
 import { UserService } from '../modules/users/user.service';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { MailsService } from '../modules/mails/mails.service';
 
 @Injectable()
 export class AuthService {
@@ -46,7 +46,33 @@ export class AuthService {
   async login(
     loginDto: LoginDto,
   ): Promise<{ access_token: string; refresh_token: string }> {
-    const { username, password } = loginDto;
+    const { username, password, isGoogleLogin } = loginDto;
+
+    if (isGoogleLogin) {
+      const isUser = await this.userService.findByEmailInit(username);
+      if (!isUser) {
+        // Nếu người dùng chưa tồn tại, tạo mới
+        const user = await this.userService.createUserGoogle(username, true);
+        return this.login({
+          username: user.username,
+          password: user.password,
+          isGoogleLogin: false,
+        });
+      }
+      const user = await this.userService.findByEmail(username);
+      await this.tokenService.cleanExpiredTokens();
+      const payload = { username: user.username, sub: user.id };
+      const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
+      const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+      const hashedRefreshToken = await this.hashRefreshToken(refreshToken);
+      await this.tokenService.createForUser(
+        user.id,
+        accessToken,
+        hashedRefreshToken,
+      );
+      return { access_token: accessToken, refresh_token: refreshToken };
+    }
+
     const user = await this.validateUser(username, password);
     const payload = { username: user.username, sub: user.id };
 
@@ -120,17 +146,21 @@ export class AuthService {
     }
   }
   async googleLogin(req) {
+    const user: Partial<User> = {
+      username: req.user.email,
+      password: req.user.email,
+      email: req.user.email,
+    };
     if (!req.user) {
       throw new UnauthorizedException('No user from google');
     }
 
-    let user = await this.userService.findByEmail(req.user.email);
+    let isUser = await this.userService.findByEmailInit(req.user.email);
 
-    if (!user) {
+    if (!isUser) {
       // Tạo user mới nếu chưa tồn tại
-      user = await this.userService.createUserGoogle(
+      const user = await this.userService.createUserGoogle(
         req.user.email,
-        `${req.user.firstName} ${req.user.lastName}`,
         true, // Google email đã được verify
       );
 
@@ -142,7 +172,11 @@ export class AuthService {
       await this.mailService.sendVerificationEmail(user.email, verifyToken);
     }
 
-    return this.login({ username: user.username, password: user.password });
+    return this.login({
+      username: user.username as string,
+      password: user.password as string,
+      isGoogleLogin: true,
+    });
   }
 
   async verifyEmail(token: string) {
