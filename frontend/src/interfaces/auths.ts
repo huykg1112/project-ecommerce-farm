@@ -8,6 +8,7 @@ export interface LoginFormProps {
   error: string | string[] | null;
   loading: boolean;
   handleSubmit: (e: React.FormEvent) => void;
+  handleGoogleLogin: () => void;
 }
 
 export interface PasswordInputProps {

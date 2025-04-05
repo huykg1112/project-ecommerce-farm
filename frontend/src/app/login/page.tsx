@@ -5,7 +5,14 @@ import LoginForm from "@/components/auth/LoginForm";
 import RegisterForm from "@/components/auth/RegisterForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { AppDispatch, RootState } from "@/lib/cart/store";
-import { clearError, loginUser, registerUser } from "@/lib/features/user-slice";
+import {
+  clearError,
+  loginUser,
+  registerUser,
+  setUser,
+} from "@/lib/features/user-slice";
+import { authService } from "@/lib/services/auth-service";
+import { userService } from "@/lib/services/user-service"; // Thêm import
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import type React from "react";
@@ -13,19 +20,16 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 export default function LoginPage() {
-  // Login form state
   const [loginUsername, setLoginUsername] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [showLoginPassword, setShowLoginPassword] = useState(false);
 
-  // Register form state
   const [registerUsername, setRegisterUsername] = useState("");
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
   const [registerPhone, setRegisterPhone] = useState("");
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
 
-  // UI state
   const [activeTab, setActiveTab] = useState("login");
 
   const router = useRouter();
@@ -33,24 +37,80 @@ export default function LoginPage() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
 
-  // Get user state from Redux
+  const accessToken = searchParams.get("access_token");
+  const refreshToken = searchParams.get("refresh_token");
+
   const { loading, error, isAuthenticated } = useSelector(
     (state: RootState) => state.user
   );
 
-  // Redirect if already authenticated
+  // Xử lý token từ Google callback và đăng nhập tự động
   useEffect(() => {
-    if (isAuthenticated) {
-      router.push(callbackUrl);
-    }
-  }, [isAuthenticated, router, callbackUrl]);
+    const handleGoogleLogin = async () => {
+      if (accessToken && refreshToken) {
+        authService.saveGoogleTokens(accessToken, refreshToken);
+        try {
+          const profile = await userService.getProfile(); // Gọi userService thay vì fetchUserProfile
+          dispatch(
+            setUser({
+              id: profile.id,
+              username: profile.username,
+              email: profile.email,
+              fullName: profile.fullName,
+              phone: profile.phone,
+              address: profile.address,
+              avatar: profile.avatar,
+              roleName: profile.roleName,
+            })
+          );
+          router.push(callbackUrl);
+        } catch (err) {
+          console.error("Failed to fetch profile after Google login:", err);
+          // Có thể thêm logic xóa token nếu profile không lấy được
+          authService.removeToken();
+        }
+      }
+    };
 
-  // Clear errors when switching tabs
+    handleGoogleLogin();
+  }, [accessToken, refreshToken, dispatch, router, callbackUrl]);
+
+  // Kiểm tra đăng nhập tự động khi reload trang
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (!isAuthenticated && authService.isAuthenticated()) {
+        try {
+          const profile = await userService.getProfile();
+          dispatch(
+            setUser({
+              id: profile.id,
+              username: profile.username,
+              email: profile.email,
+              fullName: profile.fullName,
+              phone: profile.phone,
+              address: profile.address,
+              avatar: profile.avatar,
+              roleName: profile.roleName,
+            })
+          );
+          router.push(callbackUrl);
+        } catch (err) {
+          console.error("Failed to auto-login:", err);
+          authService.removeToken();
+          dispatch(clearError());
+        }
+      } else if (isAuthenticated) {
+        router.push(callbackUrl);
+      }
+    };
+
+    checkAuth();
+  }, [isAuthenticated, dispatch, router, callbackUrl]);
+
   useEffect(() => {
     dispatch(clearError());
   }, [activeTab, dispatch]);
 
-  // Handle login form submission
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     const result = await dispatch(
@@ -60,12 +120,10 @@ export default function LoginPage() {
       })
     );
     if (loginUser.fulfilled.match(result)) {
-      // Đăng nhập thành công, chuyển hướng đến callbackUrl
       router.push(callbackUrl);
     }
   };
 
-  // Handle register form submission
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     const result = await dispatch(
@@ -81,6 +139,10 @@ export default function LoginPage() {
       setLoginUsername(registerUsername);
       setLoginPassword("");
     }
+  };
+
+  const handleGoogleLogin = () => {
+    authService.initiateGoogleLogin();
   };
 
   return (
@@ -105,6 +167,7 @@ export default function LoginPage() {
               error={error}
               loading={loading}
               handleSubmit={handleLogin}
+              handleGoogleLogin={handleGoogleLogin}
             />
           </TabsContent>
           <TabsContent value="register">
