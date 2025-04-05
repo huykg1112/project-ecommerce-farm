@@ -117,4 +117,37 @@ export class AuthService {
       await this.tokenService.deleteByAccessToken(accessToken); // Xóa token
     }
   }
+  async googleLogin(
+    googleUser: any,
+  ): Promise<{ access_token: string; refresh_token: string }> {
+    // Kiểm tra xem user đã tồn tại qua email chưa
+    let user: User;
+    let isUser = await this.userService.isUsernameExists(googleUser.email); // Dùng email làm username
+    if (!isUser) {
+      // Nếu chưa tồn tại, tạo user mới
+      user = this.userService.userRepository.create({
+        username: googleUser.email,
+        email: googleUser.email,
+        fullName: googleUser.fullName,
+        password: '', // Không cần mật khẩu cho OAuth
+        isActive: true,
+        role: await this.userService.rolesService.findByName('Client'), // Gán role mặc định
+      });
+      user = await this.userService.userRepository.save(user);
+    }
+    user = await this.userService.findByUsername(googleUser.email); // Tìm user qua email
+    // Tạo token cho user
+    const payload = { username: user.username, sub: user.id };
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+    const hashedRefreshToken = await this.hashRefreshToken(refreshToken);
+
+    await this.tokenService.createForUser(
+      user.id,
+      accessToken,
+      hashedRefreshToken,
+    );
+
+    return { access_token: accessToken, refresh_token: refreshToken };
+  }
 }

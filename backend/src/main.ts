@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import 'module-alias/register';
 import { AppDataSource } from '../ormconfig';
 import { AppModule } from './app.module';
+import * as session from 'express-session'; // Thêm import express-session
 
 // Lý do: Đặt tên hàm bootstrap là async nên cần xử lý lỗi bằng try-catch để tránh crash ứng dụng
 async function bootstrap() {
@@ -25,6 +26,20 @@ async function bootstrap() {
         allowedHeaders: 'Content-Type, Accept, Authorization',
       });
     }
+
+    // Thêm middleware express-session
+    app.use(
+      session({
+        secret: process.env.JWT_SECRET || 'mysecretkey', // Dùng JWT_SECRET làm session secret
+        resave: false, // Không lưu lại session nếu không có thay đổi
+        saveUninitialized: false, // Không tạo session cho request không xác thực
+        cookie: {
+          secure: false, // Đặt true khi dùng HTTPS trong production
+          maxAge: 24 * 60 * 60 * 1000, // Session hết hạn sau 24 giờ
+        },
+      }),
+    );
+
     // ✅ Thêm ValidationPipe
     app.useGlobalPipes(
       new ValidationPipe({

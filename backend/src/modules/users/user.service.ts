@@ -20,10 +20,10 @@ export class UserService {
   private readonly saltRounds: number; // Lý do: Cache saltRounds để tăng tốc độ
   constructor(
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    public readonly userRepository: Repository<User>,
     private readonly configService: ConfigService,
-    private readonly tokenService: TokensService,
-    private readonly rolesService: RolesService,
+    public readonly tokenService: TokensService,
+    public readonly rolesService: RolesService,
   ) {
     this.saltRounds = Number(
       this.configService.get<number>('BCRYPT_SALT_ROUNDS') ?? 10,
@@ -44,6 +44,14 @@ export class UserService {
       );
     }
     return user;
+  }
+  async isUsernameExists(username: string): Promise<boolean> {
+    const user = await this.userRepository.findOne({ where: { username } });
+    return !!user; // Trả về true nếu tồn tại, false nếu không
+  }
+  async isEmailExists(email: string): Promise<boolean> {
+    const user = await this.userRepository.findOne({ where: { email } });
+    return !!user;
   }
 
   async findById(id: string): Promise<User> {
