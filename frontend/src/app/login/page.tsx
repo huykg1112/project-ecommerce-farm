@@ -6,6 +6,7 @@ import RegisterForm from "@/components/auth/RegisterForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { AppDispatch, RootState } from "@/lib/cart/store";
 import { clearError, loginUser, registerUser } from "@/lib/features/user-slice";
+import { authService } from "@/lib/services/auth-service";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import type React from "react";
@@ -37,6 +38,8 @@ export default function LoginPage() {
   const { loading, error, isAuthenticated } = useSelector(
     (state: RootState) => state.user
   );
+
+  // Kiểm tra xem người dùng vừa được redirect từ Google về không;
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -83,6 +86,15 @@ export default function LoginPage() {
     }
   };
 
+  // Handle Google login
+  const handleGoogleLogin = () => {
+    // Lưu callbackUrl vào localStorage để sử dụng sau khi đăng nhập Google
+    localStorage.setItem("callbackUrl", callbackUrl);
+
+    // Chuyển hướng đến endpoint đăng nhập Google
+    window.location.href = `${authService.API_URL}/auth/google/login`;
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 pb-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md">
@@ -105,6 +117,7 @@ export default function LoginPage() {
               error={error}
               loading={loading}
               handleSubmit={handleLogin}
+              handleGoogleLogin={handleGoogleLogin}
             />
           </TabsContent>
           <TabsContent value="register">

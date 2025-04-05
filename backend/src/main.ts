@@ -23,6 +23,7 @@ async function bootstrap() {
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
         credentials: true,
         allowedHeaders: 'Content-Type, Accept, Authorization',
+        exposedHeaders: ['Authorization'], // Cho phép client nhận header Authorization từ server
       });
     }
     // ✅ Thêm ValidationPipe

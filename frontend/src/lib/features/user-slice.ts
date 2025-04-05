@@ -140,6 +140,7 @@ const userSlice = createSlice({
     clearUser: (state) => {
       state.currentUser = null;
       state.isAuthenticated = false;
+      state.profile = null;
     },
     setLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
@@ -190,6 +191,7 @@ const userSlice = createSlice({
         state.loading = false;
         state.currentUser = null;
         state.isAuthenticated = false;
+        state.profile = null;
       })
       .addCase(logoutUser.rejected, (state, action) => {
         state.loading = false;
@@ -197,6 +199,7 @@ const userSlice = createSlice({
         // Vẫn đăng xuất người dùng ngay cả khi API gọi thất bại
         state.currentUser = null;
         state.isAuthenticated = false;
+        state.profile = null;
       })
       // Refresh Token
       .addCase(refreshToken.fulfilled, (state) => {

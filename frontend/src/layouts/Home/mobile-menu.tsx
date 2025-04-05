@@ -57,6 +57,7 @@ export default function MobileMenu({ isScrolled }: MobileMenuProps) {
     try {
       await dispatch(logoutUser());
       setOpen(false);
+      router.push("/login");
     } catch (error) {
       console.error("Đăng xuất thất bại:", error);
     }

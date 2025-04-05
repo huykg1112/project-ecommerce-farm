@@ -9,6 +9,7 @@ import { UserModule } from '../modules/users/user.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { GoogleStrategy } from './google.strategy';
 
 @Module({
   imports: [
@@ -26,7 +27,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
     }),
     ConfigModule,
   ],
-  providers: [AuthService, JwtAuthGuard], // Cung cấp JwtAuthGuard
+  providers: [AuthService, JwtAuthGuard, GoogleStrategy], // Cung cấp JwtAuthGuard
   controllers: [AuthController],
   exports: [JwtAuthGuard], // Export JwtAuthGuard để UserModule sử dụng
 })

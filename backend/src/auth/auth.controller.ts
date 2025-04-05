@@ -3,9 +3,13 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Post,
   Request,
+  Res,
+  UseGuards,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { RefreshTokenDto } from '../modules/users/dto/refresh-token.dto';
 import { Public } from '../public.decorator';
 import { AuthService } from './auth.service';
@@ -14,6 +18,38 @@ import { LoginDto } from './dto/login.dto';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Public()
+  @Get('google/login')
+  @UseGuards(AuthGuard('google'))
+  async googleAuth() {
+    // Guard will handle the authentication
+    console.log('Google Auth called');
+  }
+
+  @Public()
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthCallback(
+    @Request() req,
+    @Res() res: import('express').Response,
+  ): Promise<{ access_token: string; refresh_token: string } | undefined> {
+    try {
+      const token = await this.authService.googleLogin(req);
+      const htpp =
+        'http://localhost:3000/home?' +
+        'access_token=' +
+        token.access_token +
+        '&' +
+        'refresh_token=' +
+        token.refresh_token;
+      res.redirect(htpp); // Redirect to your frontend URL with tokens as query parameters
+    } catch (error) {
+      console.error('Google Auth Callback Error:', error);
+      res.status(500).send('Internal Server Error');
+      return undefined;
+    }
+  }
 
   // Đăng nhập
   @Public()
