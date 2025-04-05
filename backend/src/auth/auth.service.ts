@@ -7,6 +7,7 @@ import { User } from '../modules/users/entities/user.entity';
 import { UserService } from '../modules/users/user.service';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
+import { MailsService } from '../modules/mails/mails.service';
 
 @Injectable()
 export class AuthService {
@@ -14,6 +15,7 @@ export class AuthService {
     private readonly userService: UserService,
     private readonly tokenService: TokensService, // Inject TokenService
     private readonly jwtService: JwtService,
+    private readonly mailService: MailsService,
   ) {}
 
   async validateUser(
