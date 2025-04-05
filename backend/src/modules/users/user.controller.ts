@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Headers,
   NotFoundException,
   Param,
   Patch,
@@ -70,14 +71,14 @@ export class UserController {
   @Patch('change-password')
   async changePassword(
     @Req() req,
+    @Headers('authorization') authHeader: string,
     @Body() changePasswordDto: ChangePasswordDto,
-  ): Promise<{ message: string }> {
+  ) {
     const userId = req.user.id as string;
-    const currentAccessToken = req.headers.authorization.split(' ')[1];
-    if (!currentAccessToken) {
-      throw new NotFoundException('Authorization header missing'); // Lý do: Kiểm tra header để tránh lỗi split undefined
-    }
-    return await this.userService.changePassword(
+    const currentAccessToken = authHeader?.split(' ')[1];
+    if (!currentAccessToken)
+      throw new NotFoundException('Authorization header missing');
+    return this.userService.changePassword(
       userId,
       changePasswordDto.oldPassword,
       changePasswordDto.newPassword,

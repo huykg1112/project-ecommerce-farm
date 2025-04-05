@@ -119,78 +119,37 @@ export class AuthService {
       await this.tokenService.deleteByAccessToken(accessToken); // Xóa token
     }
   }
-  async googleLogin(req) {
-    if (!req.user) {
-      throw new UnauthorizedException('No user from google');
+  async googleLogin(
+    googleUser: any,
+  ): Promise<{ access_token: string; refresh_token: string }> {
+    // Kiểm tra xem user đã tồn tại qua email chưa
+    let user: User;
+    let isUser = await this.userService.isUsernameExists(googleUser.email); // Dùng email làm username
+    if (!isUser) {
+      // Nếu chưa tồn tại, tạo user mới
+      user = this.userService.userRepository.create({
+        username: googleUser.email,
+        email: googleUser.email,
+        fullName: googleUser.fullName,
+        password: '', // Không cần mật khẩu cho OAuth
+        isActive: true,
+        role: await this.userService.rolesService.findByName('Client'), // Gán role mặc định
+      });
+      user = await this.userService.userRepository.save(user);
     }
+    user = await this.userService.findByUsername(googleUser.email); // Tìm user qua email
+    // Tạo token cho user
+    const payload = { username: user.username, sub: user.id };
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
+    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+    const hashedRefreshToken = await this.hashRefreshToken(refreshToken);
 
-    let user = await this.userService.findByEmail(req.user.email);
-
-    if (!user) {
-      // Tạo user mới nếu chưa tồn tại
-      user = await this.userService.createUserGoogle(
-        req.user.email,
-        `${req.user.firstName} ${req.user.lastName}`,
-        true, // Google email đã được verify
-      );
-
-      // Gửi email xác thực cho lần đăng nhập đầu
-      const verifyToken = this.jwtService.sign(
-        { email: user.email },
-        { expiresIn: '1d' },
-      );
-      await this.mailService.sendVerificationEmail(user.email, verifyToken);
-    }
-
-    return this.login({ username: user.username, password: user.password });
-  }
-
-  async verifyEmail(token: string) {
-    try {
-      const decoded = this.jwtService.verify(token);
-      const user = await this.userService.findByEmail(decoded.email);
-
-      if (!user) {
-        throw new UnauthorizedException('User not found');
-      }
-
-      user.isVerified = true;
-      await this.userService.saveUser(user);
-
-      return { message: 'Email verified successfully' };
-    } catch (error) {
-      throw new UnauthorizedException('Invalid or expired token');
-    }
-  }
-
-  async forgotPassword(email: string) {
-    const user = await this.userService.findByEmail(email);
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-
-    const resetToken = this.jwtService.sign(
-      { email: user.email },
-      { expiresIn: '1h' },
+    await this.tokenService.createForUser(
+      user.id,
+      accessToken,
+      hashedRefreshToken,
     );
 
-    await this.mailService.sendPasswordResetEmail(email, resetToken);
-    return { message: 'Password reset email sent' };
-  }
-
-  async resetPassword(token: string, newPassword: string) {
-    try {
-      const decoded = this.jwtService.verify(token);
-      const user = await this.userService.findByEmail(decoded.email);
-
-      if (!user) {
-        throw new UnauthorizedException('User not found');
-      }
-
-      await this.userService.changePassword(user.id, '', newPassword, '');
-      return { message: 'Password reset successfully' };
-    } catch (error) {
-      throw new UnauthorizedException('Invalid or expired token');
-    }
+    return { access_token: accessToken, refresh_token: refreshToken };
   }
 }

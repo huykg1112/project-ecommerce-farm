@@ -3,9 +3,14 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Post,
+  Redirect,
   Request,
+  UseGuards,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { AuthGuard } from '@nestjs/passport';
 import { RefreshTokenDto } from '../modules/users/dto/refresh-token.dto';
 import { Public } from '../public.decorator';
 import { AuthService } from './auth.service';
@@ -13,7 +18,10 @@ import { LoginDto } from './dto/login.dto';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService,
+  ) {}
 
   // Đăng nhập
   @Public()
@@ -41,5 +49,27 @@ export class AuthController {
     const accessToken = req.headers.authorization.split(' ')[1]; // Lấy token từ header
     await this.authService.logout(accessToken); // Truyền accessToken thay vì userId
     return { message: 'Đăng xuất thành công' };
+  }
+  @Public()
+  @Get('google')
+  @UseGuards(AuthGuard('google'))
+  async googleLogin() {
+    // Không cần logic, AuthGuard sẽ redirect tới Google
+  }
+
+  @Public()
+  @Get('google/callback')
+  @UseGuards(AuthGuard('google'))
+  @Redirect() // Thêm decorator Redirect
+  async googleLoginCallback(@Request() req) {
+    const { access_token, refresh_token } = await this.authService.googleLogin(
+      req.user,
+    );
+    const redirectUrl = this.configService.get<string>(
+      'GOOGLE_FRONTEND_REDIRECT_URL',
+    );
+    return {
+      url: `${redirectUrl}?access_token=${access_token}&refresh_token=${refresh_token}`,
+    };
   }
 }

@@ -157,4 +157,18 @@ export const authService = {
       localStorage.removeItem("access_token");
     }
   },
+  // Bắt đầu quá trình đăng nhập Google
+  initiateGoogleLogin(): void {
+    if (isClient) {
+      window.location.href = `${API_URL}/auth/google`;
+    }
+  },
+
+  // Lưu token từ callback Google
+  saveGoogleTokens(accessToken: string, refreshToken: string): void {
+    if (isClient) {
+      localStorage.setItem("access_token", accessToken);
+      localStorage.setItem("refresh_token", refreshToken);
+    }
+  },
 };
