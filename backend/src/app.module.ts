@@ -10,7 +10,7 @@ import { CartItemsModule } from './modules/cart_items/cart_items.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { FavoriteProductsModule } from './modules/favorite_products/favorite_products.module';
 import { InventorysModule } from './modules/inventorys/inventorys.module';
-import { MailsModule } from './modules/mails/mails.module';
+
 import { OrderItemsModule } from './modules/order_items/order_items.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { PaymentsModule } from './modules/payments/payments.module';
@@ -72,7 +72,6 @@ import { UserModule } from './modules/users/user.module';
     PaymentsModule,
     InventorysModule,
     TokensModule,
-    MailsModule,
   ],
   controllers: [AppController],
   providers: [
