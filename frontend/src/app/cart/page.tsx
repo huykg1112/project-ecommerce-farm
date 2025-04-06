@@ -49,6 +49,10 @@ function CartPage() {
     return acc;
   }, {} as Record<string, { sellerName: string; items: any[] }>);
 
+  useEffect(() => {
+    setExpandedSellers(Object.keys(itemsBySeller));
+  }, [items]);
+
   const calculateSelectedTotal = () =>
     items
       .filter((item) => selectedItems.includes(item.id))

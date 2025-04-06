@@ -15,12 +15,12 @@ async function bootstrap() {
     const enableCors = process.env.ENABLE_CORS === 'true'; // Thêm vào .env: ENABLE_CORS=true
     if (enableCors) {
       app.enableCors({
-        origin: [
-          'http://localhost:3000', // Cổng mặc định của React, cho phép gọi API từ React App
-          'http://localhost:3001',
-          'http://localhost:4200',
-        ],
-        // origin: true, // Cho phép tất cả các domain
+        // origin: [
+        //   'http://localhost:3000', // Cổng mặc định của React, cho phép gọi API từ React App
+        //   'http://localhost:3001',
+        //   'http://localhost:4200',
+        // ],
+        origin: true, // Cho phép tất cả các domain
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
         credentials: true,
         allowedHeaders: 'Content-Type, Accept, Authorization',
