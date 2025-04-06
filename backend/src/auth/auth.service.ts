@@ -35,7 +35,7 @@ export class AuthService {
   }
 
   async hashRefreshToken(token: string): Promise<string> {
-    const saltRounds = 10;
+    const saltRounds = parseInt(process.env.BCRYPT_SALT_ROUNDS || '15', 10);
     return bcrypt.hash(token, saltRounds);
   }
 
