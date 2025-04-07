@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Store, StoreDetailProps } from "@/interfaces";
+import { StoreDetailProps } from "@/interfaces";
 import {
   Clock,
   Globe,
@@ -11,14 +11,21 @@ import {
   Navigation,
   Phone,
   Star,
+  StoreIcon,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 const StoreDetail = ({ store, onClose }: StoreDetailProps) => {
+  const router = useRouter();
   const handleGetDirections = () => {
     window.open(
       `https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}`,
       "_blank"
     );
+  };
+  const handleGetDeteilSeller = ({ idSeller }: { idSeller: number }) => {
+    console.log("idSeller", idSeller);
+    router.push(`/seller/${idSeller}`);
   };
 
   return (
@@ -118,9 +125,15 @@ const StoreDetail = ({ store, onClose }: StoreDetailProps) => {
         </div>
       </div>
 
-      <div className="p-4 border-t">
+      <div className="p-4 border-t flex gap-4">
+        <Button
+          className="w-full bg-orange-500 hover:bg-orange-400"
+          onClick={() => handleGetDeteilSeller({ idSeller: store.id })}
+        >
+          <StoreIcon className="h-4 w-4" /> Đến cửa hàng
+        </Button>
         <Button className="w-full" onClick={handleGetDirections}>
-          <Navigation className="h-4 w-4 mr-2" />
+          <Navigation className="h-4 w-4" />
           Chỉ đường
         </Button>
       </div>

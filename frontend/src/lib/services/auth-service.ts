@@ -150,6 +150,14 @@ export const authService = {
 
     return isTokenExpired(token);
   },
+  isTokenExpiredRefresh(): boolean {
+    if (!isClient) return true;
+    
+    const refreshToken = localStorage.getItem("refresh_token");
+    if (!refreshToken) return true;
+
+    return isTokenExpired(refreshToken);
+  },
 
   // Xóa token cũ
   removeToken(): void {

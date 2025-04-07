@@ -18,7 +18,9 @@ export const stores: Store[] = [
       { days: "Thứ 2 - Thứ 6", hours: "8:00 - 20:00" },
       { days: "Thứ 7 - Chủ nhật", hours: "8:00 - 18:00" },
     ],
-    images: ["/placeholder.svg?height=300&width=400"],
+    images: [
+      "https://mia.vn/media/uploads/blog-du-lich/nong-trai-xanh-5ku-farm-sai-gon-08-1704005467.jpg",
+    ],
   },
   {
     id: 2,
@@ -37,7 +39,9 @@ export const stores: Store[] = [
       { days: "Thứ 2 - Thứ 6", hours: "7:30 - 21:00" },
       { days: "Thứ 7 - Chủ nhật", hours: "8:00 - 20:00" },
     ],
-    images: ["/placeholder.svg?height=300&width=400"],
+    images: [
+      "https://danviet.ex-cdn.com/files/f1/2018/5/images/fd748fb0-vuon-rau-sach-globol-gap-1jpg.jpg",
+    ],
   },
   {
     id: 3,
@@ -70,7 +74,7 @@ export const stores: Store[] = [
     lng: 105.768986,
     rating: 4.2,
     openingHours: [{ days: "Thứ 2 - Chủ nhật", hours: "7:00 - 20:00" }],
-    images: ["/placeholder.svg?height=300&width=400"],
+    images: ["https://giongcogiare.com.vn/wp-content/uploads/2018/05/logo.jpg"],
   },
   {
     id: 5,
@@ -88,7 +92,9 @@ export const stores: Store[] = [
       { days: "Thứ 2 - Thứ 6", hours: "8:00 - 19:00" },
       { days: "Thứ 7 - Chủ nhật", hours: "8:00 - 21:00" },
     ],
-    images: ["/placeholder.svg?height=300&width=400"],
+    images: [
+      "https://file.hstatic.net/1000192210/file/vat-tu-nong-nghiep-2_8910dbf3c0904c788082af58ddf49e2b.jpg",
+    ],
   },
   {
     id: 6,

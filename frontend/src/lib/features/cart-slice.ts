@@ -1,4 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+//createSlice là một hàm của Redux Toolkit để tạo ra một slice (một phần của Redux store) với các reducer và action creators tự động
+//PayloadAction là một kiểu dữ liệu của Redux Toolkit để định nghĩa action với payload
 
 export interface CartItem {
   id: string;

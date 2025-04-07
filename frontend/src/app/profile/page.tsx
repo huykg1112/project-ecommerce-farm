@@ -77,7 +77,9 @@ function ProfilePage() {
         });
       } catch (error) {
         console.error("Failed to fetch profile:", error);
-        showToast.error("Không thể tải thông tin người dùng");
+
+        dispatch(logoutUser());
+        router.push("/login");
       } finally {
         setLoading(false);
       }

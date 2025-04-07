@@ -6,8 +6,14 @@ const API_URL = "http://localhost:4200";
 export const userService = {
   async getProfile(): Promise<UserProfile> {
     let token = localStorage.getItem("access_token");
-    if (!token) {
+    let refreshToken = localStorage.getItem("refresh_token");
+    if (!refreshToken && !token) {
       throw new Error("Unauthorized");
+    }
+    if ((refreshToken && !token) || authService.isTokenExpiredRefresh()) {
+      // Nếu refresh token có nhưng access token không có, gọi refresh token
+      await authService.refreshToken();
+      token = localStorage.getItem("access_token")!;
     }
 
     let response = await fetch(`${API_URL}/user/profile`, {

@@ -44,6 +44,9 @@ export default function MobileMenu({ isScrolled }: MobileMenuProps) {
   const { isAuthenticated, currentUser } = useSelector(
     (state: RootState) => state.user
   );
+  const { totalItems: wishlistItems } = useSelector(
+    (state: RootState) => state.wishlist
+  );
   const dispatch = useDispatch<AppDispatch>();
   const pathname = usePathname();
   const router = useRouter();
@@ -70,6 +73,12 @@ export default function MobileMenu({ isScrolled }: MobileMenuProps) {
       icon: <ShoppingBag className="h-5 w-5 mr-2" />,
     },
     {
+      name: "Cửa hàng & Đại lý",
+      href: "/stores",
+      icon: <Package className="h-5 w-5 mr-2" />,
+      requireAuth: true,
+    },
+    {
       name: "Blog",
       href: "/blog",
       icon: <FileText className="h-5 w-5 mr-2" />,
@@ -90,7 +99,7 @@ export default function MobileMenu({ isScrolled }: MobileMenuProps) {
     },
     {
       name: "Đơn hàng",
-      href: "/cart",
+      href: "/orders",
       icon: <Package className="h-5 w-5 mr-2" />,
       requireAuth: true,
     },
@@ -98,6 +107,12 @@ export default function MobileMenu({ isScrolled }: MobileMenuProps) {
       name: "Yêu thích",
       href: "/wishlist",
       icon: <Heart className="h-5 w-5 mr-2" />,
+      requireAuth: true,
+    },
+    {
+      name: "Giỏ hàng",
+      href: "/cart",
+      icon: <ShoppingBag className="h-5 w-5 mr-2" />,
       requireAuth: true,
     },
     {
@@ -262,7 +277,7 @@ export default function MobileMenu({ isScrolled }: MobileMenuProps) {
           {isAuthenticated && (
             <div className="p-4 border-t">
               <h3 className="text-sm font-medium text-gray-500 mb-2">
-                Tài khoản của bạn
+                Tài khoản & Mua sắm
               </h3>
               <nav>
                 <ul className="space-y-1">

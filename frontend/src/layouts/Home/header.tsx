@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { categories } from "@/data/categories";
 import { RootState } from "@/lib/cart/store";
 import { cn } from "@/lib/utils";
-import { Camera, Heart, Search, X } from "lucide-react";
+import { Camera, Search, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
@@ -16,16 +16,17 @@ import { useSelector } from "react-redux";
 
 // Sử dụng dynamic import cho phần user authentication
 const UserAuthSection = dynamic(
-  () => import("../../components/auth/user-auth-section"),
+  () => import("@/components/auth/user-auth-section"),
   {
     ssr: false,
   }
 );
-const CartButton = dynamic(
-  () => import("../../components/products/cart-button"),
-  {
-    ssr: false,
-  }
+const CartButton = dynamic(() => import("@/components/products/cart-button"), {
+  ssr: false,
+});
+const WishlistButton = dynamic(
+  () => import("@/components/wishlist/wishlist-button"),
+  { ssr: false }
 );
 const MobileMenu = dynamic(() => import("./mobile-menu"), { ssr: false });
 const SearchModal = dynamic(() => import("./search-modal"), { ssr: false });
@@ -74,18 +75,18 @@ export default function Header() {
     setSearchValue("");
   };
 
-  const handleWishlistClick = (e: React.MouseEvent) => {
-    e.preventDefault();
+  // const handleWishlistClick = (e: React.MouseEvent) => {
+  //   e.preventDefault();
 
-    if (!isAuthenticated) {
-      // Nếu chưa đăng nhập, chuyển hướng đến trang đăng nhập
-      router.push("/login");
-      return;
-    }
+  //   if (!isAuthenticated) {
+  //     // Nếu chưa đăng nhập, chuyển hướng đến trang đăng nhập
+  //     router.push("/login");
+  //     return;
+  //   }
 
-    // Nếu đã đăng nhập, chuyển hướng đến trang yêu thích
-    router.push("/wishlist");
-  };
+  //   // Nếu đã đăng nhập, chuyển hướng đến trang yêu thích
+  //   router.push("/wishlist");
+  // };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -219,17 +220,10 @@ export default function Header() {
           >
             <Search className="h-6 w-6" />
           </Button>
-          <Link href="/wishlist" className="hidden sm:block">
-            <Button
-              variant="ghost"
-              size="icon"
-              className={cn("relative", isScrolled && "text-white")}
-              onClick={handleWishlistClick}
-            >
-              <Heart className="h-6 w-6" />
-              <span className="sr-only">Wishlist</span>
-            </Button>
-          </Link>
+          {/* Wishlist Button - Show on both desktop and mobile */}
+          <div className="hidden sm:block">
+            <WishlistButton isScrolled={isScrolled} />
+          </div>
           <div className="hidden sm:block cart-button-header">
             <CartButton isScrolled={isScrolled} />
           </div>

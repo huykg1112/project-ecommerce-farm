@@ -1,6 +1,6 @@
 "use client";
 
-import { GoogleMapComponentProps, Store } from "@/interfaces";
+import { GoogleMapComponentProps } from "@/interfaces";
 import {
   GoogleMap,
   InfoWindowF,
@@ -8,6 +8,7 @@ import {
   useJsApiLoader,
 } from "@react-google-maps/api";
 import { Loader2, Navigation } from "lucide-react";
+import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "../ui/button";
 
@@ -185,6 +186,16 @@ export default function GoogleMapComponent({
               onCloseClick={() => setActiveMarker(null)}
             >
               <div className="p-2 max-w-xs">
+                {/* Hiển thị ảnh đầu tiên */}
+                <div className="w-full h-24 mb-2">
+                  <Image
+                    src={store.images[0] || "/placeholder.png"} // Hiển thị ảnh đầu tiên hoặc ảnh mặc định
+                    alt={store.name}
+                    width={96}
+                    height={96}
+                    className="object-cover w-full h-full rounded-md"
+                  />
+                </div>
                 <h3 className="font-semibold text-sm">{store.name}</h3>
                 <p className="text-xs text-gray-600 mt-1">{store.address}</p>
               </div>
