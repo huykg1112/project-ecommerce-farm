@@ -31,6 +31,7 @@ export class AuthController {
   }
 
   // Refresh token
+  @Public()
   @Post('refresh')
   async refresh(
     @Body() refreshTokenDto: RefreshTokenDto,

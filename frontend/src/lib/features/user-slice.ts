@@ -105,6 +105,10 @@ export const fetchUserProfile = createAsyncThunk(
   "user/fetchProfile",
   async (_, { rejectWithValue }) => {
     try {
+      // check refresh token
+      if (isClient && authService.isTokenExpired()) {
+        await authService.refreshToken();
+      }
       const profile = await userService.getProfile();
       return profile;
     } catch (error: any) {

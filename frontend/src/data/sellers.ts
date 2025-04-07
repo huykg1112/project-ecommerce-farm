@@ -1,6 +1,6 @@
 export const sellers = [
   {
-    id: "s1",
+    id: "1",
     name: "Nông Trại Xanh",
     avatar:
       "https://mia.vn/media/uploads/blog-du-lich/nong-trai-xanh-5ku-farm-sai-gon-08-1704005467.jpg",
@@ -10,7 +10,7 @@ export const sellers = [
     verified: true,
   },
   {
-    id: "s2",
+    id: "2",
     name: "Vườn Sạch",
     avatar:
       "https://danviet.ex-cdn.com/files/f1/2018/5/images/fd748fb0-vuon-rau-sach-globol-gap-1jpg.jpg",
@@ -20,7 +20,7 @@ export const sellers = [
     verified: true,
   },
   {
-    id: "s3",
+    id: "3",
     name: "Trái Cây Nhập Khẩu",
     avatar:
       "https://vinfruits.com/wp-content/uploads/2017/05/Trai-cay-nhap-khau-VinFruits.jpg",
@@ -30,7 +30,7 @@ export const sellers = [
     verified: true,
   },
   {
-    id: "s4",
+    id: "4",
     name: "Hạt Giống Việt",
     avatar: "https://giongcogiare.com.vn/wp-content/uploads/2018/05/logo.jpg",
     rating: 4.5,
@@ -39,7 +39,7 @@ export const sellers = [
     verified: true,
   },
   {
-    id: "s5",
+    id: "5",
     name: "Vật Tư Nông Nghiệp Như Ý",
     avatar:
       "https://file.hstatic.net/1000192210/file/vat-tu-nong-nghiep-2_8910dbf3c0904c788082af58ddf49e2b.jpg",
@@ -49,7 +49,7 @@ export const sellers = [
     verified: true,
   },
   {
-    id: "s6",
+    id: "6",
     name: "Đặc Sản Vùng Cao",
     avatar:
       "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ41zn8ykaVu4pWn_IPY_nnPBfqAvhnLX5Www&s",

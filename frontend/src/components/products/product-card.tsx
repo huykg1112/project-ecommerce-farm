@@ -6,13 +6,19 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useAuthAction } from "@/lib/auth/use-auth-action";
 import { useCartAnimation } from "@/lib/cart/cart-animation-context";
 import { addToCart } from "@/lib/features/cart-slice";
+import {
+  addToWishlist,
+  removeFromWishlist,
+  selectIsInWishlist,
+} from "@/lib/features/wishlist-slice";
 import { showToast } from "@/lib/toast-provider";
 import { formatCurrency } from "@/lib/utils";
+import { useWishlistAnimation } from "@/lib/wishlist/wishlist-animation-context";
 import { Heart, ShoppingCart, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
 
 interface Product {
   id: string;
@@ -37,10 +43,11 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const [isWishlisted, setIsWishlisted] = useState(false);
+  const isInWishlist = useSelector(selectIsInWishlist(product.id));
   const dispatch = useDispatch();
   const { requireAuth } = useAuthAction();
   const { startAnimation } = useCartAnimation();
+  const { startAnimation: startWishlistAnimation } = useWishlistAnimation();
   const productRef = useRef<HTMLDivElement>(null);
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -79,16 +86,44 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   const toggleWishlist = (e: React.MouseEvent) => {
-    e.preventDefault(); // Ngăn chặn chuyển hướng đến trang chi tiết sản phẩm
+    e.preventDefault(); // Prevent navigation to product detail page
 
-    // Kiểm tra đăng nhập trước khi thêm vào yêu thích
+    // Check login before adding to wishlist
     requireAuth(() => {
-      setIsWishlisted(!isWishlisted);
-      // Hiển thị thông báo
-      if (!isWishlisted) {
-        showToast.success(`Đã thêm ${product.name} vào danh sách yêu thích!`);
-      } else {
+      if (isInWishlist) {
+        dispatch(removeFromWishlist(product.id));
         showToast.info(`Đã xóa ${product.name} khỏi danh sách yêu thích!`);
+      } else {
+        dispatch(
+          addToWishlist({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.images[0],
+            sellerId: product.seller.id,
+            sellerName: product.seller.name,
+            category: product.category,
+            discount: product.discount,
+          })
+        );
+
+        // Get product position for animation
+        if (productRef.current) {
+          const rect = productRef.current.getBoundingClientRect();
+          const sourcePosition = {
+            x: rect.left + rect.width / 2 - 32, // Center
+            y: rect.top + rect.height / 2 - 32,
+          };
+
+          // Start animation
+          startWishlistAnimation(
+            product.images[0],
+            product.name,
+            sourcePosition
+          );
+        }
+
+        showToast.success(`Đã thêm ${product.name} vào danh sách yêu thích!`);
       }
     });
   };
@@ -116,11 +151,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           className="absolute top-2 right-2 bg-white rounded-full hover:bg-gray-100"
           onClick={toggleWishlist}
         >
-          <Heart
-            className={`h-5 w-5 ${
-              isWishlisted ? "fill-red-500 text-red-500" : "text-gray-600"
-            }`}
-          />
+          <Heart className={`h-5 w-5 ${isInWishlist ? "fill-red-500 text-red-500" : "text-gray-600"}`} />
           <span className="sr-only">Add to wishlist</span>
         </Button>
         {product.discount && product.discount > 0 && (

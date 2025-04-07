@@ -14,12 +14,7 @@ const authRoutes = [
   "/checkout/success",
 ];
 
-const authApiRoutes = [
-  "/api/cart",
-  "/api/wishlist",
-  "/api/user",
-  "/api/orders",
-];
+const authApiRoutes = ["/cart", "/wishlist", "/user", "/orders"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
