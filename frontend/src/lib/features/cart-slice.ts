@@ -91,3 +91,4 @@ export default cartSlice.reducer;
 
 // Các hàm addToCart, removeFromCart, updateQuantity, clearCart được export ra để sử dụng trong các component khác
 // Đây là slice của Redux store để quản lý giỏ hàng của người dùng
+//cartSlice.reducer là reducer của slice này, được sử dụng để xử lý các action và cập nhật state trong Redux store
