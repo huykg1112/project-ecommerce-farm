@@ -1,6 +1,6 @@
 "use client";
 
-import type { RootState } from "@/lib/cart/store";
+import type { RootState } from "@/lib/features/store";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 

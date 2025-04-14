@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import type { AppDispatch } from "@/lib/cart/store";
+import type { AppDispatch } from "@/lib/features/store";
 import { logoutUser } from "@/lib/features/user-slice";
 import { userService } from "@/lib/services/user-service";
 import { showToast } from "@/lib/toast-provider";

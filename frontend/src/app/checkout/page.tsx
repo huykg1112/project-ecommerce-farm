@@ -8,9 +8,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { withAuth } from "@/lib/auth/with-auth";
-import type { AppDispatch, RootState } from "@/lib/cart/store";
 import type { CartItem } from "@/lib/features/cart-slice";
 import { removeFromCart } from "@/lib/features/cart-slice";
+import type { AppDispatch, RootState } from "@/lib/features/store";
 import { formatCurrency } from "@/lib/utils";
 import {
   ChevronLeft,

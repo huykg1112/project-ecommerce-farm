@@ -8,12 +8,12 @@ import { SellerSection } from "@/components/cart/SellerSection";
 import { Button } from "@/components/ui/button";
 import { products } from "@/data/products";
 import { withAuth } from "@/lib/auth/with-auth";
-import type { AppDispatch, RootState } from "@/lib/cart/store";
 import {
   clearCart,
   removeFromCart,
   updateQuantity,
 } from "@/lib/features/cart-slice";
+import type { AppDispatch, RootState } from "@/lib/features/store";
 import { showToast } from "@/lib/toast-provider";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";

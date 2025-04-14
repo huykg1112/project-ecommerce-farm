@@ -7,8 +7,8 @@ import { Separator } from "@/components/ui/separator";
 import { products } from "@/data/products";
 import { withAuth } from "@/lib/auth/with-auth";
 import { useCartAnimation } from "@/lib/cart/cart-animation-context";
-import type { AppDispatch } from "@/lib/cart/store";
 import { addToCart } from "@/lib/features/cart-slice";
+import type { AppDispatch } from "@/lib/features/store";
 import {
   clearWishlist,
   removeFromWishlist,
