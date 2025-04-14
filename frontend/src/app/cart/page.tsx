@@ -2,7 +2,8 @@
 
 import { CartHeader } from "@/components/cart/CartHeader";
 import { EmptyCart } from "@/components/cart/EmptyCart";
-import { OrderSummary } from "@/components/cart/OrderSummary";
+import { OrderSummary } from "@/components/cart/OrderSummaryCart";
+
 import { RecommendedProducts } from "@/components/cart/RecommendedProducts";
 import { SellerSection } from "@/components/cart/SellerSection";
 import { Button } from "@/components/ui/button";
@@ -165,12 +166,12 @@ function CartPage() {
 
   if (items.length === 0) {
     return (
-      <>
+      <div className="container">
         <EmptyCart />
         {recommendedProducts.length > 0 && (
           <RecommendedProducts products={recommendedProducts} />
         )}
-      </>
+      </div>
     );
   }
 

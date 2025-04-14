@@ -34,7 +34,7 @@ function WishlistPage() {
   const [recommendedProducts, setRecommendedProducts] = useState(
     products
       .filter((p) => !wishlistItems.some((item) => item.id === p.id))
-      .slice(0, 4)
+      .slice(0, 8)
   );
 
   const handleRemoveFromWishlist = (id: string, name: string) => {
