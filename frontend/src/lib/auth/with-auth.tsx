@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import type { RootState } from "@/lib/cart/store";
+import type { RootState } from "@/lib/features/store";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useSelector } from "react-redux";

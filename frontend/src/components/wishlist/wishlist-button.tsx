@@ -5,7 +5,7 @@ import type React from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuthAction } from "@/lib/auth/use-auth-action";
-import type { RootState } from "@/lib/cart/store";
+import type { RootState } from "@/lib/features/store";
 import { cn } from "@/lib/utils";
 import { Heart } from "lucide-react";
 import { useRouter } from "next/navigation";

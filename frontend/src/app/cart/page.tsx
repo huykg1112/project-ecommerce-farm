@@ -2,18 +2,19 @@
 
 import { CartHeader } from "@/components/cart/CartHeader";
 import { EmptyCart } from "@/components/cart/EmptyCart";
-import { OrderSummary } from "@/components/cart/OrderSummary";
+import { OrderSummary } from "@/components/cart/OrderSummaryCart";
+
 import { RecommendedProducts } from "@/components/cart/RecommendedProducts";
 import { SellerSection } from "@/components/cart/SellerSection";
 import { Button } from "@/components/ui/button";
 import { products } from "@/data/products";
 import { withAuth } from "@/lib/auth/with-auth";
-import type { AppDispatch, RootState } from "@/lib/cart/store";
 import {
   clearCart,
   removeFromCart,
   updateQuantity,
 } from "@/lib/features/cart-slice";
+import type { AppDispatch, RootState } from "@/lib/features/store";
 import { showToast } from "@/lib/toast-provider";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
@@ -165,12 +166,12 @@ function CartPage() {
 
   if (items.length === 0) {
     return (
-      <>
+      <div className="container">
         <EmptyCart />
         {recommendedProducts.length > 0 && (
           <RecommendedProducts products={recommendedProducts} />
         )}
-      </>
+      </div>
     );
   }
 

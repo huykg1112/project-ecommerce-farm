@@ -1,9 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { ArrowRight } from "lucide-react";
-import { formatCurrency } from "@/lib/utils";
 import { OrderSummaryProps } from "@/interfaces";
+import { formatCurrency } from "@/lib/utils";
+import { ArrowRight } from "lucide-react";
+import { Card, CardHeader, CardTitle } from "../ui/card";
 
 export function OrderSummary({
   selectedItemsCount,
@@ -18,9 +19,11 @@ export function OrderSummary({
   onCheckout,
 }: OrderSummaryProps) {
   return (
-    <div className="bg-white rounded-lg shadow-sm overflow-hidden sticky top-24">
+    <Card className="sticky top-24 h-fit">
       <div className="p-6">
-        <h2 className="text-lg font-semibold mb-4">Tóm tắt đơn hàng</h2>
+        <CardHeader className="pb-3">
+          <CardTitle>Tóm tắt đơn hàng</CardTitle>
+        </CardHeader>
         <div className="space-y-3 mb-4">
           <div className="flex justify-between">
             <span className="text-gray-600">Sản phẩm đã chọn</span>
@@ -85,6 +88,6 @@ export function OrderSummary({
           <p>* Đơn hàng sẽ được giao trong vòng 2-3 ngày làm việc</p>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

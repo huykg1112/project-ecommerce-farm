@@ -4,7 +4,7 @@ import Logo from "@/assets/logo/logoFarme2.png";
 import LoginForm from "@/components/auth/LoginForm";
 import RegisterForm from "@/components/auth/RegisterForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { AppDispatch, RootState } from "@/lib/cart/store";
+import type { AppDispatch, RootState } from "@/lib/features/store";
 import {
   clearError,
   loginUser,

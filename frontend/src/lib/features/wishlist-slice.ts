@@ -1,4 +1,4 @@
-import type { RootState } from "@/lib/cart/store";
+import type { RootState } from "@/lib/features/store";
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 export interface WishlistItem {

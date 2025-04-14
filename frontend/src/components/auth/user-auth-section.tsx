@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UserAuthSectionProps } from "@/interfaces";
-import type { AppDispatch, RootState } from "@/lib/cart/store";
+import type { AppDispatch, RootState } from "@/lib/features/store";
 import { logoutUser } from "@/lib/features/user-slice";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
