@@ -84,6 +84,7 @@ export const authService = {
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
         localStorage.removeItem("Authorization");
+        localStorage.removeItem("wishlist");
       }
 
       return await response.json();
@@ -152,7 +153,7 @@ export const authService = {
   },
   isTokenExpiredRefresh(): boolean {
     if (!isClient) return true;
-    
+
     const refreshToken = localStorage.getItem("refresh_token");
     if (!refreshToken) return true;
 
