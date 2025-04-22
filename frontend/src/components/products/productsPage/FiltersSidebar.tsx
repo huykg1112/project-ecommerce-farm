@@ -21,6 +21,8 @@ interface FiltersSidebarProps {
   clearAllFilters: () => void;
   searchTerm: string;
   setSearchTerm: (value: string) => void;
+  searchSeller: string;
+  setSearchSeller: (value: string) => void;
   categories: any[];
   sellers: string[];
   minPrice: number;
@@ -37,6 +39,8 @@ export default function FiltersSidebar({
   clearAllFilters,
   searchTerm,
   setSearchTerm,
+  searchSeller,
+  setSearchSeller,
   categories,
   sellers,
   minPrice,
@@ -150,21 +154,32 @@ export default function FiltersSidebar({
             <AccordionTrigger>Đại lý</AccordionTrigger>
             <AccordionContent>
               <div className="space-y-2">
-                {sellers.map((seller) => (
-                  <div key={seller} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`seller-${seller}`}
-                      checked={filters.sellers.includes(seller)}
-                      onCheckedChange={() => handleSellerChange(seller)}
-                    />
-                    <Label
-                      htmlFor={`seller-${seller}`}
-                      className="text-sm cursor-pointer"
-                    >
-                      {seller}
-                    </Label>
-                  </div>
-                ))}
+                <Input
+                  type="search"
+                  placeholder="Tìm kiếm đại lý..."
+                  value={searchSeller}
+                  onChange={(e) => setSearchSeller(e.target.value)}
+                  className="mb-4 "
+                />
+                {sellers
+                  .filter((seller) =>
+                    seller.toLowerCase().includes(searchSeller.toLowerCase())
+                  )
+                  .map((seller) => (
+                    <div key={seller} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`seller-${seller}`}
+                        checked={filters.sellers.includes(seller)}
+                        onCheckedChange={() => handleSellerChange(seller)}
+                      />
+                      <Label
+                        htmlFor={`seller-${seller}`}
+                        className="text-sm cursor-pointer"
+                      >
+                        {seller}
+                      </Label>
+                    </div>
+                  ))}
               </div>
             </AccordionContent>
           </AccordionItem>
