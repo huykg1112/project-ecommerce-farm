@@ -44,6 +44,7 @@ export async function middleware(request: NextRequest) {
           // Nếu refresh thất bại, xóa token và redirect
           localStorage.removeItem("access_token");
           localStorage.removeItem("refresh_token");
+          localStorage.removeItem("wishlist");
 
           if (isAuthApiRoute) {
             return NextResponse.json(
