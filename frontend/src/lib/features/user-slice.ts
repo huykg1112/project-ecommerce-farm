@@ -159,30 +159,40 @@ const userSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
+    //   extraReducers: (builder) là một phần của Redux Toolkit, cho phép bạn xử lý các action ngoài các action được định nghĩa trong slice. Nó cho phép bạn thêm các case cho các action được tạo ra từ createAsyncThunk hoặc các action khác mà không cần phải định nghĩa chúng trong reducers.
     builder
       // Login
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
+      // Nếu đăng nhập thành công, lưu thông tin người dùng vào state
+      // action.payload là thông tin người dùng từ server
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
         state.currentUser = action.payload;
         state.isAuthenticated = true;
       })
+      // Nếu đăng nhập thất bại, lưu thông báo lỗi vào state
+      // action.payload là thông báo lỗi từ server
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string | string[];
       })
       // Register
+      // Nếu đăng ký thành công, không cần làm gì thêm
+      // action.payload là thông tin người dùng từ server
       .addCase(registerUser.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
+      // action.payload là thông tin người dùng từ server
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
         // Không đăng nhập tự động sau khi đăng ký
       })
+      // Nếu đăng ký thất bại, lưu thông báo lỗi vào state
+      // action.payload là thông báo lỗi từ server
       .addCase(registerUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string | string[];
@@ -191,11 +201,14 @@ const userSlice = createSlice({
       .addCase(logoutUser.pending, (state) => {
         state.loading = true;
       })
+      // nêu đăng xuất thành công, xóa thông tin người dùng khỏi state
       .addCase(logoutUser.fulfilled, (state) => {
         state.loading = false;
         state.currentUser = null;
         state.isAuthenticated = false;
       })
+      // Nếu đăng xuất thất bại, lưu thông báo lỗi vào state
+      // action.payload là thông báo lỗi từ server
       .addCase(logoutUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string | string[];

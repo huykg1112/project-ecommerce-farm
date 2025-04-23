@@ -1,4 +1,4 @@
-import { store } from "../cart/store";
+import { store } from "../features/store";
 import { logoutUser, refreshToken } from "../features/user-slice";
 import { authService } from "./auth-service";
 

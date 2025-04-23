@@ -1,4 +1,4 @@
-import { store } from "@/lib/cart/store";
+import { store } from "@/lib/features/store";
 import { refreshToken } from "@/lib/features/user-slice";
 import { isTokenExpired } from "@/lib/utils";
 import type { NextRequest } from "next/server";

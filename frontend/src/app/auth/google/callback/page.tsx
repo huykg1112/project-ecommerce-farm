@@ -1,6 +1,6 @@
 "use client";
 
-import { AppDispatch } from "@/lib/cart/store";
+import { AppDispatch } from "@/lib/features/store";
 import { setUser } from "@/lib/features/user-slice";
 import { authService } from "@/lib/services/auth-service";
 import { useRouter, useSearchParams } from "next/navigation";

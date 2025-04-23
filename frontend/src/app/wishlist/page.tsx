@@ -7,8 +7,8 @@ import { Separator } from "@/components/ui/separator";
 import { products } from "@/data/products";
 import { withAuth } from "@/lib/auth/with-auth";
 import { useCartAnimation } from "@/lib/cart/cart-animation-context";
-import type { AppDispatch } from "@/lib/cart/store";
 import { addToCart } from "@/lib/features/cart-slice";
+import type { AppDispatch } from "@/lib/features/store";
 import {
   clearWishlist,
   removeFromWishlist,
@@ -34,7 +34,7 @@ function WishlistPage() {
   const [recommendedProducts, setRecommendedProducts] = useState(
     products
       .filter((p) => !wishlistItems.some((item) => item.id === p.id))
-      .slice(0, 4)
+      .slice(0, 8)
   );
 
   const handleRemoveFromWishlist = (id: string, name: string) => {

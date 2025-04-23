@@ -36,6 +36,7 @@ export default function ProductsPage() {
   const [sort, setSort] = useState<SortOption>("featured");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchSeller, setSearchSeller] = useState("");
 
   useEffect(() => {
     if (initSearchTerm) {
@@ -185,6 +186,7 @@ export default function ProductsPage() {
     setCategoryParam(null);
     setFilters(initialFilters);
     setSearchTerm("");
+    setSearchSeller("");
   };
 
   // Đếm số lượng bộ lọc đang áp dụng
@@ -286,6 +288,8 @@ export default function ProductsPage() {
           maxPrice={maxPrice}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
+          searchSeller={searchSeller}
+          setSearchSeller={setSearchSeller}
           handleCategoryChange={handleCategoryChange}
           handleSellerChange={handleSellerChange}
           handleRatingChange={handleRatingChange}
