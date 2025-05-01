@@ -11,7 +11,7 @@ import {
   removeFromWishlist,
   selectIsInWishlist,
 } from "@/lib/features/wishlist-slice";
-import { showToast } from "@/lib/toast-provider";
+import { showToast } from "@/lib/provider/toast-provider";
 import { formatCurrency } from "@/lib/utils";
 import { useWishlistAnimation } from "@/lib/wishlist/wishlist-animation-context";
 import { Heart, ShoppingCart, Star } from "lucide-react";
@@ -151,7 +151,11 @@ export default function ProductCard({ product }: ProductCardProps) {
           className="absolute top-2 right-2 bg-white rounded-full hover:bg-gray-100"
           onClick={toggleWishlist}
         >
-          <Heart className={`h-5 w-5 ${isInWishlist ? "fill-red-500 text-red-500" : "text-gray-600"}`} />
+          <Heart
+            className={`h-5 w-5 ${
+              isInWishlist ? "fill-red-500 text-red-500" : "text-gray-600"
+            }`}
+          />
           <span className="sr-only">Add to wishlist</span>
         </Button>
         {product.discount && product.discount > 0 && (

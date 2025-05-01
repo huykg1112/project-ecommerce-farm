@@ -1,8 +1,8 @@
 "use client";
 
 import { CartAnimationProvider } from "@/lib/cart/cart-animation-context";
+import { ToastProvider } from "@/lib/provider/toast-provider";
 import { TokenRefreshProvider } from "@/lib/provider/token-refresh-provider";
-import { ToastProvider } from "@/lib/toast-provider";
 import { WishlistAnimationProvider } from "@/lib/wishlist/wishlist-animation-context";
 import { ThemeProvider } from "next-themes";
 import dynamic from "next/dynamic";

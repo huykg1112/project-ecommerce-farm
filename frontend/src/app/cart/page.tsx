@@ -15,7 +15,7 @@ import {
   updateQuantity,
 } from "@/lib/features/cart-slice";
 import type { AppDispatch, RootState } from "@/lib/features/store";
-import { showToast } from "@/lib/toast-provider";
+import { showToast } from "@/lib/provider/toast-provider";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
