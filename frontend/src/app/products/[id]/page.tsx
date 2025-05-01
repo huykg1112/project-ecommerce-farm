@@ -10,7 +10,7 @@ import { products } from "@/data/products";
 import { useAuthAction } from "@/lib/auth/use-auth-action";
 import { useCartAnimation } from "@/lib/cart/cart-animation-context";
 import { addToCart } from "@/lib/features/cart-slice";
-import { showToast } from "@/lib/toast-provider";
+import { showToast } from "@/lib/provider/toast-provider";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useRef, useState } from "react";

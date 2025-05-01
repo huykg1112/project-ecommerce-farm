@@ -14,7 +14,7 @@ import {
   removeFromWishlist,
   selectWishlistItems,
 } from "@/lib/features/wishlist-slice";
-import { showToast } from "@/lib/toast-provider";
+import { showToast } from "@/lib/provider/toast-provider";
 import { formatCurrency } from "@/lib/utils";
 import { Heart, ShoppingCart, Trash2, X } from "lucide-react";
 import Image from "next/image";

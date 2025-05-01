@@ -18,8 +18,8 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import type { AppDispatch } from "@/lib/features/store";
 import { logoutUser } from "@/lib/features/user-slice";
+import { showToast } from "@/lib/provider/toast-provider";
 import { userService } from "@/lib/services/user-service";
-import { showToast } from "@/lib/toast-provider";
 
 import { ChangePasswordDto, UpdateProfileDto, UserProfile } from "@/interfaces";
 import {
