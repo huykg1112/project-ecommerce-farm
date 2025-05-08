@@ -7,8 +7,8 @@ import { User } from '../modules/users/entities/user.entity';
 import { UserModule } from '../modules/users/user.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './jwt-auth.guard';
 import { GoogleStrategy } from './google.strategy';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Module({
   imports: [
