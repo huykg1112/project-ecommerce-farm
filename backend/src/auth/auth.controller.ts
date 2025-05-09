@@ -66,6 +66,7 @@ export class AuthController {
     const { access_token, refresh_token } = await this.authService.googleLogin(
       req.user,
     );
+    console.log(access_token, refresh_token);
     const redirectUrl = this.configService.get<string>(
       'GOOGLE_FRONTEND_REDIRECT_URL',
     );
