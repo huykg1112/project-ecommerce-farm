@@ -1,8 +1,8 @@
 import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
+    CanActivate,
+    ExecutionContext,
+    Injectable,
+    UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
@@ -22,23 +22,22 @@ export class JwtAuthGuard implements CanActivate {
     private readonly configService: ConfigService,
     private readonly tokenService: TokensService,
     private readonly userService: UserService,
-    private readonly reflector: Reflector, // Sử dụng reflector để lấy metadata, dùng để kiểm tra route có phải public hay không
+    private readonly reflector: Reflector,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const publicKey = this.configService.get<string>('IS_PUBLIC_KEY');
-
-    // Kiểm tra metadata với key từ .env
     const isPublic = this.reflector.getAllAndOverride<boolean>(publicKey, [
-      context.getHandler(), // Lấy handler của route, dung để kiểm tra metadata của route
+      context.getHandler(),
       context.getClass(),
     ]);
+
     if (isPublic) {
-      return true; // Cho phép truy cập route công khai
+      return true;
     }
 
     const request = context.switchToHttp().getRequest();
-    const authHeader = request.headers.authorization as string;
+    const authHeader = request.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       throw new UnauthorizedException('Token không hợp lệ hoặc thiếu');
@@ -60,24 +59,24 @@ export class JwtAuthGuard implements CanActivate {
       ]);
 
       if (!user || !user.isActive) {
-        throw new UnauthorizedException(
-          'Người dùng không tồn tại hoặc bị khóa',
-        );
+        throw new UnauthorizedException('Người dùng không tồn tại hoặc bị khóa');
       }
 
-      if (
-        !storedToken ||
-        storedToken.accessToken !== token ||
-        (storedToken.accessTokenExpiresAt &&
-          storedToken.accessTokenExpiresAt < new Date())
-      ) {
-        throw new UnauthorizedException(
-          'Token không hợp lệ hoặc đã bị vô hiệu hóa',
-        );
+      if (!storedToken || storedToken.accessToken !== token) {
+        throw new UnauthorizedException('Token không hợp lệ hoặc đã bị vô hiệu hóa');
       }
 
-      const { password, ...result } = user;
-      request.user = result;
+      if (storedToken.accessTokenExpiresAt && storedToken.accessTokenExpiresAt < new Date()) {
+        throw new UnauthorizedException('Token đã hết hạn');
+      }
+
+      // Attach user to request object
+      request.user = {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        role: user.role,
+      };
 
       return true;
     } catch (error) {

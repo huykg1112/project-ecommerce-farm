@@ -5,43 +5,51 @@ const API_URL = "http://localhost:4200";
 
 export const userService = {
   async getProfile(): Promise<UserProfile> {
-    let token = localStorage.getItem("access_token");
-    let refreshToken = localStorage.getItem("refresh_token");
-    if (!refreshToken && !token) {
-      throw new Error("Unauthorized");
-    }
-    if ((refreshToken && !token) || authService.isTokenExpiredRefresh()) {
-      // Nếu refresh token có nhưng access token không có, gọi refresh token
-      await authService.refreshToken();
-      token = localStorage.getItem("access_token")!;
-    }
+    try {
+      let token = localStorage.getItem("access_token");
+      let refreshToken = localStorage.getItem("refresh_token");
+      
+      if (!refreshToken && !token) {
+        throw new Error("Unauthorized - Please login");
+      }
 
-    let response = await fetch(`${API_URL}/user/profile`, {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
+      if ((refreshToken && !token) || authService.isTokenExpiredRefresh()) {
+        await authService.refreshToken();
+        token = localStorage.getItem("access_token")!;
+      }
 
-    // Nếu token hết hạn, thử refresh
-    if (response.status === 401) {
-      await authService.refreshToken();
-      token = localStorage.getItem("access_token")!;
-      response = await fetch(`${API_URL}/user/profile`, {
+      let response = await fetch(`${API_URL}/user/profile`, {
         method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
-    }
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch profile");
-    }
+      if (response.status === 401) {
+        await authService.refreshToken();
+        token = localStorage.getItem("access_token")!;
+        response = await fetch(`${API_URL}/user/profile`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+      }
 
-    return await response.json();
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to fetch profile");
+      }
+
+      return await response.json();
+    } catch (error) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("An unexpected error occurred while fetching profile");
+    }
   },
 
   async updateProfile(data: UpdateProfileDto): Promise<{ message: string }> {

@@ -4,12 +4,14 @@ import {
   Delete,
   Get,
   Headers,
+  InternalServerErrorException,
   NotFoundException,
   Param,
   Patch,
   Post,
   Put,
   Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Public } from '@root/src/public.decorator';
 import { validate as isUUID } from 'uuid';
@@ -28,13 +30,25 @@ export class UserController {
 
   @Get('profile')
   async getProfile(@Req() req): Promise<UserProfileSerializer> {
-    const userId: string = req.user.id as string;
-    // console.log(req.user);
-    const user = await this.userService.findById(userId);
-    if (!user) {
-      throw new NotFoundException(`User with id ${userId} not found`);
+    try {
+      if (!req.user || !req.user.id) {
+        throw new UnauthorizedException('User not authenticated');
+      }
+
+      const userId: string = req.user.id;
+      const user = await this.userService.findById(userId);
+      
+      if (!user) {
+        throw new NotFoundException(`User with id ${userId} not found`);
+      }
+
+      return UserProfileSerializer.serialize(user);
+    } catch (error) {
+      if (error instanceof UnauthorizedException || error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Failed to fetch user profile');
     }
-    return UserProfileSerializer.serialize(user);
   }
 
   @Get(':id')

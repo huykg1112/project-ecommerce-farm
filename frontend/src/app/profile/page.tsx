@@ -22,6 +22,7 @@ import { showToast } from "@/lib/provider/toast-provider";
 import { userService } from "@/lib/services/user-service";
 
 import { ChangePasswordDto, UpdateProfileDto, UserProfile } from "@/interfaces";
+import { withAuth } from "@/lib/auth/with-auth";
 import {
   Heart,
   LogOut,
@@ -75,9 +76,9 @@ function ProfilePage() {
           address: data.address || "",
           email: data.email || "",
         });
+        console.log(data);
       } catch (error) {
         console.error("Failed to fetch profile:", error);
-
         dispatch(logoutUser());
         router.push("/login");
       } finally {
@@ -596,5 +597,5 @@ function ProfilePage() {
   );
 }
 
-// export default withAuth(ProfilePage);
-export default ProfilePage;
+export default withAuth(ProfilePage);
+// export default ProfilePage;
