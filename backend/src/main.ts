@@ -1,15 +1,22 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import * as session from 'express-session'; // Thêm import express-session
 import 'module-alias/register';
+import { join } from 'path';
 import { AppDataSource } from '../ormconfig';
 import { AppModule } from './app.module';
-import * as session from 'express-session'; // Thêm import express-session
 
 // Lý do: Đặt tên hàm bootstrap là async nên cần xử lý lỗi bằng try-catch để tránh crash ứng dụng
 async function bootstrap() {
   try {
-    const app = await NestFactory.create(AppModule);
+    const app = await NestFactory.create<NestExpressApplication>(AppModule);
     await AppDataSource.initialize(); // Initialize the DataSource
+
+    // Serve static files
+    app.useStaticAssets(join(__dirname, '..', 'public'), {
+      prefix: '/public/',
+    });
 
     // Cải tiến tốc độ: Chỉ khởi tạo CORS nếu thực sự cần, có thể dùng biến môi trường để bật/tắt
     const enableCors = process.env.ENABLE_CORS === 'true'; // Thêm vào .env: ENABLE_CORS=true

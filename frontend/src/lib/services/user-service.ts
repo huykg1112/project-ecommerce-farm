@@ -13,9 +13,14 @@ export const userService = {
         throw new Error("Unauthorized - Please login");
       }
 
+
       if ((refreshToken && !token) || authService.isTokenExpiredRefresh()) {
         await authService.refreshToken();
         token = localStorage.getItem("access_token")!;
+      }
+
+      if (!token) {
+        throw new Error("No access token available");
       }
 
       let response = await fetch(`${API_URL}/user/profile`, {
@@ -27,8 +32,14 @@ export const userService = {
       });
 
       if (response.status === 401) {
+        console.log("refresh token");
         await authService.refreshToken();
         token = localStorage.getItem("access_token")!;
+        
+        if (!token) {
+          throw new Error("Failed to refresh token");
+        }
+
         response = await fetch(`${API_URL}/user/profile`, {
           method: "GET",
           headers: {
@@ -40,6 +51,9 @@ export const userService = {
 
       if (!response.ok) {
         const errorData = await response.json();
+        if (response.status === 401) {
+          throw new Error("Session expired - Please login again");
+        }
         throw new Error(errorData.message || "Failed to fetch profile");
       }
 

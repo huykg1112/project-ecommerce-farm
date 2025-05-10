@@ -5,8 +5,8 @@ import {
   Delete,
   Get,
   Post,
-  Redirect,
   Request,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -61,17 +61,23 @@ export class AuthController {
   @Public()
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  @Redirect() // Thêm decorator Redirect
-  async googleLoginCallback(@Request() req) {
-    const { access_token, refresh_token } = await this.authService.googleLogin(
-      req.user,
-    );
-    console.log(access_token, refresh_token);
-    const redirectUrl = this.configService.get<string>(
-      'GOOGLE_FRONTEND_REDIRECT_URL',
-    );
-    return {
-      url: `${redirectUrl}?access_token=${access_token}&refresh_token=${refresh_token}`,
-    };
+  async googleLoginCallback(@Request() req, @Res() res) {
+    try {
+      const { access_token, refresh_token } =
+        await this.authService.googleLogin(req.user);
+      const redirectUrl = this.configService.get<string>(
+        'GOOGLE_FRONTEND_REDIRECT_URL',
+      );
+      return res.redirect(
+        `${redirectUrl}?access_token=${access_token}&refresh_token=${refresh_token}`,
+      );
+    } catch (error) {
+      console.error('Google callback error:', error);
+      return res.redirect(
+        `${this.configService.get<string>('GOOGLE_FRONTEND_REDIRECT_URL')}?error=${
+          error.message
+        }`,
+      );
+    }
   }
 }

@@ -31,8 +31,14 @@ export class UserController {
   @Get('profile')
   async getProfile(@Req() req): Promise<UserProfileSerializer> {
     try {
-      if (!req.user || !req.user.id) {
+      // Kiểm tra xem req.user có tồn tại không
+      if (!req.user) {
         throw new UnauthorizedException('User not authenticated');
+      }
+
+      // Kiểm tra xem req.user.id có tồn tại không
+      if (!req.user.id) {
+        throw new UnauthorizedException('User ID not found');
       }
 
       const userId: string = req.user.id;
