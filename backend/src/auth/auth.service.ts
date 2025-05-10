@@ -1,5 +1,9 @@
 import { TokensService } from '@modules/tokens/tokens.service'; // Thêm TokenService
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { Token } from '../modules/tokens/entities/token.entity';
@@ -120,34 +124,61 @@ export class AuthService {
   async googleLogin(
     googleUser: any,
   ): Promise<{ access_token: string; refresh_token: string }> {
-    // Kiểm tra xem user đã tồn tại qua email chưa
-    let user: User;
-    let isUser = await this.userService.isUsernameExists(googleUser.email); // Dùng email làm username
-    if (!isUser) {
-      // Nếu chưa tồn tại, tạo user mới
-      user = this.userService.userRepository.create({
-        username: googleUser.email,
-        email: googleUser.email,
-        fullName: googleUser.fullName,
-        password: '', // Không cần mật khẩu cho OAuth
-        isActive: true,
-        role: await this.userService.rolesService.findByName('Client'), // Gán role mặc định
+    try {
+      // Kiểm tra xem user đã tồn tại qua email
+      let user = await this.userService.userRepository.findOne({
+        where: { email: googleUser.email },
+        relations: ['role'],
       });
-      user = await this.userService.userRepository.save(user);
+
+      if (!user) {
+        // Nếu chưa tồn tại, tạo user mới
+        const role = await this.userService.rolesService.findByName('Client');
+        if (!role) {
+          // Tạo vai trò Client nếu chưa tồn tại
+          const createRoleDto = {
+            name: 'Client',
+            description: 'Vai trò mặc định cho khách hàng',
+          };
+          await this.userService.rolesService.createRole(createRoleDto);
+        }
+
+        user = this.userService.userRepository.create({
+          username: googleUser.email, // Hoặc tạo username duy nhất nếu cần
+          email: googleUser.email,
+          fullName: googleUser.fullName || 'Google User',
+          password: '', // Không cần mật khẩu
+          isActive: true,
+          role: await this.userService.rolesService.findByName('Client'),
+        });
+
+        try {
+          user = await this.userService.userRepository.save(user);
+        } catch (error) {
+          throw new BadRequestException(
+            `Không thể tạo người dùng: ${error.message}`,
+          );
+        }
+      }
+
+      // Tạo token cho user
+      const payload = { username: user.username, sub: user.id };
+      const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
+      const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
+      const hashedRefreshToken = await this.hashRefreshToken(refreshToken);
+
+      await this.tokenService.createForUser(
+        user.id,
+        accessToken,
+        hashedRefreshToken,
+      );
+
+      return { access_token: accessToken, refresh_token: refreshToken };
+    } catch (error) {
+      console.error('Google login error:', error);
+      throw new BadRequestException(
+        `Đăng nhập Google thất bại: ${error.message}`,
+      );
     }
-    user = await this.userService.findByUsername(googleUser.email); // Tìm user qua email
-    // Tạo token cho user
-    const payload = { username: user.username, sub: user.id };
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
-    const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
-    const hashedRefreshToken = await this.hashRefreshToken(refreshToken);
-
-    await this.tokenService.createForUser(
-      user.id,
-      accessToken,
-      hashedRefreshToken,
-    );
-
-    return { access_token: accessToken, refresh_token: refreshToken };
   }
 }
