@@ -9,14 +9,15 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { CartItemsModule } from './modules/cart_items/cart_items.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { FavoriteProductsModule } from './modules/favorite_products/favorite_products.module';
+import { IngredientsModule } from './modules/ingredients/ingredients.module';
 import { InventorysModule } from './modules/inventorys/inventorys.module';
 import { OrderItemsModule } from './modules/order_items/order_items.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
+import { ProductsModule } from './modules/product/products.module';
 import { ProductBatchesModule } from './modules/product_batches/product_batches.module';
 import { ProductImagesModule } from './modules/product_images/product_images.module';
-import { ProductsModule } from './modules/products/products.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { RolePermissionsModule } from './modules/role_permissions/role_permissions.module';
 import { RolesModule } from './modules/roles/roles.module';
@@ -71,6 +72,7 @@ import { UserModule } from './modules/users/user.module';
     PaymentsModule,
     InventorysModule,
     TokensModule,
+    IngredientsModule, // Already included
   ],
   controllers: [AppController],
   providers: [

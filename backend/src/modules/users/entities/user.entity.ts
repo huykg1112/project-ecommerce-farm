@@ -2,10 +2,10 @@ import { CartItem } from '@modules/cart_items/entities/cart_item.entity';
 import { FavoriteProduct } from '@modules/favorite_products/entities/favorite_product.entity';
 import { Inventory } from '@modules/inventorys/entities/inventory.entity';
 import { Order } from '@modules/orders/entities/order.entity';
-import { Product } from '@modules/products/entities/product.entity';
 import { Review } from '@modules/reviews/entities/review.entity';
 import { Role } from '@modules/roles/entities/role.entity';
 import { Token } from '@modules/tokens/entities/token.entity'; // Thêm import
+import { Product } from '@root/src/modules/product/entities/product.entity';
 import {
   Column,
   CreateDateColumn,

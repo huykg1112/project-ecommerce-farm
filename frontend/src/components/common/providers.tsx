@@ -1,6 +1,7 @@
 "use client";
 
 import { CartAnimationProvider } from "@/lib/cart/cart-animation-context";
+
 import { TokenRefreshProvider } from "@/lib/provider/token-refresh-provider";
 import { ToastProvider } from "@/lib/toast-provider";
 import { WishlistAnimationProvider } from "@/lib/wishlist/wishlist-animation-context";

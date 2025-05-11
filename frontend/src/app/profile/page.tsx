@@ -18,10 +18,12 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import type { AppDispatch } from "@/lib/features/store";
 import { logoutUser } from "@/lib/features/user-slice";
+
 import { userService } from "@/lib/services/user-service";
-import { showToast } from "@/lib/toast-provider";
 
 import { ChangePasswordDto, UpdateProfileDto, UserProfile } from "@/interfaces";
+import { withAuth } from "@/lib/auth/with-auth";
+import { showToast } from "@/lib/toast-provider";
 import {
   Heart,
   LogOut,
@@ -68,6 +70,7 @@ function ProfilePage() {
       try {
         setLoading(true);
         const data = await userService.getProfile();
+
         setProfile(data);
         setFormData({
           fullName: data.fullName || "",
@@ -75,18 +78,32 @@ function ProfilePage() {
           address: data.address || "",
           email: data.email || "",
         });
-      } catch (error) {
+      } catch (error: any) {
         console.error("Failed to fetch profile:", error);
-
-        dispatch(logoutUser());
-        router.push("/login");
+        if (
+          error.message.includes("Unauthorized") ||
+          error.message.includes("Session expired")
+        ) {
+          showToast.error(
+            "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
+          );
+          // Clear tokens before logout
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          dispatch(logoutUser());
+          router.push("/login");
+        } else {
+          showToast.error(
+            error.message || "Có lỗi xảy ra khi tải thông tin cá nhân"
+          );
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchProfile();
-  }, []);
+  }, [dispatch, router]);
 
   // Handle form input changes
   const handleInputChange = (
@@ -196,7 +213,11 @@ function ProfilePage() {
               <div className="flex flex-col items-center mb-6">
                 <Avatar className="h-24 w-24 mb-4">
                   <AvatarImage
-                    src={profile?.avatar || "/avatar-placeholder.png"}
+                    src={
+                      profile?.avatar
+                        ? `http://localhost:4200/public/${profile.avatar}`
+                        : "/avatar-placeholder.png"
+                    }
                     alt={profile?.username || "User"}
                   />
                   <AvatarFallback className="text-2xl">
@@ -596,5 +617,5 @@ function ProfilePage() {
   );
 }
 
-// export default withAuth(ProfilePage);
-export default ProfilePage;
+export default withAuth(ProfilePage);
+// export default ProfilePage;

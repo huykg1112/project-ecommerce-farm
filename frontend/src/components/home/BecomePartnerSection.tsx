@@ -71,7 +71,7 @@ export default function BecomePartnerSection() {
                 Hỗ trợ marketing và quảng bá sản phẩm
               </li>
             </ul>
-            <Link href="/register-seller">
+            <Link href="/register-dealer">
               <Button
                 size="lg"
                 className="bg-white text-primary hover:bg-gray-100"

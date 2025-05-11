@@ -1,4 +1,4 @@
-import { Product } from '@modules/products/entities/product.entity';
+import { Product } from '@root/src/modules/product/entities/product.entity';
 import {
   Column,
   CreateDateColumn,
@@ -19,6 +19,8 @@ export class Category {
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   description!: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  imageURL!: string;
 
   @Column({ type: 'boolean', default: true })
   isActive!: boolean;
