@@ -23,6 +23,8 @@ import { RolePermissionsModule } from './modules/role_permissions/role_permissio
 import { RolesModule } from './modules/roles/roles.module';
 import { TokensModule } from './modules/tokens/tokens.module';
 import { UserModule } from './modules/users/user.module';
+import { VouchersModule } from './modules/vouchers/vouchers.module';
+import { ProductsComboModule } from './modules/products_combo/products_combo.module';
 
 @Module({
   imports: [
@@ -72,7 +74,10 @@ import { UserModule } from './modules/users/user.module';
     PaymentsModule,
     InventorysModule,
     TokensModule,
-    IngredientsModule, // Already included
+    IngredientsModule,
+    VouchersModule,
+    ProductsComboModule,
+
   ],
   controllers: [AppController],
   providers: [

@@ -19,7 +19,13 @@ export class Inventory {
   quantityInStock!: number;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  location!: string; // Vị trí kho của đại lý
+  address!: string; // Vị trí kho của đại lý
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  lat!: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  lng!: string;
 
   @Column({ type: 'boolean', default: true })
   isActive!: boolean;

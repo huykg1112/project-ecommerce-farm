@@ -44,6 +44,12 @@ export class User {
   @Column({ type: 'varchar', length: 500, nullable: true })
   address!: string;
 
+  @Column({ type: 'decimal', precision: 10, scale: 8, nullable: true })
+  lat!: number;
+
+  @Column({ type: 'decimal', precision: 10, scale: 8, nullable: true })
+  lng!: number;
+
   @Column({ type: 'varchar', length: 255, nullable: true })
   avatar!: string;
 
