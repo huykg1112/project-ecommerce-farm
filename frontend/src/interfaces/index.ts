@@ -16,3 +16,14 @@ export * from "./sellers";
 export * from "./stores";
 export * from "./tokens";
 export * from "./users";
+
+export interface UpdateProfileDto {
+  fullName?: string;
+  phone?: string;
+  address?: string;
+  email?: string;
+  lat?: number;
+  lng?: number;
+  cccd?: string;
+  license?: string;
+}

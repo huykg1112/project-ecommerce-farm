@@ -21,6 +21,9 @@ export interface User {
   avatar?: string;
   roleName?: string;
   fullName?: string;
+  cccd?: string;
+  lat?: number;
+  lng?: number;
 }
 
 interface UserState {

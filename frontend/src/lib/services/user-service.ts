@@ -46,6 +46,7 @@ export const userService = {
 
   async updateProfile(data: UpdateProfileDto): Promise<{ message: string }> {
     const token = authService.getToken();
+    console.log(data);
     if (!token) {
       throw new Error("Unauthorized");
     }

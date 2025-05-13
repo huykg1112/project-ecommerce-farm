@@ -44,22 +44,26 @@ function CheckoutPage() {
     fullName: currentUser?.fullName || "",
     phone: currentUser?.phone || "",
     email: currentUser?.email || "",
-  });
-  const [addressData, setAddressData] = useState<AddressData>({
-    fullAddress: "",
-    latitude: 0,
-    longitude: 0,
+    address: currentUser?.address || "",
+    lat: currentUser?.lat || 0,
+    lng: currentUser?.lng || 0,
   });
 
-  // Nếu người dùng bằng API thì không cần nhập lại thông tin
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const data = await userService.getProfile();
+        const lat = data.lat && !isNaN(Number(data.lat)) ? Number(data.lat) : 0;
+        const lng = data.lng && !isNaN(Number(data.lng)) ? Number(data.lng) : 0;
+
         setFormData({
           fullName: data.fullName || "",
           phone: data.phone || "",
           email: data.email || "",
+          address: data.address || "",
+          lat: lat,
+          lng: lng,
         });
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -106,13 +110,18 @@ function CheckoutPage() {
 
   // Xử lý thay đổi địa chỉ từ bản đồ
   const handleAddressChange = (address: AddressData) => {
-    setAddressData(address);
+    setFormData(prev => ({
+      ...prev,
+      address: address.fullAddress,
+      lat: address.latitude,
+      lng: address.longitude,
+    }));
   };
 
   // Xử lý đặt hàng
   const handlePlaceOrder = async () => {
     // Kiểm tra thông tin bắt buộc
-    if (!formData.fullName || !formData.phone || !addressData.fullAddress) {
+    if (!formData.fullName || !formData.phone || !formData.address) {
       alert("Vui lòng điền đầy đủ thông tin giao hàng");
       return;
     }
@@ -127,7 +136,7 @@ function CheckoutPage() {
           ...formData,
         },
         shipping: {
-          address: addressData,
+          address: formData.address,
           fee: shippingFee,
         },
         payment: {
@@ -138,6 +147,7 @@ function CheckoutPage() {
         createdAt: new Date().toISOString(),
       };
 
+   
       // Lưu đơn hàng vào localStorage để demo
       const orders = JSON.parse(localStorage.getItem("orders") || "[]");
       const orderId = `ORD${Date.now()}`;
@@ -145,9 +155,12 @@ function CheckoutPage() {
         id: orderId,
         ...orderData,
       };
+      console.log(formData);
+      
       orders.push(newOrder);
-      localStorage.setItem("orders", JSON.stringify(orders));
 
+      localStorage.setItem("orders", JSON.stringify(orders));
+      
       // Giả lập API call
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -271,7 +284,14 @@ function CheckoutPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <AddressMapPicker onAddressChange={handleAddressChange} />
+              <AddressMapPicker
+                onAddressChange={handleAddressChange}
+                initialAddress={{
+                  fullAddress: formData.address || "",
+                  latitude: formData.lat || 0,
+                  longitude: formData.lng || 0,
+                }}
+              />
             </CardContent>
           </Card>
 
@@ -289,6 +309,15 @@ function CheckoutPage() {
                   <RadioGroupItem value="standard" id="standard" />
                   <Label htmlFor="standard">
                     Giao hàng tiêu chuẩn (2-3 ngày)
+                  </Label>
+                  <span className="ml-auto font-medium">
+                    {shippingFee > 0 ? formatCurrency(shippingFee) : "Miễn phí"}
+                  </span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="fast" id="fast" />
+                  <Label htmlFor="fast">
+                    Nhận tại cửa hàng
                   </Label>
                   <span className="ml-auto font-medium">
                     {shippingFee > 0 ? formatCurrency(shippingFee) : "Miễn phí"}

@@ -42,34 +42,35 @@ const isValidCoordinate = (lat: number, lng: number) =>
   lat >= -90 &&
   lat <= 90 &&
   lng >= -180 &&
-  lng <= 180;
+  lng <= 180 &&
+  !(lat === 0 && lng === 0); // Loại bỏ tọa độ (0, 0)
 
 export default function AddressMapPicker({
   onAddressChange,
   initialAddress,
 }: AddressMapPickerProps) {
-  // Khởi tạo tọa độ mặc định an toàn
+  // Khởi tạo tọa độ mặc định an toàn (TP.HCM)
   const defaultCoords = { latitude: 10.762622, longitude: 106.660172 };
-  const initialLat = initialAddress?.latitude ?? defaultCoords.latitude;
-  const initialLng = initialAddress?.longitude ?? defaultCoords.longitude;
+
+  // Kiểm tra và gán tọa độ ban đầu
+  const initialLat =
+    initialAddress?.latitude && isValidCoordinate(initialAddress.latitude, initialAddress.longitude)
+      ? initialAddress.latitude
+      : defaultCoords.latitude;
+  const initialLng =
+    initialAddress?.longitude && isValidCoordinate(initialAddress.latitude, initialAddress.longitude)
+      ? initialAddress.longitude
+      : defaultCoords.longitude;
 
   const [viewport, setViewport] = useState({
-    latitude: isValidCoordinate(initialLat, initialLng)
-      ? initialLat
-      : defaultCoords.latitude,
-    longitude: isValidCoordinate(initialLat, initialLng)
-      ? initialLng
-      : defaultCoords.longitude,
-    zoom: 18,
+    latitude: initialLat,
+    longitude: initialLng,
+    zoom: 15, // Giảm zoom để tránh lỗi tỷ lệ
   });
   const [address, setAddress] = useState<AddressData>({
     fullAddress: initialAddress?.fullAddress || "",
-    latitude: isValidCoordinate(initialLat, initialLng)
-      ? initialLat
-      : defaultCoords.latitude,
-    longitude: isValidCoordinate(initialLat, initialLng)
-      ? initialLng
-      : defaultCoords.longitude,
+    latitude: initialLat,
+    longitude: initialLng,
     street: initialAddress?.street || "",
     ward: initialAddress?.ward || "",
     district: initialAddress?.district || "",
@@ -81,13 +82,13 @@ export default function AddressMapPicker({
 
   // Gọi reverse geocode khi khởi tạo
   useEffect(() => {
-    if (isValidCoordinate(address.latitude, address.longitude)) {
-      reverseGeocode(address.latitude, address.longitude);
+    if (isValidCoordinate(initialLat, initialLng)) {
+      reverseGeocode(initialLat, initialLng);
     } else {
       setLoading(false);
-      showToast.error("Tọa độ ban đầu không hợp lệ");
+      showToast.error("Tọa độ ban đầu không hợp lệ, sử dụng tọa độ mặc định");
     }
-  }, []);
+  }, [initialLat, initialLng]);
 
   // Đồng bộ viewport với address
   useEffect(() => {
@@ -96,7 +97,9 @@ export default function AddressMapPicker({
         ...prev,
         latitude: address.latitude,
         longitude: address.longitude,
+        zoom: 15,
       }));
+      onAddressChange(address);
     }
   }, [address.latitude, address.longitude]);
 
@@ -124,23 +127,13 @@ export default function AddressMapPicker({
           city = "";
         if (result.address_components) {
           for (const component of result.address_components) {
-            // Thêm kiểm tra component.types tồn tại trước khi gọi includes
-            if (component.types && component.types.includes("street")) {
+            if (component.types?.includes("street")) {
               street = component.long_name;
-            } else if (
-              component.types &&
-              component.types.includes("administrative_area_level_3")
-            ) {
+            } else if (component.types?.includes("administrative_area_level_3")) {
               ward = component.long_name;
-            } else if (
-              component.types &&
-              component.types.includes("administrative_area_level_2")
-            ) {
+            } else if (component.types?.includes("administrative_area_level_2")) {
               district = component.long_name;
-            } else if (
-              component.types &&
-              component.types.includes("administrative_area_level_1")
-            ) {
+            } else if (component.types?.includes("administrative_area_level_1")) {
               city = component.long_name;
             }
           }
@@ -210,19 +203,19 @@ export default function AddressMapPicker({
     setAddress(newAddress);
     onAddressChange(newAddress);
   };
-  console.log("Address:", address);
 
   const handleMapClick = (event: any) => {
     const lat = event.lngLat[1];
     const lng = event.lngLat[0];
-    setAddress((prev) => ({
-      ...prev,
-      latitude: lat,
-      longitude: lng,
-    }));
-    reverseGeocode(lat, lng);
+    if (isValidCoordinate(lat, lng)) {
+      setAddress((prev) => ({
+        ...prev,
+        latitude: lat,
+        longitude: lng,
+      }));
+      reverseGeocode(lat, lng);
+    }
   };
-  // Xử lý sự kiện kéo thả marker
 
   return (
     <div className="space-y-4">
@@ -260,7 +253,6 @@ export default function AddressMapPicker({
               <Marker
                 latitude={address.latitude}
                 longitude={address.longitude}
-                // icon={<MapPin className="h-5 w-5 text-primary" />}
                 offsetLeft={-12}
                 offsetTop={-24}
                 draggable
@@ -309,7 +301,6 @@ export default function AddressMapPicker({
     </div>
   );
 }
-
 // Thêm Label component
 const Label = ({
   children,

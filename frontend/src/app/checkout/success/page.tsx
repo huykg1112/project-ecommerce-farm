@@ -115,7 +115,7 @@ function OrderSuccessPage() {
                     <div className="flex items-start">
                       <MapPin className="h-5 w-5 mr-2 text-gray-500 mt-0.5" />
                       <div>
-                        <p>{order.shipping.address.fullAddress}</p>
+                        <p>{order.shipping.address}</p>
                         {order.shipping.address.notes && (
                           <p className="text-sm text-gray-500 mt-1">
                             Ghi chú: {order.shipping.address.notes}

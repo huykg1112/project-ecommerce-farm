@@ -32,7 +32,11 @@ export interface UserProfile {
   email: string;
   phone?: string;
   fullName?: string;
+  lat?: number;
+  lng?: number;
   address?: string;
+  cccd?: string;
+  license?: string;
   avatar?: string;
   roleName: string;
   createdAt: string;
@@ -44,6 +48,8 @@ export interface UpdateProfileDto {
   phone?: string;
   address?: string;
   email?: string;
+  lat?: number;
+  lng?: number;
 }
 
 export interface ChangePasswordDto {
