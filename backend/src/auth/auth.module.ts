@@ -8,8 +8,9 @@ import { User } from '../modules/users/entities/user.entity';
 import { UserModule } from '../modules/users/user.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { JwtAuthGuard } from './jwt-auth.guard';
 import { GoogleStrategy } from './google.strategy';
+import { JwtAuthGuard } from './jwt-auth.guard';
+import { RoleGuard } from './role.guard';
 
 @Module({
   imports: [
@@ -26,8 +27,8 @@ import { GoogleStrategy } from './google.strategy';
     }),
     ConfigModule,
   ],
-  providers: [AuthService, JwtAuthGuard, GoogleStrategy], // Cung cấp JwtAuthGuard
+  providers: [AuthService, JwtAuthGuard, GoogleStrategy, RoleGuard], // Cung cấp JwtAuthGuard
   controllers: [AuthController],
-  exports: [JwtAuthGuard], // Export JwtAuthGuard để UserModule sử dụng
+  exports: [JwtAuthGuard, RoleGuard], // Export JwtAuthGuard để UserModule sử dụng
 })
 export class AuthModule {}

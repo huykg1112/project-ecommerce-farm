@@ -1,6 +1,6 @@
 "use client";
 
-import GoogleMapComponent from "@/components/map/google-map";
+import GoongMapComponent from "@/components/map/goong-map";
 import StoreDetail from "@/components/map/store-detail";
 import StoreList from "@/components/map/store-list";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ export default function StoresPage() {
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [showList, setShowList] = useState(true);
   const [showDetail, setShowDetail] = useState(false);
-  const [mapInstance, setMapInstance] = useState<google.maps.Map | null>(null);
+  const [mapInstance, setMapInstance] = useState<any>(null);
 
   const handleStoreSelect = (store: Store) => {
     setSelectedStore(store);
@@ -81,11 +81,11 @@ export default function StoresPage() {
             showList ? "hidden" : "block"
           } md:block md:col-span-2 lg:col-span-3 border rounded-lg overflow-hidden`}
         >
-          <GoogleMapComponent
+          <GoongMapComponent
             stores={stores}
             selectedStore={selectedStore}
             onStoreSelect={handleStoreSelect}
-            onLoad={(map) => setMapInstance(map)} // Truyền map instance
+            onLoad={(map) => setMapInstance(map)}
           />
         </div>
       </div>

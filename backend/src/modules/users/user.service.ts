@@ -138,6 +138,7 @@ export class UserService {
   ): Promise<{ message: string }> {
     const user = await this.findById(userId);
 
+
     // Lý do: Kiểm tra email trùng lặp khi cập nhật
     if (updateProfileDto.email && updateProfileDto.email !== user.email) {
       const existingEmail = await this.userRepository.findOne({
@@ -150,10 +151,9 @@ export class UserService {
       }
     }
 
-    const { fullName, email, phone, address, isActive, avatar } =
+    const { fullName, email, phone, address, isActive, avatar, lat, lng, cccd, license } =
       updateProfileDto;
-    Object.assign(user, { fullName, email, phone, address, isActive, avatar }); //
-
+    Object.assign(user, { fullName, email, phone, address, isActive, avatar, lat, lng, cccd, license }); //
     await this.userRepository.save(user);
     return { message: 'Cập nhật thông tin thành công' };
   }

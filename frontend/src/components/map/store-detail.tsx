@@ -24,7 +24,7 @@ const StoreDetail = ({ store, onClose }: StoreDetailProps) => {
     );
   };
   const handleGetDeteilSeller = ({ idSeller }: { idSeller: number }) => {
-    console.log("idSeller", idSeller);
+    // console.log("idSeller", idSeller);
     router.push(`/seller/${idSeller}`);
   };
 

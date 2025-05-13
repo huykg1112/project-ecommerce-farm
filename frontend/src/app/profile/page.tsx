@@ -15,13 +15,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
 import type { AppDispatch } from "@/lib/features/store";
 import { logoutUser } from "@/lib/features/user-slice";
-import { userService } from "@/lib/services/user-service";
-import { showToast } from "@/lib/toast-provider";
 
+import { userService } from "@/lib/services/user-service";
+
+import AddressMapPicker, {
+  type AddressData,
+} from "@/components/map/address-map-picker";
 import { ChangePasswordDto, UpdateProfileDto, UserProfile } from "@/interfaces";
+import { withAuth } from "@/lib/auth/with-auth";
+import { showToast } from "@/lib/toast-provider";
 import {
   Heart,
   LogOut,
@@ -46,6 +50,7 @@ function ProfilePage() {
   const [updating, setUpdating] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
 
+
   const dispatch = useDispatch<AppDispatch>();
 
   // Form states
@@ -54,6 +59,10 @@ function ProfilePage() {
     phone: "",
     address: "",
     email: "",
+    lat: 0,
+    lng: 0,
+    cccd: "",
+    license: "",
   });
 
   const [passwordData, setPasswordData] = useState<ChangePasswordDto>({
@@ -62,31 +71,55 @@ function ProfilePage() {
     confirmPassword: "",
   });
 
+
+
   // Fetch profile data
   useEffect(() => {
+    setLoading(true);
     const fetchProfile = async () => {
       try {
-        setLoading(true);
         const data = await userService.getProfile();
-        setProfile(data);
+        
+        // Kiểm tra và xác thực tọa độ
+        const lat = data.lat && !isNaN(Number(data.lat)) ? Number(data.lat) : 0;
+        const lng = data.lng && !isNaN(Number(data.lng)) ? Number(data.lng) : 0;
+
         setFormData({
           fullName: data.fullName || "",
           phone: data.phone || "",
           address: data.address || "",
           email: data.email || "",
+          lat: lat,
+          lng: lng,
+          cccd: data.cccd || "",
+          license: data.license || "",
         });
-      } catch (error) {
+        setProfile(data);
+      } catch (error: any) {
         console.error("Failed to fetch profile:", error);
-
-        dispatch(logoutUser());
-        router.push("/login");
+        if (
+          error.message.includes("Unauthorized") ||
+          error.message.includes("Session expired")
+        ) {
+          showToast.error(
+            "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
+          );
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          dispatch(logoutUser());
+          router.push("/login");
+        } else {
+          showToast.error(
+            error.message || "Có lỗi xảy ra khi tải thông tin cá nhân"
+          );
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchProfile();
-  }, []);
+  }, [dispatch, router]);
 
   // Handle form input changes
   const handleInputChange = (
@@ -108,11 +141,22 @@ function ProfilePage() {
     }));
   };
 
+  // Handle address change from map picker
+  const handleAddressChange = (address: AddressData) => {
+    setFormData(prev => ({
+      ...prev,
+      address: address.fullAddress,
+      lat: address.latitude,
+      lng: address.longitude,
+    }));
+  };
+
   // Handle profile update
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setUpdating(true);
+
       await userService.updateProfile(formData);
       showToast.success("Cập nhật thông tin thành công");
 
@@ -196,7 +240,11 @@ function ProfilePage() {
               <div className="flex flex-col items-center mb-6">
                 <Avatar className="h-24 w-24 mb-4">
                   <AvatarImage
-                    src={profile?.avatar || "/avatar-placeholder.png"}
+                    src={
+                      profile?.avatar
+                        ? `http://localhost:4200/public/${profile.avatar}`
+                        : "/avatar-placeholder.png"
+                    }
                     alt={profile?.username || "User"}
                   />
                   <AvatarFallback className="text-2xl">
@@ -273,59 +321,32 @@ function ProfilePage() {
         <div className="md:col-span-3">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             {/* Profile Tab */}
-            <TabsContent value="profile">
+            <TabsContent value="profile" className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Thông tin cá nhân</CardTitle>
                   <CardDescription>
-                    Cập nhật thông tin cá nhân của bạn để tận dụng tối đa các
-                    tính năng của Nông Sàn
+                    Cập nhật thông tin cá nhân của bạn
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <form onSubmit={handleUpdateProfile}>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="username">Tên đăng nhập</Label>
-                        <Input
-                          id="username"
-                          value={profile?.username || ""}
-                          disabled
-                          className="bg-gray-50"
-                        />
-                        <p className="text-xs text-gray-500">
-                          Tên đăng nhập không thể thay đổi
-                        </p>
-                      </div>
-
-                      <div className="space-y-2">
+                  <form onSubmit={handleUpdateProfile} className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
                         <Label htmlFor="fullName">Họ và tên</Label>
-                        <Input
-                          id="fullName"
-                          name="fullName"
-                          value={formData.fullName}
-                          onChange={handleInputChange}
-                          placeholder="Nhập họ và tên của bạn"
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
                         <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                           <Input
-                            id="email"
-                            name="email"
-                            type="email"
-                            value={formData.email}
+                            id="fullName"
+                            name="fullName"
+                            value={formData.fullName}
                             onChange={handleInputChange}
-                            placeholder="example@example.com"
                             className="pl-10"
+                            placeholder="Nguyễn Văn A"
                           />
                         </div>
                       </div>
-
-                      <div className="space-y-2">
+                      <div>
                         <Label htmlFor="phone">Số điện thoại</Label>
                         <div className="relative">
                           <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
@@ -334,37 +355,80 @@ function ProfilePage() {
                             name="phone"
                             value={formData.phone}
                             onChange={handleInputChange}
-                            placeholder="0912345678"
                             className="pl-10"
+                            placeholder="0912345678"
                           />
                         </div>
                       </div>
-
-                      <div className="space-y-2 md:col-span-2">
-                        <Label htmlFor="address">Địa chỉ</Label>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="email">Email</Label>
+                          <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                            <Input
+                              id="email"
+                              name="email"
+                              value={formData.email}
+                              onChange={handleInputChange}
+                              className="pl-10"
+                              placeholder="example@example.com"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <Label htmlFor="cccd">Căn cước công dân</Label>
                         <div className="relative">
-                          <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-500" />
-                          <Textarea
-                            id="address"
-                            name="address"
-                            value={formData.address}
+                          <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                          <Input
+                            id="cccd"
+                            name="cccd"
+                            value={formData.cccd}
                             onChange={handleInputChange}
-                            placeholder="Nhập địa chỉ của bạn"
-                            className="pl-10 min-h-[100px]"
+                            className="pl-10"
+                            placeholder="Nhập số CCCD"
                           />
                         </div>
+                        </div>
                       </div>
+                      {profile?.roleName !== "Client" && (
+                         <div className="md:col-span-2">
+                        <div>
+                          <Label htmlFor="license">Mã giấy phép kinh doanh</Label>
+                          <div className="relative">
+                            <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                            <Input
+                              id="license"
+                              name="license"
+                              value={formData.license}
+                              onChange={handleInputChange}
+                              className="pl-10"
+                              placeholder="Nhập mã giấy phép kinh doanh"
+                            />
+                          </div>
+                        </div>
+                      </div >
+                      )}
+
+                    {/* Address Map Picker */}
+                    <div>
+                      <Label className="flex items-center mb-2">
+                        <MapPin className="mr-2 h-4 w-4" />
+                        Địa chỉ
+                      </Label>
+                      <AddressMapPicker
+                        onAddressChange={handleAddressChange}
+                        initialAddress={{
+                          fullAddress: formData.address || "",
+                          latitude: formData.lat || 0,
+                          longitude: formData.lng || 0,
+                        }}
+                      />
                     </div>
 
-                    <div className="mt-6 flex justify-end">
-                      <Button
-                        type="submit"
-                        className="bg-primary hover:bg-primary-dark"
-                        disabled={updating}
-                      >
-                        {updating ? "Đang cập nhật..." : "Cập nhật thông tin"}
-                      </Button>
-                    </div>
+                    <Button type="submit" disabled={updating}>
+                      {updating ? "Đang cập nhật..." : "Cập nhật thông tin"}
+                    </Button>
                   </form>
                 </CardContent>
               </Card>
@@ -596,5 +660,5 @@ function ProfilePage() {
   );
 }
 
-// export default withAuth(ProfilePage);
-export default ProfilePage;
+export default withAuth(ProfilePage);
+// export default ProfilePage;

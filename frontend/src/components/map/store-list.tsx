@@ -41,11 +41,11 @@ const StoreList = ({
     setActiveFilter(activeFilter === filter ? null : filter);
   };
 
-  const handleStoreHover = (store: Store) => {
-    if (mapInstance) {
-      mapInstance.panTo({ lat: store.lat, lng: store.lng });
-    }
-  };
+  // const handleStoreHover = (store: Store) => {
+  //   if (mapInstance) {
+  //     mapInstance.panTo({ lat: store.lat, lng: store.lng });
+  //   }
+  // };
 
   useEffect(() => {
     if (selectedStore && listRef.current) {
@@ -107,7 +107,7 @@ const StoreList = ({
                   selectedStore?.id === store.id ? "bg-blue-50" : ""
                 }`}
                 onClick={() => onStoreSelect(store)}
-                onMouseEnter={() => handleStoreHover(store)}
+                // onMouseEnter={() => handleStoreHover(store)}
               >
                 <div className="flex justify-between items-start">
                   <h3 className="font-semibold text-sm text-gray-800">

@@ -21,6 +21,9 @@ export interface User {
   avatar?: string;
   roleName?: string;
   fullName?: string;
+  cccd?: string;
+  lat?: number;
+  lng?: number;
 }
 
 interface UserState {
@@ -229,6 +232,7 @@ const userSlice = createSlice({
           localStorage.removeItem("access_token");
           localStorage.removeItem("refresh_token");
           localStorage.removeItem("Authorization");
+          localStorage.removeItem("wishlist");
         }
       })
       // Fetch Profile
