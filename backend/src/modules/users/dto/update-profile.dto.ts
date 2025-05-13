@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsString, Matches } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString, Matches } from 'class-validator';
 
 export class UpdateProfileDto {
   @IsOptional()
@@ -18,7 +18,25 @@ export class UpdateProfileDto {
 
   @IsOptional()
   @IsString()
+  // @Matches(/^\d{12}$/, { message: 'CCCD không hợp lệ' })
+  cccd?: string;
+
+  @IsOptional()
+  @IsString()
   address?: string;
+
+  @IsOptional()
+  @IsNumber()
+  lat?: number;
+
+  @IsOptional()
+  @IsNumber()
+  lng?: number;
+
+  @IsOptional()
+  @IsString()
+  // @Matches(/^[A-Z0-9]+$/, { message: 'Giấy phép kinh doanh không hợp lệ' })
+  license?: string;
 
   @IsOptional()
   @IsString()

@@ -9,6 +9,7 @@ export class UserProfileSerializer {
       fullName: user.fullName,
       phone: user.phone,
       address: user.address,
+      cccd: user.cccd,
       lat: user.lat,
       lng: user.lng,
       avatar: user.avatar,

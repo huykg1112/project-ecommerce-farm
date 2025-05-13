@@ -41,14 +41,21 @@ export class User {
   @Column({ type: 'varchar', length: 50, nullable: true })
   phone!: string;
 
+  @Column({ type: 'varchar', length: 12, nullable: true })
+  cccd!: string;
+
   @Column({ type: 'varchar', length: 500, nullable: true })
   address!: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 8, nullable: true })
+  @Column({ type: 'decimal', precision: 9, scale: 6, nullable: true })
   lat!: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 8, nullable: true })
+  @Column({ type: 'decimal', precision: 9, scale: 6, nullable: true })
   lng!: number;
+
+  //giấy phép kinh doanh
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  license!: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   avatar!: string;
