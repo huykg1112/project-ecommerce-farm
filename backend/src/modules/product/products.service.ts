@@ -16,16 +16,31 @@ export class ProductsService {
     private readonly categoryRepository: Repository<Category>,
   ) {}
 
+  private validateDiscountDates(startDate: Date | null, endDate: Date | null): boolean {
+    if (!startDate || !endDate) return false;
+    const now = new Date();
+    return startDate <= now && now <= endDate;
+  }
+
   async create(createProductDto: CreateProductDto): Promise<Product> {
-    const { categoryId, ...productData } = createProductDto;
+    const { categoryIds, ...productData } = createProductDto;
 
     const product = this.productRepository.create(productData);
 
-    if (categoryId && categoryId.length > 0) {
+    if (categoryIds && categoryIds.length > 0) {
       const categories = await this.categoryRepository.findBy({
-        id: In([categoryId]),
+        id: In(categoryIds),
       });
       product.categories = categories;
+    }
+
+    // Validate discount dates if provided
+    if (product.discountPrice && product.discountStartDate && product.discountEndDate) {
+      if (!this.validateDiscountDates(product.discountStartDate, product.discountEndDate)) {
+        product.discountPrice = null;
+        product.discountStartDate = null;
+        product.discountEndDate = null;
+      }
     }
 
     return await this.productRepository.save(product);
@@ -76,6 +91,13 @@ export class ProductsService {
       });
     }
 
+    // Add discount validation
+    const now = new Date();
+    queryBuilder.andWhere(
+      '(product.discountPrice IS NULL OR (product.discountStartDate <= :now AND product.discountEndDate >= :now))',
+      { now },
+    );
+
     switch (sortBy) {
       case SortOrder.POPULAR:
         queryBuilder.orderBy('product.totalSales', 'DESC');
@@ -84,10 +106,10 @@ export class ProductsService {
         queryBuilder.orderBy('product.createdAt', 'DESC');
         break;
       case SortOrder.PRICE_LOW_TO_HIGH:
-        queryBuilder.orderBy('product.price', 'ASC');
+        queryBuilder.orderBy('COALESCE(product.discountPrice, product.price)', 'ASC');
         break;
       case SortOrder.PRICE_HIGH_TO_LOW:
-        queryBuilder.orderBy('product.price', 'DESC');
+        queryBuilder.orderBy('COALESCE(product.discountPrice, product.price)', 'DESC');
         break;
       case SortOrder.RATING:
         queryBuilder.orderBy('product.averageRating', 'DESC');
@@ -114,6 +136,16 @@ export class ProductsService {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
 
+    // Check if discount is still valid
+    if (product.discountPrice && product.discountStartDate && product.discountEndDate) {
+      if (!this.validateDiscountDates(product.discountStartDate, product.discountEndDate)) {
+        product.discountPrice = null;
+        product.discountStartDate = null;
+        product.discountEndDate = null;
+        await this.productRepository.save(product);
+      }
+    }
+
     return product;
   }
 
@@ -121,15 +153,24 @@ export class ProductsService {
     id: string,
     updateProductDto: UpdateProductDto,
   ): Promise<Product> {
-    const { categoryId, ...updateData } = updateProductDto;
+    const { categoryIds, ...updateData } = updateProductDto;
 
     const product = await this.findOne(id);
 
+    // Validate discount dates if provided
+    if (updateData.discountPrice && updateData.discountStartDate && updateData.discountEndDate) {
+      if (!this.validateDiscountDates(updateData.discountStartDate, updateData.discountEndDate)) {
+        updateData.discountPrice = null;
+        updateData.discountStartDate = null;
+        updateData.discountEndDate = null;
+      }
+    }
+
     Object.assign(product, updateData);
 
-    if (categoryId && categoryId.length > 0) {
+    if (categoryIds && categoryIds.length > 0) {
       const categories = await this.categoryRepository.findBy({
-        id: In([categoryId]),
+        id: In(categoryIds),
       });
       product.categories = categories;
     }

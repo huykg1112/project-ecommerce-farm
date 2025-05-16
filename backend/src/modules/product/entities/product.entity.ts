@@ -33,6 +33,15 @@ export class Product {
   @Column('decimal', { precision: 10, scale: 2 })
   price: number;
 
+  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  discountPrice: number | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  discountStartDate: Date | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  discountEndDate: Date | null;
+
   @Column('int')
   stock: number;
 

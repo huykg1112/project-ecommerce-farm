@@ -1,26 +1,40 @@
-import { IsArray, IsBoolean, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsBoolean, IsDate, IsInt, IsNotEmpty, IsNumber, IsOptional, IsString, IsUUID } from 'class-validator';
 
 export class CreateProductDto {
+  @IsNotEmpty()
   @IsString()
   name: string;
 
+  @IsNotEmpty()
   @IsString()
   description: string;
 
+  @IsNotEmpty()
   @IsNumber()
-  @Min(0)
   price: number;
 
+  @IsOptional()
   @IsNumber()
-  @Min(0)
+  discountPrice?: number | null;
+
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  discountStartDate?: Date | null;
+
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  discountEndDate?: Date | null;
+
+  @IsNotEmpty()
+  @IsInt()
   stock: number;
 
   @IsOptional()
   @IsString()
   image?: string;
-
-  @IsUUID()
-  categoryId: string;
 
   @IsOptional()
   @IsBoolean()
@@ -38,7 +52,15 @@ export class CreateProductDto {
   @IsString()
   storageInstructions?: string;
 
-  @IsArray()
+  @IsNotEmpty()
+  @IsUUID()
+  distributorId: string;
+
+  @IsOptional()
   @IsUUID('4', { each: true })
-  ingredientIds: string[];
+  categoryIds?: string[];
+
+  @IsOptional()
+  @IsUUID('4', { each: true })
+  ingredientIds?: string[];
 }
