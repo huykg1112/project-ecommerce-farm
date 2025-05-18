@@ -7,6 +7,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
+import { CloudinaryService } from '../../cloudinary/cloudinary.service';
 import { CreateRoleDto } from '../roles/dto/create-role.dto';
 import { RolesService } from '../roles/roles.service';
 import { TokensService } from '../tokens/tokens.service';
@@ -24,6 +25,7 @@ export class UserService {
     private readonly configService: ConfigService,
     public readonly tokenService: TokensService,
     public readonly rolesService: RolesService,
+    private readonly cloudinaryService: CloudinaryService,
   ) {
     this.saltRounds = Number(
       this.configService.get<number>('BCRYPT_SALT_ROUNDS') ?? 10,
@@ -213,6 +215,23 @@ export class UserService {
       throw new NotFoundException('Vai trò Client không tồn tại'); // Lý do: Kiểm tra role mặc định
     }
     user.role = roleClient;
+    return this.userRepository.save(user);
+  }
+
+  async updateAvatar(id: string, avatarUrl: string, publicId: string) {
+    const user = await this.userRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Delete old avatar if exists
+    if (user.avatarPublicId) {
+      await this.cloudinaryService.deleteImage(user.avatarPublicId);
+    }
+
+    // Update user with new avatar
+    user.avatar = avatarUrl;
+    user.avatarPublicId = publicId;
     return this.userRepository.save(user);
   }
 }

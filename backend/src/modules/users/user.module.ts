@@ -1,7 +1,7 @@
 import { forwardRef, Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CloudinaryModule } from '../../cloudinary/cloudinary.module';
 import { RolesModule } from '../roles/roles.module';
 import { TokensModule } from '../tokens/tokens.module';
 import { User } from './entities/user.entity';
@@ -14,6 +14,7 @@ import { UserService } from './user.service';
     ConfigModule,
     forwardRef(() => TokensModule), // Ensure TokensModule is imported
     forwardRef(() => RolesModule), // Ensure RolesModule is imported
+    forwardRef(() => CloudinaryModule),
   ],
   providers: [UserService], // Remove TokensService from providers
   controllers: [UserController],

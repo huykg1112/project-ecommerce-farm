@@ -45,9 +45,6 @@ export class Product {
   @Column('int')
   stock: number;
 
-  @Column({ nullable: true })
-  image: string;
-
   @Column('decimal', { precision: 3, scale: 2, default: 0 })
   averageRating: number;
 
@@ -98,7 +95,7 @@ export class Product {
   @JoinTable() // Tạo bảng trung gian product_categories
   categories!: Category[]; // Một Product có thể thuộc nhiều Category
 
-  @OneToMany(() => ProductImage, (image) => image.product)
+  @OneToMany(() => ProductImage, (image) => image.product, { cascade: true })
   images!: ProductImage[]; // Một Product có nhiều ProductImage
 
   @OneToMany(() => ProductBatch, (batch) => batch.product)

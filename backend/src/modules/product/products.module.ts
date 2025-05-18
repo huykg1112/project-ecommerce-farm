@@ -1,9 +1,12 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CloudinaryModule } from '../../cloudinary/cloudinary.module';
 import { CartItem } from '../cart_items/entities/cart_item.entity';
 import { Category } from '../categories/entities/category.entity';
 import { FavoriteProduct } from '../favorite_products/entities/favorite_product.entity';
 import { OrderItem } from '../order_items/entities/order_item.entity';
+import { ProductImage } from '../product_images/entities/product_image.entity';
+import { ProductImagesModule } from '../product_images/product_images.module';
 import { Review } from '../reviews/entities/review.entity';
 import { UserModule } from '../users/user.module';
 import { Product } from './entities/product.entity';
@@ -19,8 +22,11 @@ import { ProductsService } from './products.service';
       OrderItem,
       CartItem,
       FavoriteProduct,
+      ProductImage,
     ]),
-    UserModule,
+    forwardRef(() => UserModule),
+    forwardRef(() => CloudinaryModule),
+    forwardRef(() => ProductImagesModule),
   ],
   controllers: [ProductsController],
   providers: [ProductsService],

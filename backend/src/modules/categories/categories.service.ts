@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { CloudinaryService } from '../../cloudinary/cloudinary.service';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 import { Category } from './entities/category.entity';
@@ -10,6 +11,7 @@ export class CategoriesService {
   constructor(
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   async create(createCategoryDto: CreateCategoryDto): Promise<Category> {
@@ -40,5 +42,22 @@ export class CategoriesService {
   async remove(id: string): Promise<void> {
     const category = await this.findOne(id);
     await this.categoryRepository.remove(category);
+  }
+
+  async updateCategoryImage(id: string, imageUrl: string, publicId: string) {
+    const category = await this.categoryRepository.findOne({ where: { id } });
+    if (!category) {
+      throw new Error('Category not found');
+    }
+
+    // Delete old image if exists
+    if (category.imagePublicId) {
+      await this.cloudinaryService.deleteImage(category.imagePublicId);
+    }
+
+    // Update category with new image
+    category.image = imageUrl;
+    category.imagePublicId = publicId;
+    return this.categoryRepository.save(category);
   }
 }

@@ -10,9 +10,14 @@ import {
   Post,
   Put,
   Req,
+  UploadedFile,
+  UseInterceptors
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Public } from '@root/src/public.decorator';
 import { validate as isUUID } from 'uuid';
+
+import { CloudinaryService } from '../../cloudinary/cloudinary.service';
 import { AssignRoleDto } from './dto/assign-role.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
@@ -24,7 +29,10 @@ import { UserService } from './user.service';
 
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   @Get('profile')
   async getProfile(@Req() req): Promise<UserProfileSerializer> {
@@ -118,5 +126,15 @@ export class UserController {
     }
     await this.userService.removeRole(id);
     return { message: 'Xóa vai trò thành công' };
+  }
+
+  @Post(':id/avatar')
+  @UseInterceptors(FileInterceptor('image'))
+  async uploadAvatar(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    const result = await this.cloudinaryService.uploadImage(file);
+    return this.userService.updateAvatar(id, result.url, result.public_id);
   }
 }

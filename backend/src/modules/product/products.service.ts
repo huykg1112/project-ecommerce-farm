@@ -1,7 +1,9 @@
-import { Category } from '@modules/categories/entities/category.entity';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import { CloudinaryService } from '../../cloudinary/cloudinary.service';
+import { Category } from '../categories/entities/category.entity';
+import { ProductImage } from '../product_images/entities/product_image.entity';
 import { CreateProductDto } from './dto/create-product.dto';
 import { SearchProductDto, SortOrder } from './dto/search-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -14,6 +16,9 @@ export class ProductsService {
     private readonly productRepository: Repository<Product>,
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
+    private readonly cloudinaryService: CloudinaryService,
+    @InjectRepository(ProductImage)
+    private readonly productImageRepository: Repository<ProductImage>,
   ) {}
 
   private validateDiscountDates(startDate: Date | null, endDate: Date | null): boolean {
@@ -231,6 +236,123 @@ export class ProductsService {
       order: { averageRating: 'DESC' },
       take: 10,
       relations: ['categories'],
+    });
+  }
+
+  async updateProductImage(id: string, imageUrl: string, publicId: string) {
+    const product = await this.productRepository.findOne({ 
+      where: { id },
+      relations: ['images']
+    });
+    
+    if (!product) {
+      throw new Error('Product not found');
+    }
+
+    // Tạo ảnh mới
+    const newImage = this.productImageRepository.create({
+      url: imageUrl,
+      publicId: publicId,
+      isMain: product.images.length === 0, // Nếu là ảnh đầu tiên thì set làm ảnh chính
+      product: { id }
+    });
+    
+    await this.productImageRepository.save(newImage);
+
+    return this.productRepository.findOne({
+      where: { id },
+      relations: ['images']
+    });
+  }
+
+  async deleteProductImage(productId: string, imageId: string) {
+    const product = await this.productRepository.findOne({
+      where: { id: productId },
+      relations: ['images']
+    });
+
+    if (!product) {
+      throw new Error('Product not found');
+    }
+
+    const image = product.images.find(img => img.id === imageId);
+    if (!image) {
+      throw new Error('Image not found');
+    }
+
+    // Xóa ảnh từ Cloudinary
+    await this.cloudinaryService.deleteImage(image.publicId);
+
+    // Nếu là ảnh chính và còn ảnh khác, set ảnh đầu tiên làm ảnh chính
+    if (image.isMain && product.images.length > 1) {
+      const nextMainImage = product.images.find(img => img.id !== imageId);
+      if (nextMainImage) {
+        nextMainImage.isMain = true;
+        await this.productImageRepository.save(nextMainImage);
+      }
+    }
+
+    // Xóa ảnh từ database
+    await this.productImageRepository.delete(imageId);
+
+    return this.productRepository.findOne({
+      where: { id: productId },
+      relations: ['images']
+    });
+  }
+
+  async deleteAllProductImages(productId: string) {
+    const product = await this.productRepository.findOne({
+      where: { id: productId },
+      relations: ['images']
+    });
+
+    if (!product) {
+      throw new Error('Product not found');
+    }
+
+    // Xóa tất cả ảnh từ Cloudinary
+    for (const image of product.images) {
+      await this.cloudinaryService.deleteImage(image.publicId);
+    }
+
+    // Xóa tất cả ảnh từ database
+    await this.productImageRepository.delete({ product: { id: productId } });
+
+    return this.productRepository.findOne({
+      where: { id: productId },
+      relations: ['images']
+    });
+  }
+
+  async setMainImage(productId: string, imageId: string) {
+    const product = await this.productRepository.findOne({
+      where: { id: productId },
+      relations: ['images']
+    });
+
+    if (!product) {
+      throw new Error('Product not found');
+    }
+
+    const targetImage = product.images.find(img => img.id === imageId);
+    if (!targetImage) {
+      throw new Error('Image not found');
+    }
+
+    // Reset tất cả ảnh về không phải ảnh chính
+    await this.productImageRepository.update(
+      { product: { id: productId } },
+      { isMain: false }
+    );
+
+    // Set ảnh được chọn làm ảnh chính
+    targetImage.isMain = true;
+    await this.productImageRepository.save(targetImage);
+
+    return this.productRepository.findOne({
+      where: { id: productId },
+      relations: ['images']
     });
   }
 }

@@ -1,26 +1,46 @@
 import { Injectable } from '@nestjs/common';
-import { CreateProductImageDto } from './dto/create-product_image.dto';
-import { UpdateProductImageDto } from './dto/update-product_image.dto';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { ProductImage } from './entities/product_image.entity';
 
 @Injectable()
 export class ProductImagesService {
-  create(createProductImageDto: CreateProductImageDto) {
-    return 'This action adds a new productImage';
+  constructor(
+    @InjectRepository(ProductImage)
+    private readonly productImageRepository: Repository<ProductImage>,
+  ) {}
+
+  async create(data: Partial<ProductImage>): Promise<ProductImage> {
+    const image = this.productImageRepository.create(data);
+    return this.productImageRepository.save(image);
   }
 
-  findAll() {
-    return `This action returns all productImages`;
+  async findAllByProductId(productId: string): Promise<ProductImage[]> {
+    return this.productImageRepository.find({
+      where: { product: { id: productId }, isActive: true },
+      order: { isMain: 'DESC', createdAt: 'ASC' },
+    });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} productImage`;
+  async setMainImage(productId: string, imageId: string): Promise<void> {
+    // Reset all images to non-main
+    await this.productImageRepository.update(
+      { product: { id: productId } },
+      { isMain: false },
+    );
+
+    // Set the selected image as main
+    await this.productImageRepository.update(
+      { id: imageId, product: { id: productId } },
+      { isMain: true },
+    );
   }
 
-  update(id: number, updateProductImageDto: UpdateProductImageDto) {
-    return `This action updates a #${id} productImage`;
+  async deleteImage(imageId: string): Promise<void> {
+    await this.productImageRepository.delete(imageId);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} productImage`;
+  async deactivateImage(imageId: string): Promise<void> {
+    await this.productImageRepository.update(imageId, { isActive: false });
   }
 }

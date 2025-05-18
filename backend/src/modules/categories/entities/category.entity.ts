@@ -1,15 +1,15 @@
-import { Product } from '@root/src/modules/product/entities/product.entity';
+import { Product } from '@modules/product/entities/product.entity';
 import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  JoinColumn,
-  ManyToMany,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
+    Column,
+    CreateDateColumn,
+    Entity,
+    JoinColumn,
+    ManyToMany,
+    PrimaryGeneratedColumn,
+    UpdateDateColumn,
 } from 'typeorm';
 
-@Entity()
+@Entity('category')
 export class Category {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -24,6 +24,12 @@ export class Category {
 
   @Column({ type: 'boolean', default: true })
   isActive!: boolean;
+
+  @Column({ nullable: true })
+  image: string;
+
+  @Column({ nullable: true })
+  imagePublicId: string;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt!: Date;

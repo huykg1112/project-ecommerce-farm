@@ -6,6 +6,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { CartItemsModule } from './modules/cart_items/cart_items.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { FavoriteProductsModule } from './modules/favorite_products/favorite_products.module';
@@ -18,13 +19,13 @@ import { PermissionsModule } from './modules/permissions/permissions.module';
 import { ProductsModule } from './modules/product/products.module';
 import { ProductBatchesModule } from './modules/product_batches/product_batches.module';
 import { ProductImagesModule } from './modules/product_images/product_images.module';
+import { ProductsComboModule } from './modules/products_combo/products_combo.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { RolePermissionsModule } from './modules/role_permissions/role_permissions.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { TokensModule } from './modules/tokens/tokens.module';
 import { UserModule } from './modules/users/user.module';
 import { VouchersModule } from './modules/vouchers/vouchers.module';
-import { ProductsComboModule } from './modules/products_combo/products_combo.module';
 
 @Module({
   imports: [
@@ -77,7 +78,7 @@ import { ProductsComboModule } from './modules/products_combo/products_combo.mod
     IngredientsModule,
     VouchersModule,
     ProductsComboModule,
-
+    CloudinaryModule,
   ],
   controllers: [AppController],
   providers: [

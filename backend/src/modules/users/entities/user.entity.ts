@@ -19,7 +19,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity()
+@Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
@@ -59,6 +59,9 @@ export class User {
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   avatar!: string;
+
+  @Column({ nullable: true })
+  avatarPublicId: string;
 
   @Column({ type: 'boolean', default: false })
   isVerified!: boolean;

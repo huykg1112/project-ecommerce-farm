@@ -1,20 +1,26 @@
-import { Product } from '@root/src/modules/product/entities/product.entity';
+import { Product } from '@modules/product/entities/product.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
   ManyToOne,
   PrimaryGeneratedColumn,
-  UpdateDateColumn,
+  UpdateDateColumn
 } from 'typeorm';
 
-@Entity()
+@Entity('product_image')
 export class ProductImage {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
   @Column({ type: 'varchar', length: 255 })
   url!: string;
+
+  @Column({ type: 'varchar', length: 255 })
+  publicId!: string;
+
+  @Column({ type: 'boolean', default: false })
+  isMain!: boolean;
 
   @Column({ type: 'boolean', default: true })
   isActive!: boolean;
@@ -25,6 +31,6 @@ export class ProductImage {
   @UpdateDateColumn({ type: 'timestamp', nullable: true })
   updatedAt!: Date;
 
-  @ManyToOne(() => Product, (product) => product.images)
+  @ManyToOne(() => Product, (product) => product.images, { onDelete: 'CASCADE' })
   product!: Product;
 }
