@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { UserAuthSectionProps } from "@/interfaces";
+import { User, UserAuthSectionProps } from "@/interfaces";
 import type { AppDispatch, RootState } from "@/lib/features/store";
 import { logoutUser } from "@/lib/features/user-slice";
 import { cn } from "@/lib/utils";
@@ -39,7 +39,7 @@ export default function UserAuthSection({ isScrolled }: UserAuthSectionProps) {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-10 w-10 rounded-full">
             <Avatar className="h-10 w-10">
-              <AvatarImage src="/avatar.jpg" alt="User" />
+              <AvatarImage src={"/avatar.jpg"} alt="User" />
               <AvatarFallback>US</AvatarFallback>
             </Avatar>
           </Button>

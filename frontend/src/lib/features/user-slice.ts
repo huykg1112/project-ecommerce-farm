@@ -19,6 +19,7 @@ export interface User {
   phone?: string;
   address?: string;
   avatar?: string;
+  public_id?: string;
   roleName?: string;
   fullName?: string;
   cccd?: string;
@@ -48,6 +49,7 @@ const initialState: UserState = {
   profileLoading: false,
   profileError: null,
 };
+
 
 // Async thunks
 export const loginUser = createAsyncThunk(
@@ -131,6 +133,32 @@ export const updateUserProfile = createAsyncThunk(
       return updatedProfile;
     } catch (error: any) {
       return rejectWithValue(error.message || "Cập nhật thông tin thất bại");
+    }
+  }
+);
+
+export const updateAvatar = createAsyncThunk(
+  "user/updateAvatar",
+  async (file: File, { rejectWithValue }) => {
+    try {
+      const response = await userService.updateAvatar(file);
+      // Sau khi cập nhật avatar thành công, lấy lại thông tin profile mới
+      const updatedProfile = await userService.getProfile();
+      return updatedProfile;
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Cập nhật avatar thất bại");
+    }
+  }
+);
+
+export const registerStore = createAsyncThunk(
+  "user/registerStore",
+  async (userData: RegisterRequest, { rejectWithValue }) => {
+    try {
+      const response = await authService.registerStore(userData);
+      return response;
+    } catch (error: any) {
+      return rejectWithValue(error.message || "Đăng ký đại lý thất bại");
     }
   }
 );
@@ -283,6 +311,37 @@ const userSlice = createSlice({
       .addCase(updateUserProfile.rejected, (state, action) => {
         state.profileLoading = false;
         state.profileError = action.payload as string;
+      })
+      // Update Avatar cases
+      .addCase(updateAvatar.pending, (state) => {
+        state.profileLoading = true;
+        state.profileError = null;
+      })
+      .addCase(updateAvatar.fulfilled, (state, action) => {
+        state.profileLoading = false;
+        state.profile = action.payload;
+        if (state.currentUser) {
+          state.currentUser = {
+            ...state.currentUser,
+            avatar: action.payload.avatar,
+          };
+        }
+      })
+      .addCase(updateAvatar.rejected, (state, action) => {
+        state.profileLoading = false;
+        state.profileError = action.payload as string;
+      })
+      // Register Store
+      .addCase(registerStore.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(registerStore.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(registerStore.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string | string[];
       });
   },
 });

@@ -62,6 +62,9 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  
+
+
   const mainNavItems = [
     { name: "Trang Chủ", href: "/home" },
     { name: "Sản phẩm", href: "/products" },

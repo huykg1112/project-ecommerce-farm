@@ -181,4 +181,23 @@ export const authService = {
       localStorage.setItem("refresh_token", refreshToken);
     }
   },
+
+  // Đăng ký đại lý
+  async registerStore(data: RegisterRequest): Promise<RegisterResponse> {
+    const response = await fetch(`${API_URL}/user/register/store`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+      const errorData: ApiError = await response.json();
+      throw errorData;
+    }
+
+    return await response.json();
+  },
 };

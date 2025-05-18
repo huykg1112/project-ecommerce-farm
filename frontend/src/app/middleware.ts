@@ -12,6 +12,7 @@ const authRoutes = [
   "/settings",
   "/checkout",
   "/checkout/success",
+  "/register-dealer",
 ];
 
 const authApiRoutes = ["/cart", "/wishlist", "/user", "/orders"];

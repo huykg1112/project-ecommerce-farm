@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -20,6 +21,7 @@ import { validate as isUUID } from 'uuid';
 import { CloudinaryService } from '../../cloudinary/cloudinary.service';
 import { AssignRoleDto } from './dto/assign-role.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { RegisterStoreDto } from './dto/register-store.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { User } from './entities/user.entity';
@@ -128,13 +130,56 @@ export class UserController {
     return { message: 'Xóa vai trò thành công' };
   }
 
-  @Post(':id/avatar')
-  @UseInterceptors(FileInterceptor('image'))
-  async uploadAvatar(
-    @Param('id') id: string,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
-    const result = await this.cloudinaryService.uploadImage(file);
-    return this.userService.updateAvatar(id, result.url, result.public_id);
+  @Post('avatar')
+  @UseInterceptors(FileInterceptor('image', {
+    fileFilter: (req, file, cb) => {
+      if (!file.mimetype.match(/image\/(jpg|jpeg|png|gif)$/)) {
+        return cb(new BadRequestException('Only image files are allowed'), false);
+      }
+      cb(null, true);
+    },
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  }))
+  async uploadAvatar(@Req() req, @UploadedFile() file: Express.Multer.File) {
+    const userId = req.user.id;
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+
+    try {
+      const result = await this.cloudinaryService.uploadImage(file);
+      if (!result || !result.url || !result.public_id) {
+        throw new BadRequestException('Failed to upload image to cloud storage');
+      }
+
+      const updatedUser = await this.userService.updateAvatar(userId, result.url, result.public_id);
+      return {
+        message: 'Avatar updated successfully',
+        avatar: updatedUser.avatar,
+      };
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      throw new BadRequestException(error.message || 'Failed to upload avatar');
+    }
+  }
+
+  @Post('registerDistributor')
+  async registerStore(@Body() registerStoreDto: RegisterStoreDto,
+      @Req() req,
+) {
+    
+    const user = await this.userService.registerStore(registerStoreDto, req.user.id);
+    return {
+      message: 'Đăng ký chủ đại lý thành công',
+      user: {
+        id: user.id,
+        username: user.username,
+        email: user.email,
+        fullName: user.fullName,
+        phone: user.phone,
+        address: user.address,
+        role: user.role.name,
+      },
+    };
   }
 }

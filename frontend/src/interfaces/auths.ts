@@ -50,16 +50,18 @@ export interface LoginResponse {
   refresh_token: string;
 }
 
-export interface RegisterRequest {
-  username: string;
-  email: string;
-  password: string;
-  phone: string;
-}
+
 
 export interface RegisterResponse {
   username: string;
   email: string;
+  fullName: string;
+  phone: string;
+  address: string;
+  cccd: string;
+  license: string;
+  lat: number;
+  lng: number;
 }
 
 export interface RefreshTokenRequest {

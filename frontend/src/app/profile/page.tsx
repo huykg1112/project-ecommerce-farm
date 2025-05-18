@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import type { AppDispatch } from "@/lib/features/store";
-import { logoutUser } from "@/lib/features/user-slice";
+import { logoutUser, updateAvatar } from "@/lib/features/user-slice";
 
 import { userService } from "@/lib/services/user-service";
 
@@ -39,7 +39,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 
 function ProfilePage() {
@@ -49,7 +49,8 @@ function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
-
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const dispatch = useDispatch<AppDispatch>();
 
@@ -200,6 +201,37 @@ function ProfilePage() {
     }
   };
 
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+  
+    // Kiểm tra định dạng và kích thước file
+    const validTypes = ["image/jpeg", "image/png", "image/gif"];
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (!validTypes.includes(file.type)) {
+      showToast.error("Chỉ hỗ trợ file JPG, PNG hoặc GIF");
+      return;
+    }
+    if (file.size > maxSize) {
+      showToast.error("Kích thước file không được vượt quá 10MB");
+      return;
+    }
+  
+    try {
+      setUploadingAvatar(true);
+      await dispatch(updateAvatar(file)).unwrap();
+      showToast.success("Cập nhật avatar thành công");
+    } catch (error: any) {
+      showToast.error(error.message || "Cập nhật avatar thất bại");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="container py-8">
@@ -238,19 +270,32 @@ function ProfilePage() {
           <Card>
             <CardContent className="p-6">
               <div className="flex flex-col items-center mb-6">
-                <Avatar className="h-24 w-24 mb-4">
-                  <AvatarImage
-                    src={
-                      profile?.avatar
-                        ? `http://localhost:4200/public/${profile.avatar}`
-                        : "/avatar-placeholder.png"
-                    }
-                    alt={profile?.username || "User"}
-                  />
-                  <AvatarFallback className="text-2xl">
-                    {profile?.username?.charAt(0).toUpperCase() || "U"}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="relative">
+                  <Avatar 
+                    className="h-24 w-24 mb-4 cursor-pointer hover:opacity-80 transition-opacity" 
+                    onClick={handleAvatarClick}
+                  >
+                    <AvatarImage
+                      src={profile?.avatar || "/avatar-placeholder.png"}
+                      alt={profile?.username || "User"}
+                    />
+                    <AvatarFallback className="text-2xl">
+                      {profile?.username?.charAt(0).toUpperCase() || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  {uploadingAvatar && (
+                    <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 rounded-full">
+                      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-white"></div>
+                    </div>
+                  )}
+                </div>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleAvatarChange}
+                  accept="image/*"
+                  className="hidden"
+                />
                 <h2 className="text-xl font-bold">
                   {profile?.fullName || profile?.username}
                 </h2>

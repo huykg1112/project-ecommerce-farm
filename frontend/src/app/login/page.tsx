@@ -13,6 +13,7 @@ import {
 } from "@/lib/features/user-slice";
 import { authService } from "@/lib/services/auth-service";
 import { userService } from "@/lib/services/user-service"; // Thêm import
+import { showToast } from "@/lib/toast-provider";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import type React from "react";
@@ -120,6 +121,7 @@ export default function LoginPage() {
       })
     );
     if (loginUser.fulfilled.match(result)) {
+      showToast.success("Đăng nhập thành công. Chào mừng bạn đến với Nông Sàn!");
       router.push(callbackUrl);
     }
   };
@@ -135,6 +137,7 @@ export default function LoginPage() {
       })
     );
     if (registerUser.fulfilled.match(result)) {
+      showToast.success("Đăng ký thành công. Vui lòng đăng nhập để tiếp tục.");
       setActiveTab("login");
       setLoginUsername(registerUsername);
       setLoginPassword("");
@@ -144,7 +147,6 @@ export default function LoginPage() {
   const handleGoogleLogin = () => {
     authService.initiateGoogleLogin();
   };
-
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 pb-12 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-md">

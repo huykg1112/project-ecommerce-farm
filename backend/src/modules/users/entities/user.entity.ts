@@ -94,7 +94,7 @@ export class User {
   @OneToMany(() => Product, (product) => product.distributor)
   products!: Product[];
 
-  @OneToOne(() => Inventory, (inventory) => inventory.distributor)
+  @OneToOne(() => Inventory, (inventory) => inventory.user)
   @JoinColumn()
   inventory!: Inventory;
 

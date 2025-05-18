@@ -1,17 +1,27 @@
 import { IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
-export class CreateInventoryDto {
-  @IsNotEmpty()
-  @IsString()
-  nameStore?: string;
+export class RegisterStoreDto {
 
   @IsNotEmpty()
   @IsString()
-  addressStore?: string;
+  email: string;
 
   @IsNotEmpty()
   @IsString()
-  userId: string;
+  fullName: string;
+
+  @IsNotEmpty()
+  @IsString()
+  phone: string;
+
+
+  @IsNotEmpty()
+  @IsString()
+  cccd: string;
+
+  @IsNotEmpty()
+  @IsString()
+  license: string;
 
   @IsOptional()
   @IsString()
@@ -22,15 +32,18 @@ export class CreateInventoryDto {
   imageStorePublicId?: string;
 
   @IsOptional()
+  @IsString()
+  addressStore?: string;
+
+  @IsOptional()
+  @IsString()
+  nameStore?: string;
+
+  @IsOptional()
   @IsNumber()
   lat?: number;
 
   @IsOptional()
   @IsNumber()
   lng?: number;
-
-  @IsOptional()
-  @IsString()
-  description?: string;
-
-}
+} 

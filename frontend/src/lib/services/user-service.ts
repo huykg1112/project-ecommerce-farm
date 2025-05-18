@@ -1,100 +1,93 @@
-import { ChangePasswordDto, UpdateProfileDto, UserProfile } from "@/interfaces";
-import { authService } from "./auth-service";
+import { ChangePasswordDto, RegisterRequest, UpdateProfileDto, UserProfile } from "@/interfaces";
 
 const API_URL = "http://localhost:4200";
 
 export const userService = {
   async getProfile(): Promise<UserProfile> {
-    let token = localStorage.getItem("access_token");
-    let refreshToken = localStorage.getItem("refresh_token");
-    if (!refreshToken && !token) {
-      throw new Error("Unauthorized");
-    }
-    if ((refreshToken && !token) || authService.isTokenExpiredRefresh()) {
-      // Nếu refresh token có nhưng access token không có, gọi refresh token
-      await authService.refreshToken();
-      token = localStorage.getItem("access_token")!;
-    }
-
-    let response = await fetch(`${API_URL}/user/profile`, {
-      method: "GET",
+    const response = await fetch(`${API_URL}/user/profile`, {
       headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
       },
     });
-
-    // Nếu token hết hạn, thử refresh
-    if (response.status === 401) {
-      await authService.refreshToken();
-      token = localStorage.getItem("access_token")!;
-      response = await fetch(`${API_URL}/user/profile`, {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-    }
 
     if (!response.ok) {
       throw new Error("Failed to fetch profile");
     }
 
-    return await response.json();
+    return response.json();
   },
 
   async updateProfile(data: UpdateProfileDto): Promise<{ message: string }> {
-    const token = authService.getToken();
-    console.log(data);
-    if (!token) {
-      throw new Error("Unauthorized");
-    }
-
     const response = await fetch(`${API_URL}/user/profile`, {
       method: "PUT",
       headers: {
-        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
       },
       body: JSON.stringify(data),
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Failed to update profile");
+      throw new Error("Failed to update profile");
     }
 
-    return await response.json();
+    return response.json();
   },
 
   async changePassword(data: ChangePasswordDto): Promise<{ message: string }> {
-    const token = authService.getToken();
-    if (!token) {
-      throw new Error("Unauthorized");
-    }
-
-    if (data.newPassword !== data.confirmPassword) {
-      throw new Error("Mật khẩu xác nhận không khớp");
-    }
-
     const response = await fetch(`${API_URL}/user/change-password`, {
       method: "PATCH",
       headers: {
-        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
       },
-      body: JSON.stringify({
-        oldPassword: data.oldPassword,
-        newPassword: data.newPassword,
-      }),
+      body: JSON.stringify(data),
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || "Failed to change password");
+      throw new Error("Failed to change password");
     }
 
-    return await response.json();
+    return response.json();
+  },
+
+  async updateAvatar(file: File): Promise<{ message: string; avatar: string }> {
+    const formData = new FormData();
+    formData.append("image", file);
+
+    const response = await fetch(`${API_URL}/user/avatar`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to update avatar");
+    }
+
+    return response.json();
+  },
+
+  async registerStore(data: RegisterRequest): Promise<{ message: string }> {
+
+    const response = await fetch(`${API_URL}/user/registerDistributor`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    console.log("response", response);
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || "Failed to register store");
+    }
+
+    return response.json();
   },
 };

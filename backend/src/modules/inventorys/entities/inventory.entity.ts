@@ -1,44 +1,62 @@
-import { ProductBatch } from '@modules/product_batches/entities/product_batch.entity';
-import { User } from '@modules/users/entities/user.entity';
 import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   OneToMany,
-  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { ProductBatch } from '../../product_batches/entities/product_batch.entity';
+import { User } from '../../users/entities/user.entity';
 
-@Entity()
+@Entity('inventorys')
 export class Inventory {
   @PrimaryGeneratedColumn('uuid')
-  id!: string;
+  id: string;
 
-  @Column({ type: 'int' })
-  quantityInStock!: number;
+  @Column({ nullable: true })
+  nameStore: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  address!: string; // Vị trí kho của đại lý
+  @Column({ nullable: true })
+  addressStore: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  lat!: string;
+  @Column({ nullable: true })
+  imageStore: string;
 
-  @Column({ type: 'varchar', length: 100, nullable: true })
-  lng!: string;
+  @Column({ nullable: true })
+  imageStorePublicId: string;
 
-  @Column({ type: 'boolean', default: true })
-  isActive!: boolean;
+  @Column({ type: 'decimal', precision: 9, scale: 6, nullable: true })
+  lat!: number;
 
-  @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
-  createdAt!: Date;
+  @Column({ type: 'decimal', precision: 9, scale: 6, nullable: true })
+  lng!: number;
 
-  @UpdateDateColumn({ type: 'timestamp', nullable: true })
-  updatedAt!: Date;
+  @Column({ nullable: true })
+  description: string;
 
-  @OneToOne(() => User, (user) => user.inventory)
-  distributor!: User; // Một Inventory chỉ thuộc 1 User
+  @Column({ default: true })
+  isActive: boolean;
+
+  @Column({ default: false })
+  isApproved: boolean;
+
+  @ManyToOne(() => User, (user) => user.inventory)
+  @JoinColumn({ name: 'userId' })
+  user: User;
+
+  @Column()
+  userId: string;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 
   @OneToMany(() => ProductBatch, (batch) => batch.inventory) // Một Inventory chứa nhiều ProductBatch
   productBatches!: ProductBatch[];
+
 }

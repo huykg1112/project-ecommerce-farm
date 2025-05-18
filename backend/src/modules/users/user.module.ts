@@ -7,6 +7,7 @@ import { TokensModule } from '../tokens/tokens.module';
 import { User } from './entities/user.entity';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
+import { InventorysModule } from '../inventorys/inventorys.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { UserService } from './user.service';
     forwardRef(() => TokensModule), // Ensure TokensModule is imported
     forwardRef(() => RolesModule), // Ensure RolesModule is imported
     forwardRef(() => CloudinaryModule),
+    forwardRef(() => InventorysModule),
   ],
   providers: [UserService], // Remove TokensService from providers
   controllers: [UserController],

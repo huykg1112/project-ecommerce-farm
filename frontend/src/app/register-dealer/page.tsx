@@ -7,9 +7,9 @@ import SuccessStep from "@/components/register-dealer/success-step";
 import TermsStep from "@/components/register-dealer/terms-step";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { useToast } from "@/components/ui/use-toast";
 import { UpdateProfileDto } from "@/interfaces";
 import { userService } from "@/lib/services/user-service";
+import { showToast } from "@/lib/toast-provider";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -44,8 +44,25 @@ export default function RegisterDealerPage() {
   });
 
   const router = useRouter();
-  const { toast } = useToast();
   let user: UpdateProfileDto;
+
+  // Kiểm tra role và chuyển hướng nếu cần
+  useEffect(() => {
+    const checkRole = async () => {
+      try {
+        const data = await userService.getProfile();
+        if (data.roleName === "Distributor") {
+         showToast.warning("Bạn đã là chủ đại lý. Không thể đăng ký thêm.");
+          router.push("/");
+        }
+      } catch (error) {
+        console.error("Failed to fetch profile:", error);
+        // Nếu không lấy được profile (chưa đăng nhập), chuyển về trang đăng nhập
+        router.push("/login");
+      }
+    };
+    checkRole();
+  }, []);
 
   // fetch user profile
   useEffect(() => {
@@ -135,27 +152,29 @@ export default function RegisterDealerPage() {
 
   const handleSubmit = async () => {
     try {
-      // Mô phỏng gửi dữ liệu lên server
-      console.log("Submitting dealer registration:", formData);
-
-      // Giả lập API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const { personalInfo, dealerInfo } = formData;
+      
+      // Gọi API đăng ký đại lý
+      const response = await userService.registerStore({
+        fullName: personalInfo.fullName,
+        email: personalInfo.email,
+        phone: personalInfo.phone,
+        cccd: personalInfo.idNumber,
+        license: personalInfo.businessLicense,
+        nameStore: dealerInfo.dealerName,
+        addressStore: dealerInfo.address.fullAddress,
+        lat: dealerInfo.address.latitude,
+        lng: dealerInfo.address.longitude,
+        imageStore: dealerInfo.image ? URL.createObjectURL(dealerInfo.image) : undefined,
+      });
 
       // Chuyển đến bước thành công
       setCurrentStep(5);
 
-      toast({
-        title: "Đăng ký thành công",
-        description:
-          "Yêu cầu đăng ký đại lý của bạn đã được gửi. Chúng tôi sẽ liên hệ với bạn sớm.",
-      });
-    } catch (error) {
+      showToast.success("Yêu cầu đăng ký đại lý của bạn đã được gửi. Chúng tôi sẽ liên hệ với bạn sớm.");
+    } catch (error: any) {
       console.error("Error submitting dealer registration:", error);
-      toast({
-        title: "Đăng ký thất bại",
-        description: "Đã xảy ra lỗi khi gửi đăng ký. Vui lòng thử lại sau.",
-        variant: "destructive",
-      });
+      showToast.error(error.message || "Đã xảy ra lỗi khi gửi đăng ký. Vui lòng thử lại sau.");
     }
   };
 

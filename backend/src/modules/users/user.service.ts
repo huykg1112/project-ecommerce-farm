@@ -8,10 +8,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { Repository } from 'typeorm';
 import { CloudinaryService } from '../../cloudinary/cloudinary.service';
+import { InventorysService } from '../inventorys/inventorys.service';
 import { CreateRoleDto } from '../roles/dto/create-role.dto';
 import { RolesService } from '../roles/roles.service';
 import { TokensService } from '../tokens/tokens.service';
 import { AssignRoleDto } from './dto/assign-role.dto';
+import { RegisterStoreDto } from './dto/register-store.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { User } from './entities/user.entity';
@@ -26,6 +28,7 @@ export class UserService {
     public readonly tokenService: TokensService,
     public readonly rolesService: RolesService,
     private readonly cloudinaryService: CloudinaryService,
+    private readonly inventorysService: InventorysService,
   ) {
     this.saltRounds = Number(
       this.configService.get<number>('BCRYPT_SALT_ROUNDS') ?? 10,
@@ -218,20 +221,62 @@ export class UserService {
     return this.userRepository.save(user);
   }
 
-  async updateAvatar(id: string, avatarUrl: string, publicId: string) {
+
+
+  async updateAvatar(id: string, avatarUrl: string, publicId: string): Promise<User> {
+    if (!avatarUrl || !publicId) {
+      throw new BadRequestException('Avatar URL and Public ID are required');
+    }
+
     const user = await this.userRepository.findOne({ where: { id } });
     if (!user) {
-      throw new Error('User not found');
+      throw new NotFoundException('User not found');
     }
 
-    // Delete old avatar if exists
-    if (user.avatarPublicId) {
-      await this.cloudinaryService.deleteImage(user.avatarPublicId);
+    try {
+      // Xóa avatar cũ nếu có
+      if (user.avatarPublicId) {
+        await this.cloudinaryService.deleteImage(user.avatarPublicId);
+      }
+
+      // Cập nhật thông tin avatar mới
+      user.avatar = avatarUrl;
+      user.avatarPublicId = publicId;
+      return await this.userRepository.save(user);
+    } catch (error) {
+      console.error('Update avatar error:', error);
+      throw new BadRequestException('Failed to update avatar: ' + error.message);
+    }
+  }
+  
+
+  async registerStore(registerStoreDto: RegisterStoreDto, userId: string): Promise<User> {
+    const {  email, fullName, phone, cccd, license, imageStore, imageStorePublicId, addressStore, nameStore, lat, lng } = registerStoreDto;
+
+    const user = await this.findById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
     }
 
-    // Update user with new avatar
-    user.avatar = avatarUrl;
-    user.avatarPublicId = publicId;
-    return this.userRepository.save(user);
+    // Tìm hoặc tạo vai trò "Store"
+    let role = await this.rolesService.findByName('Distributor');
+    
+    // Cập nhật user mới với vai trò Distributor
+    Object.assign(user, { email, fullName, phone, cccd, license, role });
+
+    const savedUser = await this.userRepository.save(user);
+
+    // Tạo kho/cửa hàng cho đại lý
+    await this.inventorysService.create({
+      nameStore,
+      addressStore,
+      userId: savedUser.id,
+      lat,
+      lng,
+      imageStore,
+      imageStorePublicId,
+    });
+
+    return savedUser;
   }
 }

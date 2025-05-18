@@ -50,10 +50,43 @@ export interface UpdateProfileDto {
   email?: string;
   lat?: number;
   lng?: number;
+  cccd?: string;
+  license?: string;
 }
 
 export interface ChangePasswordDto {
   oldPassword: string;
   newPassword: string;
   confirmPassword: string;
+}
+
+export interface UpdateStoreDto {
+  fullName?: string;
+  phone?: string;
+  email?: string;
+  cccd?: string;
+  license?: string;
+  nameStore?: string;
+  addressStore?: string;
+  lat?: number;
+  lng?: number;
+  imageStore?: string;
+  imageStorePublicId?: string;
+}
+
+export interface RegisterRequest {
+  username?: string;
+  email: string;
+  password?: string;
+  phone?: string;
+  fullName?: string;
+  address?: string;
+  cccd?: string;
+  license?: string;
+  lat?: number;
+  lng?: number;
+  nameStore?: string;
+  addressStore?: string;
+  imageStore?: string;
+  imageStorePublicId?: string;
 }
