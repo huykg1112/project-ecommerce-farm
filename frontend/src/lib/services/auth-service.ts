@@ -63,7 +63,7 @@ export const authService = {
 
   // Đăng xuất
   async logout(): Promise<{ message: string }> {
-    const token = isClient ? localStorage.getItem("access_token") : null;
+    const token = isClient ? getCookie("access_token")  : null;
 
     try {
       const response = await fetch(`${API_URL}/auth/logout`, {
@@ -106,7 +106,7 @@ export const authService = {
       throw new Error("Cannot refresh token on server side");
     }
 
-    const refreshToken = localStorage.getItem("refresh_token");
+    const refreshToken = getCookie("refresh_token");
 
     if (!refreshToken) {
       throw new Error("No refresh token available");
@@ -128,7 +128,7 @@ export const authService = {
     const result: RefreshTokenResponse = await response.json();
 
     // Cập nhật access token trong localStorage
-    localStorage.setItem("access_token", result.access_token);
+    setCookie("access_token", result.access_token);
 
     return result;
   },

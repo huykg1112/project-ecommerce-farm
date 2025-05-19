@@ -11,6 +11,7 @@ import {
 } from "@reduxjs/toolkit";
 import { authService } from "../services/auth-service";
 import { userService } from "../services/user-service";
+import { deleteCookie } from "../utils";
 
 export interface User {
   id?: string;
@@ -257,8 +258,8 @@ const userSlice = createSlice({
         state.currentUser = null;
         state.isAuthenticated = false;
         if (isClient) {
-          localStorage.removeItem("access_token");
-          localStorage.removeItem("refresh_token");
+          deleteCookie("access_token");
+          deleteCookie("refresh_token");
           localStorage.removeItem("Authorization");
           localStorage.removeItem("wishlist");
         }

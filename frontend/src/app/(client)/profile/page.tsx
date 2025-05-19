@@ -26,6 +26,7 @@ import AddressMapPicker, {
 import { ChangePasswordDto, UpdateProfileDto, UserProfile } from "@/interfaces";
 import { withAuth } from "@/lib/auth/with-auth";
 import { showToast } from "@/lib/toast-provider";
+import { deleteCookie } from "@/lib/utils";
 import {
   Heart,
   LogOut,
@@ -80,6 +81,7 @@ function ProfilePage() {
     const fetchProfile = async () => {
       try {
         const data = await userService.getProfile();
+        console.log(data);
         
         // Kiểm tra và xác thực tọa độ
         const lat = data.lat && !isNaN(Number(data.lat)) ? Number(data.lat) : 0;
@@ -105,8 +107,8 @@ function ProfilePage() {
           showToast.error(
             "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại."
           );
-          localStorage.removeItem("access_token");
-          localStorage.removeItem("refresh_token");
+          deleteCookie("access_token");
+          deleteCookie("refresh_token");
           dispatch(logoutUser());
           router.push("/login");
         } else {

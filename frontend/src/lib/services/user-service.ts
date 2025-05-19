@@ -1,4 +1,5 @@
 import { ChangePasswordDto, RegisterRequest, UpdateProfileDto, UserProfile } from "@/interfaces";
+import { getCookie } from "../utils";
 
 const API_URL = "http://localhost:4200";
 
@@ -6,7 +7,7 @@ export const userService = {
   async getProfile(): Promise<UserProfile> {
     const response = await fetch(`${API_URL}/user/profile`, {
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        Authorization: `Bearer ${getCookie("access_token")}`,
       },
     });
 
@@ -22,7 +23,7 @@ export const userService = {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        Authorization: `Bearer ${getCookie("access_token")}`,
       },
       body: JSON.stringify(data),
     });
@@ -39,7 +40,7 @@ export const userService = {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        Authorization: `Bearer ${getCookie("access_token")}`,
       },
       body: JSON.stringify(data),
     });
@@ -58,7 +59,7 @@ export const userService = {
     const response = await fetch(`${API_URL}/user/avatar`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        Authorization: `Bearer ${getCookie("access_token")}`,
       },
       body: formData,
     });
@@ -76,7 +77,7 @@ export const userService = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        Authorization: `Bearer ${getCookie("access_token")}`,
       },
       body: JSON.stringify(data),
     });
