@@ -88,7 +88,7 @@ export default function FeaturedSellers() {
           ))}
       </div>
       {sellers.length > visibleSellers && (
-        <>
+        <div>
           <Button
             variant="outline"
             size="icon"
@@ -107,7 +107,7 @@ export default function FeaturedSellers() {
             <ChevronRight className="h-5 w-5" />
             <span className="sr-only">Next</span>
           </Button>
-        </>
+        </div>
       )}
     </div>
   );

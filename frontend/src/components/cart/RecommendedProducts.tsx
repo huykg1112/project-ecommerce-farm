@@ -6,7 +6,7 @@ interface RecommendedProductsProps {
 
 export function RecommendedProducts({ products }: RecommendedProductsProps) {
   return (
-    <>
+    <div>
       {/* {recommendedProducts.length > 0 && (
           <div className="mt-12">
             <h2 className="text-xl font-bold mb-6">Có thể bạn sẽ thích</h2>
@@ -30,6 +30,6 @@ export function RecommendedProducts({ products }: RecommendedProductsProps) {
           ))}
         </div>
       </div>
-    </>
+    </div>
   );
 }

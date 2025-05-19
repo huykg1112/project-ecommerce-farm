@@ -91,7 +91,7 @@ function OrderSuccessPage() {
               </div>
 
               {order && (
-                <>
+                <div>
                   <div className="border-t pt-4 mt-4">
                     <h3 className="font-medium mb-3">Thông tin người nhận</h3>
                     <div className="space-y-2">
@@ -181,7 +181,7 @@ function OrderSuccessPage() {
                       </div>
                     </div>
                   </div>
-                </>
+                </div>
               )}
 
               <div>

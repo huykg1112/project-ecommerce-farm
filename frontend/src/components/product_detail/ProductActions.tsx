@@ -11,7 +11,7 @@ export default function ProductActions({
   isWishlisted,
 }: ProductActionsProps) {
   return (
-    <>
+    <div>
       <div className="mb-6">
         <h3 className="text-sm font-medium text-gray-900 mb-2">Số lượng:</h3>
         <div className="flex items-center">
@@ -53,6 +53,6 @@ export default function ProductActions({
           <Share2 className="h-5 w-5" />
         </Button>
       </div>
-    </>
+    </div>
   );
 }

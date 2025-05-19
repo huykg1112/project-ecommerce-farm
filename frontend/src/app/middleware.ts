@@ -1,6 +1,6 @@
 import { store } from "@/lib/features/store";
 import { refreshToken } from "@/lib/features/user-slice";
-import { isTokenExpired } from "@/lib/utils";
+import { deleteCookie, getCookie, isTokenExpired, setCookie } from "@/lib/utils";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -30,7 +30,7 @@ export async function middleware(request: NextRequest) {
 
   // Chỉ chạy ở phía client
   if (typeof window !== "undefined") {
-    let token = localStorage.getItem("access_token");
+    let token = getCookie("access_token");
 
     // Nếu có token và route yêu cầu xác thực
     if (token && (isAuthRoute || isAuthApiRoute)) {
@@ -40,11 +40,11 @@ export async function middleware(request: NextRequest) {
           // Thử refresh token
           const refreshResult = await store.dispatch(refreshToken()).unwrap();
           token = refreshResult.access_token;
-          localStorage.setItem("access_token", token);
+          setCookie("access_token", token);
         } catch (error) {
           // Nếu refresh thất bại, xóa token và redirect
-          localStorage.removeItem("access_token");
-          localStorage.removeItem("refresh_token");
+          deleteCookie("access_token");
+          deleteCookie("refresh_token");
           localStorage.removeItem("wishlist");
 
           if (isAuthApiRoute) {

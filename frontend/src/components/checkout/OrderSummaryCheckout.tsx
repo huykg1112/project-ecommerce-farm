@@ -24,7 +24,7 @@ export default function OrderSummary({
   handlePlaceOrder,
 }: OrderSummaryProps) {
   return (
-    <>
+    <div>
       <Card className="sticky top-24">
         <CardHeader className="pb-3">
           <CardTitle>Tóm tắt đơn hàng</CardTitle>
@@ -99,6 +99,6 @@ export default function OrderSummary({
           </Link>
         </Button>
       </div>
-    </>
+    </div>
   );
 }

@@ -61,7 +61,7 @@ export function PrintInvoice({ order }: PrintInvoiceProps) {
   }).format(orderDate);
 
   return (
-    <>
+    <div>
       <Button
         onClick={onPrintClick}
         className="bg-primary hover:bg-primary-dark"
@@ -199,6 +199,6 @@ export function PrintInvoice({ order }: PrintInvoiceProps) {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

@@ -8,7 +8,7 @@ import {
 } from "@/interfaces";
 
 // Import hàm kiểm tra token hết hạn
-import { isTokenExpired } from "../utils";
+import { deleteCookie, getCookie, isTokenExpired, setCookie } from "../utils";
 
 // Kiểm tra xem localStorage có tồn tại hay không (chỉ tồn tại ở phía client)
 const isClient = typeof window !== "undefined";
@@ -36,8 +36,8 @@ export const authService = {
 
     // Lưu token vào localStorage (chỉ ở phía client)
     if (isClient) {
-      localStorage.setItem("access_token", result.access_token);
-      localStorage.setItem("refresh_token", result.refresh_token);
+      setCookie("access_token", result.access_token);
+      setCookie("refresh_token", result.refresh_token);
     }
 
     return result;
@@ -81,8 +81,8 @@ export const authService = {
 
       // Xóa token khỏi localStorage (chỉ ở phía client)
       if (isClient) {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
+        deleteCookie("access_token");
+        deleteCookie("refresh_token");
         localStorage.removeItem("Authorization");
         localStorage.removeItem("wishlist");
       }
@@ -91,8 +91,8 @@ export const authService = {
     } catch (error) {
       // Vẫn xóa token ngay cả khi API gọi thất bại
       if (isClient) {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
+        deleteCookie("access_token");
+        deleteCookie("refresh_token");
         localStorage.removeItem("Authorization");
         localStorage.removeItem("wishlist");
       }
@@ -135,19 +135,19 @@ export const authService = {
 
   // Kiểm tra trạng thái đăng nhập
   isAuthenticated(): boolean {
-    return isClient ? !!localStorage.getItem("access_token") : false;
+    return isClient ? !!getCookie("access_token") : false;
   },
 
   // Lấy token
   getToken(): string | null {
-    return isClient ? localStorage.getItem("access_token") : null;
+    return isClient ? getCookie("access_token") : null;
   },
 
   // Kiểm tra token còn hạn hay không
   isTokenExpired(): boolean {
     if (!isClient) return true;
 
-    const token = localStorage.getItem("access_token");
+    const token = getCookie("access_token");
     if (!token) return true;
 
     return isTokenExpired(token);
@@ -155,7 +155,7 @@ export const authService = {
   isTokenExpiredRefresh(): boolean {
     if (!isClient) return true;
 
-    const refreshToken = localStorage.getItem("refresh_token");
+    const refreshToken = getCookie("refresh_token");
     if (!refreshToken) return true;
 
     return isTokenExpired(refreshToken);
@@ -164,7 +164,7 @@ export const authService = {
   // Xóa token cũ
   removeToken(): void {
     if (isClient) {
-      localStorage.removeItem("access_token");
+      deleteCookie("access_token");
     }
   },
   // Bắt đầu quá trình đăng nhập Google
@@ -177,8 +177,8 @@ export const authService = {
   // Lưu token từ callback Google
   saveGoogleTokens(accessToken: string, refreshToken: string): void {
     if (isClient) {
-      localStorage.setItem("access_token", accessToken);
-      localStorage.setItem("refresh_token", refreshToken);
+      setCookie("access_token", accessToken);
+      setCookie("refresh_token", refreshToken);
     }
   },
 
@@ -188,7 +188,7 @@ export const authService = {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${localStorage.getItem("access_token")}`,
+        Authorization: `Bearer ${getCookie("access_token")}`,
       },
       body: JSON.stringify(data),
     });
