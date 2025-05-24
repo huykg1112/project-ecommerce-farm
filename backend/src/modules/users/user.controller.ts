@@ -10,20 +10,23 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   Req,
   UploadedFile,
+  UseGuards,
   UseInterceptors
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Public } from '@root/src/public.decorator';
+import { Roles } from 'src/auth/roles.decorator';
 import { validate as isUUID } from 'uuid';
-
 import { CloudinaryService } from '../../cloudinary/cloudinary.service';
 import { AssignRoleDto } from './dto/assign-role.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { RegisterStoreDto } from './dto/register-store.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UserStatisticsDto } from './dto/user-statistics.dto';
 import { User } from './entities/user.entity';
 import { UserProfileSerializer } from './serializers';
 import { UserService } from './user.service';
@@ -34,7 +37,7 @@ export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly cloudinaryService: CloudinaryService,
-  ) {}
+  ) { }
 
   @Get('profile')
   async getProfile(@Req() req): Promise<UserProfileSerializer> {
@@ -165,9 +168,9 @@ export class UserController {
 
   @Post('registerDistributor')
   async registerStore(@Body() registerStoreDto: RegisterStoreDto,
-      @Req() req,
-) {
-    
+    @Req() req,
+  ) {
+
     const user = await this.userService.registerStore(registerStoreDto, req.user.id);
     return {
       message: 'Đăng ký chủ đại lý thành công',
@@ -181,5 +184,10 @@ export class UserController {
         role: user.role.name,
       },
     };
+  }
+
+  @Get('statistics')
+  async getUserStatistics(@Query() query: UserStatisticsDto) {
+    return this.userService.getUserStatistics(query);
   }
 }

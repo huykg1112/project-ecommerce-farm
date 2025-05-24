@@ -85,6 +85,7 @@ export const logoutUser = createAsyncThunk(
   "user/logout",
   async (_, { rejectWithValue }) => {
     // _là tham số không sử dụng
+    //rejectWithValue là một hàm được sử dụng để trả về một giá trị lỗi từ async thunk
     try {
       await authService.logout();
       // console.log("Logout message");
