@@ -5,6 +5,8 @@ export interface Category {
   name: string;
   description?: string;
   isActive?: boolean;
+  image?: string;
+  imagePublicId?: string;
   createdAt?: Date;
   updatedAt?: Date;
   products?: Product[];

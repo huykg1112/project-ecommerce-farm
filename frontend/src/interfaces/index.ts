@@ -4,6 +4,7 @@ export * from "./cart_page";
 export * from "./categories";
 export * from "./favorite_products";
 export * from "./homes";
+export * from "./ingredients";
 export * from "./inventorys";
 export * from "./maps";
 export * from "./permissions";

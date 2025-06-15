@@ -9,7 +9,8 @@ export interface User {
   id: string;
   email: string;
   password?: string;
-  firstName?: string;
+  username?: string;
+  fullName?: string;
   phone?: string;
   address?: string;
   avatar?: string;
@@ -34,6 +35,8 @@ export interface UserProfile {
   fullName?: string;
   lat?: number;
   lng?: number;
+  isActive?: boolean;
+  isVerified?: boolean;
   address?: string;
   cccd?: string;
   license?: string;
@@ -89,4 +92,28 @@ export interface RegisterRequest {
   addressStore?: string;
   imageStore?: string;
   imageStorePublicId?: string;
+}
+
+//admin
+export interface UserRole {
+  id: string
+  name: string
+  description?: string
+  isActive: boolean
+}
+
+export interface UserStatistics {
+  pieChart: {
+    label: string
+    value: number
+  }[]
+  barChart: {
+    label: string
+    value: number
+  }[]
+  totalStats: {
+    totalUsers: number
+    activeUsers: number
+    verifiedUsers: number
+  }
 }

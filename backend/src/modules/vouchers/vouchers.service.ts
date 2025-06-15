@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { UserService } from '../users/user.service';
@@ -20,7 +24,10 @@ export class VouchersService {
     }
 
     // Kiểm tra quyền tạo voucher
-    if (createVoucherDto.type === VoucherType.GLOBAL && creator.role.name !== 'admin') {
+    if (
+      createVoucherDto.type === VoucherType.GLOBAL &&
+      creator.role.name !== 'admin'
+    ) {
       throw new BadRequestException('Chỉ admin mới có thể tạo voucher global');
     }
 
@@ -29,7 +36,9 @@ export class VouchersService {
       if (!createVoucherDto.distributorId) {
         throw new BadRequestException('Voucher thông thường cần có đại lý');
       }
-      const distributor = await this.userService.findById(createVoucherDto.distributorId);
+      const distributor = await this.userService.findById(
+        createVoucherDto.distributorId,
+      );
       if (!distributor || distributor.role.name !== 'distributor') {
         throw new BadRequestException('Đại lý không hợp lệ');
       }
@@ -37,7 +46,9 @@ export class VouchersService {
 
     // Kiểm tra thời gian
     if (createVoucherDto.startDate >= createVoucherDto.endDate) {
-      throw new BadRequestException('Thời gian kết thúc phải sau thời gian bắt đầu');
+      throw new BadRequestException(
+        'Thời gian kết thúc phải sau thời gian bắt đầu',
+      );
     }
 
     // Kiểm tra mã voucher trùng lặp
@@ -51,7 +62,9 @@ export class VouchersService {
     const voucher = this.voucherRepository.create({
       ...createVoucherDto,
       createdBy: creator,
-      distributor: createVoucherDto.distributorId ? await this.userService.findById(createVoucherDto.distributorId) : creator,
+      distributor: createVoucherDto.distributorId
+        ? await this.userService.findById(createVoucherDto.distributorId)
+        : creator,
     });
 
     return this.voucherRepository.save(voucher);
@@ -97,7 +110,9 @@ export class VouchersService {
     // Kiểm tra thời gian
     const now = new Date();
     if (now < voucher.startDate || now > voucher.endDate) {
-      throw new BadRequestException('Voucher đã hết hạn hoặc chưa đến thời gian sử dụng');
+      throw new BadRequestException(
+        'Voucher đã hết hạn hoặc chưa đến thời gian sử dụng',
+      );
     }
 
     // Kiểm tra số lượng
@@ -107,7 +122,9 @@ export class VouchersService {
 
     // Kiểm tra giá trị đơn hàng tối thiểu
     if (voucher.minOrderValue && orderAmount < voucher.minOrderValue) {
-      throw new BadRequestException(`Đơn hàng phải có giá trị tối thiểu ${voucher.minOrderValue}`);
+      throw new BadRequestException(
+        `Đơn hàng phải có giá trị tối thiểu ${voucher.minOrderValue}`,
+      );
     }
 
     // Kiểm tra loại voucher và quyền sử dụng
@@ -124,7 +141,7 @@ export class VouchersService {
 
   async applyVoucher(code: string, userId: string, orderAmount: number) {
     const voucher = await this.validateVoucher(code, userId, orderAmount);
-    
+
     let discountAmount = 0;
     if (voucher.discountType === 'PERCENTAGE') {
       discountAmount = (orderAmount * voucher.discountValue) / 100;

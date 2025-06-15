@@ -1,9 +1,22 @@
 import { Category } from "./categories";
+import { Ingredient } from "./ingredients";
 
 export interface Product {
   id: string;
   name: string;
   description?: string;
+  discountPrice?: number;
+  discountStartDate?: Date;
+  discountEndDate?: Date;
+  stock?: number;
+  averageRating?: number;
+  totalSales?: number;
+  isFeatured?: boolean;
+  usageInstructions?: string;
+  safetyInstructions?: string;
+  storageInstructions?: string;
+  ingredients?: Ingredient[];
+  images?: ProductImage[];
   price?: number;
   isActive?: boolean;
   createdAt?: Date;

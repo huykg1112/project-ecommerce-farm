@@ -1,11 +1,11 @@
 import { User } from '@modules/users/entities/user.entity';
 import {
-      Column,
-      CreateDateColumn,
-      Entity,
-      ManyToOne,
-      PrimaryGeneratedColumn,
-      UpdateDateColumn,
+  Column,
+  CreateDateColumn,
+  Entity,
+  ManyToOne,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 
 export enum VoucherType {

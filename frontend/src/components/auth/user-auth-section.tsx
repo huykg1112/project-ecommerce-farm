@@ -1,25 +1,30 @@
 "use client";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { User, UserAuthSectionProps } from "@/interfaces";
+import { UserAuthSectionProps, UserProfile } from "@/interfaces";
 import type { AppDispatch, RootState } from "@/lib/features/store";
 import { logoutUser } from "@/lib/features/user-slice";
+import { userService } from "@/lib/services/user-service";
 import { cn } from "@/lib/utils";
+import { DropdownMenuSeparator } from "@radix-ui/react-dropdown-menu";
+import { LogOut, Settings, ShoppingBag, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 export default function UserAuthSection({ isScrolled }: UserAuthSectionProps) {
   const { isAuthenticated } = useSelector((state: RootState) => state.user);
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
 
   // Hàm xử lý đăng xuất
   const handleLogout = async () => {
@@ -33,28 +38,51 @@ export default function UserAuthSection({ isScrolled }: UserAuthSectionProps) {
     }
   };
 
+ useEffect(() => {
+    const fetchProfile = async () => {
+      const response = await userService.getProfile();
+      setProfile(response);
+    };
+    fetchProfile();
+  }, []);
+
   if (isAuthenticated) {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-            <Avatar className="h-10 w-10">
-              <AvatarImage src={"/avatar.jpg"} alt="User" />
-              <AvatarFallback>US</AvatarFallback>
+            <Avatar className="h-12 w-12 border-2 border-[#74a65d]/30">
+            <AvatarImage
+                      src={profile?.avatar || "/avatar-placeholder.png"}
+                      alt={profile?.username || "User"}
+                    />
             </Avatar>
           </Button>
-        </DropdownMenuTrigger>
+        </DropdownMenuTrigger >
         <DropdownMenuContent className="w-56" align="end" forceMount>
           <DropdownMenuItem asChild>
-            <Link href="/profile">Tài khoản</Link>
+            <Link href="/profile">
+            <User className="mr-2 h-4 w-4" />
+              <span>Tài khoản</span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link href="/orders">
+            <ShoppingBag className="mr-2 h-4 w-4" />
+              <span>Đơn hàng</span>
+            </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/orders">Đơn hàng</Link>
+            <Link href="/settings">
+            <Settings className="mr-2 h-4 w-4" />
+              <span>Cài đặt</span>
+            </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/settings">Cài đặt</Link>
+          <DropdownMenuItem onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4 text-red-500" />
+              <span className="text-red-500">Đăng xuất</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleLogout}>Đăng xuất</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     );
