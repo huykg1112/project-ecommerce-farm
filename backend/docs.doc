@@ -1,0 +1,572 @@
+Tài liệu chi tiết mô tả cơ sở dữ liệu cho hệ thống sàn TMĐT bán thuốc bảo vệ thực vật
+Tổng quan
+Cơ sở dữ liệu này được thiết kế cho hệ thống sàn thương mại điện tử (TMĐT) bán thuốc bảo vệ thực vật (BVTV), nhằm kết nối nông dân với các đại lý uy tín, hỗ trợ mua bán, tư vấn bệnh cây trồng bằng trí tuệ nhân tạo (AI), và quản lý lô sản phẩm, thành phần đặc trị, khuyến mãi, và đánh giá. Hệ thống sử dụng PostgreSQL với UUID làm khóa chính để đảm bảo khả năng mở rộng cho dự án lớn. Thiết kế tuân thủ nguyên tắc atomic (chia nhỏ dữ liệu đến mức tối đa) và chuẩn hóa 3NF để tránh dư thừa dữ liệu, đảm bảo tính toàn vẹn và dễ bảo trì.
+Đặc trưng chính của hệ thống
+
+Quản lý người dùng: Hỗ trợ các vai trò (Khách vãng lai, Khách hàng, Đại lý, Quản trị viên) với quyền hạn riêng.
+Quản lý sản phẩm và lô hàng: Quản lý thông tin sản phẩm, lô sản phẩm, thành phần đặc trị, và bệnh cây trồng liên quan.
+Tư vấn AI: Phân tích triệu chứng bệnh và đề xuất lộ trình điều trị dựa trên cây trồng, triệu chứng, và giai đoạn sinh trưởng.
+Định vị bản đồ: Tìm đại lý gần nhất dựa trên tọa độ địa lý.
+Giỏ hàng và đơn hàng: Hỗ trợ thêm sản phẩm vào giỏ, đặt hàng, và thanh toán (VNPAY hoặc COD).
+Khuyến mãi: Quản lý chương trình khuyến mãi và mã giảm giá.
+Đánh giá và yêu thích: Cho phép khách hàng đánh giá sản phẩm và lưu sản phẩm yêu thích.
+Quản lý đại lý: Xét duyệt yêu cầu đăng ký đại lý.
+
+Nguyên tắc thiết kế
+
+UUID làm khóa chính: Đảm bảo khả năng mở rộng với số lượng bản ghi lớn.
+Atomic: Mỗi bảng chỉ lưu một loại thông tin cụ thể (VD: product, batch, active_ingredient).
+Khóa ngoại: Đảm bảo toàn vẹn tham chiếu giữa các bảng.
+Cột trạng thái và thời gian: Các cột is_active, created_at, updated_at hỗ trợ quản lý trạng thái và lịch sử.
+Khả năng mở rộng: Các bảng như product_type, order_status, disease cho phép thêm giá trị mới mà không cần sửa cấu trúc.
+
+
+Mô tả chi tiết các bảng
+1. Bảng role
+Mục đích: Lưu trữ các vai trò người dùng trong hệ thống (VD: Khách vãng lai, Khách hàng, Đại lý, Quản trị viên), xác định quyền hạn cơ bản dựa trên vai trò.
+Các cột:
+
+role_id (UUID, khóa chính, mặc định uuid_generate_v4()): Định danh duy nhất cho mỗi vai trò, đảm bảo không trùng lặp trên quy mô lớn.
+role_name (VARCHAR(50), UNIQUE): Tên vai trò (VD: "Customer", "Agent", "Admin"). Đảm bảo tính duy nhất để tránh nhầm lẫn.
+description (TEXT): Mô tả chi tiết về vai trò, giúp quản trị viên hiểu rõ chức năng (VD: "Khách hàng có thể đặt hàng và nhận tư vấn AI").
+is_active (BOOLEAN, mặc định TRUE): Trạng thái vai trò (TRUE = hoạt động, FALSE = vô hiệu hóa). Hỗ trợ vô hiệu hóa vai trò mà không xóa.
+created_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian tạo vai trò, dùng để theo dõi lịch sử.
+updated_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian cập nhật gần nhất, hỗ trợ kiểm tra thay đổi.
+
+Ứng dụng:
+
+Xác định quyền hạn của người dùng (VD: Đại lý có thể quản lý sản phẩm, Quản trị viên phê duyệt yêu cầu đại lý).
+Hỗ trợ mở rộng bằng cách thêm vai trò mới (VD: "Nhà cung cấp" trong tương lai).
+
+Tương tác: Liên kết với bảng user qua role_id để gán vai trò cho người dùng.
+
+2. Bảng user
+Mục đích: Lưu trữ thông tin người dùng, bao gồm khách vãng lai, khách hàng, đại lý, và quản trị viên.
+Các cột:
+
+user_id (UUID, khóa chính, mặc định uuid_generate_v4()): Định danh duy nhất cho mỗi người dùng.
+username (VARCHAR(50), UNIQUE): Tên đăng nhập, dùng để đăng nhập hệ thống.
+email (VARCHAR(100), UNIQUE): Địa chỉ email để xác thực, khôi phục mật khẩu, và liên lạc.
+password_hash (VARCHAR(255)): Mật khẩu được mã hóa (VD: sử dụng bcrypt), đảm bảo an toàn.
+full_name (VARCHAR(100)): Họ và tên đầy đủ, hỗ trợ giao hàng và giao tiếp.
+phone_number (VARCHAR(20)): Số điện thoại để liên hệ, đặc biệt với đại lý và khách hàng.
+role_id (UUID, khóa ngoại): Liên kết đến bảng role, xác định vai trò của người dùng.
+is_active (BOOLEAN, mặc định TRUE): Trạng thái tài khoản (TRUE = hoạt động, FALSE = bị khóa).
+created_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian tạo tài khoản.
+updated_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian cập nhật tài khoản.
+
+Ứng dụng:
+
+Quản lý thông tin người dùng cho các chức năng như đăng nhập, đặt hàng, tư vấn AI, quản lý sản phẩm, và xét duyệt đại lý.
+Hỗ trợ phân quyền dựa trên role_id.
+
+Tương tác:
+
+Liên kết với role qua role_id.
+Được tham chiếu bởi address, order, cart, review, wishlist, ai_consultation, và agent_request.
+
+
+3. Bảng address
+Mục đích: Lưu trữ địa chỉ của người dùng để hỗ trợ giao hàng và tìm đại lý gần nhất thông qua bản đồ định vị.
+Các cột:
+
+address_id (UUID, khóa chính, mặc định uuid_generate_v4()): Định danh duy nhất cho mỗi địa chỉ.
+user_id (UUID, khóa ngoại): Liên kết đến bảng user, xác định chủ sở hữu địa chỉ.
+address_line (VARCHAR(255)): Địa chỉ chi tiết (số nhà, đường).
+city (VARCHAR(100)): Thành phố của địa chỉ.
+province (VARCHAR(100)): Tỉnh/thành.
+postal_code (VARCHAR(20)): Mã bưu điện, hỗ trợ giao hàng.
+latitude (DECIMAL(9,6)): Vĩ độ, dùng để định vị trên bản đồ.
+longitude (DECIMAL(9,6)): Kinh độ, dùng để định vị trên bản đồ.
+is_default (BOOLEAN, mặc định FALSE): Địa chỉ mặc định cho giao hàng.
+is_active (BOOLEAN, mặc định TRUE): Trạng thái địa chỉ (TRUE = hoạt động).
+created_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian tạo địa chỉ.
+updated_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian cập nhật địa chỉ.
+
+Ứng dụng:
+
+Hỗ trợ tính năng định vị đại lý gần nhất dựa trên latitude và longitude.
+Cung cấp địa chỉ giao hàng cho đơn hàng (order).
+
+Tương tác: Liên kết với user qua user_id và được tham chiếu bởi order qua address_id.
+
+4. Bảng category
+Mục đích: Lưu trữ danh mục sản phẩm để phân loại thuốc BVTV (VD: thuốc trừ sâu, thuốc trừ nấm, thuốc trừ cỏ).
+Các cột:
+
+category_id (UUID, khóa chính, mặc định uuid_generate_v4()): Định danh duy nhất cho mỗi danh mục.
+category_name (VARCHAR(100), UNIQUE): Tên danh mục, đảm bảo không trùng lặp.
+description (TEXT): Mô tả chi tiết về danh mục (VD: "Thuốc trừ sâu diệt côn trùng").
+is_active (BOOLEAN, mặc định TRUE): Trạng thái danh mục (TRUE = hoạt động).
+created_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian tạo danh mục.
+updated_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian cập nhật danh mục.
+
+Ứng dụng:
+
+Hỗ trợ tìm kiếm và lọc sản phẩm theo danh mục trên giao diện người dùng.
+Giúp quản trị viên và đại lý tổ chức sản phẩm hiệu quả.
+
+Tương tác: Liên kết với product qua category_id.
+
+5. Bảng product_type
+Mục đích: Lưu trữ dạng bào chế của sản phẩm thuốc BVTV (VD: dung dịch, hạt, bột).
+Các cột:
+
+product_type_id (UUID, khóa chính, mặc định uuid_generate_v4()): Định danh duy nhất cho mỗi loại sản phẩm.
+type_name (VARCHAR(50), UNIQUE): Tên loại (VD: "Solution", "Granule", "Powder").
+description (TEXT): Mô tả chi tiết về dạng bào chế.
+is_active (BOOLEAN, mặc định TRUE): Trạng thái loại (TRUE = hoạt động).
+created_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian tạo.
+updated_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian cập nhật.
+
+Ứng dụng:
+
+Phân biệt dạng bào chế của thuốc, giúp nông dân chọn sản phẩm phù hợp (VD: dung dịch để phun, hạt để rắc).
+Hỗ trợ mở rộng thêm dạng bào chế mới.
+
+Tương tác: Liên kết với product qua product_type_id.
+
+6. Bảng disease
+Mục đích: Lưu trữ danh sách bệnh cây trồng mà thuốc BVTV có thể điều trị (VD: bệnh đạo ôn, rệp sáp).
+Các cột:
+
+disease_id (UUID, khóa chính, mặc định uuid_generate_v4()): Định danh duy nhất cho mỗi bệnh.
+disease_name (VARCHAR(100), UNIQUE): Tên bệnh, đảm bảo không trùng lặp.
+description (TEXT): Mô tả chi tiết về bệnh (VD: triệu chứng, cây trồng bị ảnh hưởng).
+is_active (BOOLEAN, mặc định TRUE): Trạng thái bệnh (TRUE = hoạt động).
+created_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian tạo.
+updated_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian cập nhật.
+
+Ứng dụng:
+
+Hỗ trợ tư vấn AI bằng cách cung cấp danh sách bệnh để phân tích triệu chứng.
+Giúp nông dân hiểu rõ bệnh cây trồng và chọn thuốc phù hợp.
+
+Tương tác: Liên kết với ingredient_disease qua disease_id.
+
+7. Bảng active_ingredient
+Mục đích: Lưu trữ thông tin thành phần đặc trị trong thuốc BVTV (VD: Abamectin, Azoxystrobin).
+Các cột:
+
+ingredient_id (UUID, khóa chính, mặc định uuid_generate_v4()): Định danh duy nhất cho mỗi thành phần.
+ingredient_name (VARCHAR(100), UNIQUE): Tên thành phần đặc trị.
+description (TEXT): Mô tả chi tiết về thành phần (VD: công dụng, cơ chế hoạt động).
+hazard_level (VARCHAR(50)): Mức độ nguy hiểm (VD: "Low", "Medium", "High"), hỗ trợ cảnh báo an toàn.
+is_active (BOOLEAN, mặc định TRUE): Trạng thái thành phần (TRUE = hoạt động).
+created_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian tạo.
+updated_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian cập nhật.
+
+Ứng dụng:
+
+Cung cấp thông tin về thành phần đặc trị để hiển thị trên giao diện sản phẩm.
+Hỗ trợ tư vấn AI bằng cách liên kết với bệnh cây trồng qua ingredient_disease.
+Đảm bảo an toàn bằng cách cung cấp thông tin về mức độ nguy hiểm.
+
+Tương tác: Liên kết với product_ingredient và ingredient_disease qua ingredient_id.
+
+8. Bảng ingredient_disease
+Mục đích: Liên kết nhiều-nhiều giữa thành phần đặc trị (active_ingredient) và bệnh cây trồng (disease), mô tả hiệu quả điều trị.
+Các cột:
+
+ingredient_id (UUID, khóa ngoại): Liên kết đến bảng active_ingredient.
+disease_id (UUID, khóa ngoại): Liên kết đến bảng disease.
+effectiveness_description (TEXT): Mô tả hiệu quả điều trị (VD: "Hiệu quả cao với bệnh đạo ôn trên lúa").
+created_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian tạo liên kết.
+
+Ứng dụng:
+
+Hỗ trợ tư vấn AI bằng cách cung cấp thông tin về thành phần đặc trị nào điều trị bệnh nào.
+Giúp nông dân chọn sản phẩm dựa trên bệnh cây trồng.
+
+Tương tác: Liên kết active_ingredient và disease qua ingredient_id và disease_id.
+
+9. Bảng product
+Mục đích: Lưu trữ thông tin chung của sản phẩm thuốc BVTV, bao gồm tên, mô tả, và hướng dẫn sử dụng.
+Các cột:
+
+product_id (UUID, khóa chính, mặc định uuid_generate_v4()): Định danh duy nhất cho mỗi sản phẩm.
+agent_id (UUID, khóa ngoại): Liên kết đến bảng user, xác định đại lý sở hữu sản phẩm.
+category_id (UUID, khóa ngoại): Liên kết đến bảng category, xác định danh mục.
+product_type_id (UUID, khóa ngoại): Liên kết đến bảng product_type, xác định dạng bào chế.
+product_name (VARCHAR(100)): Tên sản phẩm, hiển thị trên giao diện.
+description (TEXT): Mô tả chi tiết về sản phẩm (VD: công dụng, cách pha).
+usage_instructions (TEXT): Hướng dẫn sử dụng sản phẩm (VD: liều lượng, cách phun).
+image_url (VARCHAR(255)): Đường dẫn hình ảnh sản phẩm.
+is_active (BOOLEAN, mặc định TRUE): Trạng thái sản phẩm (TRUE = hoạt động).
+created_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian tạo.
+updated_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian cập nhật.
+
+Ứng dụng:
+
+Hiển thị thông tin sản phẩm trên giao diện, bao gồm hướng dẫn sử dụng.
+Hỗ trợ tư vấn AI bằng cách liên kết với treatment_plan.
+
+Tương tác: Liên kết với user, category, product_type, product_ingredient, batch, review, wishlist, và treatment_plan.
+
+10. Bảng product_ingredient
+Mục đích: Liên kết nhiều-nhiều giữa sản phẩm và thành phần đặc trị, chỉ định nồng độ và thành phần chính.
+Các cột:
+
+product_id (UUID, khóa ngoại): Liên kết đến bảng product.
+ingredient_id (UUID, khóa ngoại): Liên kết đến bảng active_ingredient.
+concentration (DECIMAL(5,2)): Nồng độ thành phần (% hoặc mg/L).
+is_primary (BOOLEAN, mặc định FALSE): Xác định thành phần đặc trị chính (TRUE = chính).
+created_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian tạo liên kết.
+
+Ứng dụng:
+
+Hiển thị danh sách thành phần đặc trị của sản phẩm, nhấn mạnh thành phần chính.
+Hỗ trợ tư vấn AI bằng cách cung cấp thông tin về thành phần và bệnh điều trị.
+
+Tương tác: Liên kết product và active_ingredient qua product_id và ingredient_id.
+
+11. Bảng batch
+Mục đích: Lưu trữ thông tin lô sản phẩm, bao gồm số lượng, ngày sản xuất, và ngày hết hạn để quản lý tồn kho.
+Các cột:
+
+batch_id (UUID, khóa chính, mặc định uuid_generate_v4()): Định danh duy nhất cho mỗi lô.
+product_id (UUID, khóa ngoại): Liên kết đến bảng product.
+batch_number (VARCHAR(50), UNIQUE): Số lô sản phẩm, đảm bảo không trùng lặp.
+quantity (INT): Số lượng sản phẩm trong lô.
+manufactured_date (DATE): Ngày sản xuất lô.
+expiry_date (DATE): Ngày hết hạn lô, hỗ trợ cảnh báo.
+low_stock_threshold (INT, mặc định 10): Ngưỡng tồn kho thấp để cảnh báo đại lý.
+is_active (BOOLEAN, mặc định TRUE): Trạng thái lô (TRUE = hoạt động).
+created_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian tạo.
+updated_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian cập nhật.
+
+Ứng dụng:
+
+Quản lý tồn kho, theo dõi số lượng và ngày hết hạn.
+Cảnh báo đại lý khi lô gần hết hoặc gần hết hạn thông qua quantity và expiry_date.
+Hỗ trợ đặt hàng và giỏ hàng bằng cách liên kết với order_detail và cart_item.
+
+Tương tác: Liên kết với product qua product_id, được tham chiếu bởi order_detail và cart_item.
+
+12. Bảng order_status
+Mục đích: Lưu trữ trạng thái của đơn hàng và yêu cầu đăng ký đại lý (VD: pending, processing, delivered).
+Các cột:
+
+status_id (UUID, khóa chính, mặc định uuid_generate_v4()): Định danh duy nhất cho mỗi trạng thái.
+status_name (VARCHAR(50), UNIQUE): Tên trạng thái (VD: "Pending", "Delivered").
+description (TEXT): Mô tả chi tiết về trạng thái.
+is_active (BOOLEAN, mặc định TRUE): Trạng thái hoạt động (TRUE = hoạt động).
+created_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian tạo.
+updated_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian cập nhật.
+
+Ứng dụng:
+
+Theo dõi trạng thái đơn hàng và yêu cầu đăng ký đại lý.
+Hỗ trợ mở rộng bằng cách thêm trạng thái mới.
+
+Tương tác: Liên kết với order và agent_request qua status_id.
+
+13. Bảng payment_method
+Mục đích: Lưu trữ các phương thức thanh toán (VD: VNPAY, COD).
+Các cột:
+
+payment_method_id (UUID, khóa chính, mặc định uuid_generate_v4()): Định danh duy nhất cho mỗi phương thức.
+method_name (VARCHAR(50), UNIQUE): Tên phương thức (VD: "VNPAY", "COD").
+description (TEXT): Mô tả chi tiết.
+is_active (BOOLEAN, mặc định TRUE): Trạng thái phương thức (TRUE = hoạt động).
+created_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian tạo.
+updated_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian cập nhật.
+
+Ứng dụng:
+
+Hỗ trợ thanh toán trực tuyến và khi nhận hàng.
+Dễ dàng thêm phương thức thanh toán mới (VD: ví điện tử).
+
+Tương tác: Liên kết với order qua payment_method_id.
+
+14. Bảng order
+Mục đích: Lưu trữ thông tin đơn hàng của khách hàng.
+Các cột:
+
+order_id (UUID, khóa chính, mặc định uuid_generate_v4()): Định danh duy nhất cho mỗi đơn hàng.
+customer_id (UUID, khóa ngoại): Liên kết đến bảng user, xác định khách hàng.
+agent_id (UUID, khóa ngoại): Liên kết đến bảng user, xác định đại lý.
+address_id (UUID, khóa ngoại): Liên kết đến bảng address, xác định địa chỉ giao hàng.
+status_id (UUID, khóa ngoại): Liên kết đến bảng order_status, xác định trạng thái.
+payment_method_id (UUID, khóa ngoại): Liên kết đến bảng payment_method.
+total_amount (DECIMAL(10,2)): Tổng giá trị đơn hàng.
+created_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian tạo.
+updated_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian cập nhật.
+
+Ứng dụng:
+
+Quản lý đơn hàng, theo dõi trạng thái và thanh toán.
+Hỗ trợ đại lý theo dõi đơn hàng và cập nhật trạng thái.
+
+Tương tác: Liên kết với user, address, order_status, payment_method, và được tham chiếu bởi order_detail.
+
+15. Bảng order_detail
+Mục đích: Lưu trữ chi tiết sản phẩm trong đơn hàng, liên kết với lô sản phẩm.
+Các cột:
+
+order_detail_id (UUID, khóa chính, mặc định uuid_generate_v4()): Định danh duy nhất cho mỗi mục.
+order_id (UUID, khóa ngoại): Liên kết đến bảng order.
+batch_id (UUID, khóa ngoại): Liên kết đến bảng batch, xác định lô sản phẩm.
+quantity (INT): Số lượng sản phẩm.
+unit_price (DECIMAL(10,2)): Giá đơn vị của lô sản phẩm tại thời điểm đặt hàng.
+subtotal (DECIMAL(10,2)): Tổng giá trị mục (quantity * unit_price).
+created_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian tạo.
+
+Ứng dụng:
+
+Quản lý chi tiết đơn hàng, đảm bảo lấy đúng lô sản phẩm.
+Hỗ trợ tính toán tổng giá trị đơn hàng.
+
+Tương tác: Liên kết với order và batch.
+
+16. Bảng discount_type
+Mục đích: Lưu trữ các loại giảm giá (VD: phần trăm, cố định).
+Các cột:
+
+discount_type_id (UUID, khóa chính, mặc định uuid_generate_v4()): Định danh duy nhất cho mỗi loại.
+type_name (VARCHAR(50), UNIQUE): Tên loại giảm giá (VD: "Percentage", "Fixed").
+description (TEXT): Mô tả chi tiết.
+is_active (BOOLEAN, mặc định TRUE): Trạng thái loại (TRUE = hoạt động).
+created_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian tạo.
+updated_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian cập nhật.
+
+Ứng dụng:
+
+Hỗ trợ quản lý các loại khuyến mãi.
+Dễ dàng thêm loại giảm giá mới.
+
+Tương tác: Liên kết với promotion qua discount_type_id.
+
+16. Bảng promotion
+Mục đích: Lưu trữ chương trình khuyến mãi do đại lý tạo.
+Các cột:
+
+promotion_id (UUID, khóa chính, mặc định uuid_generate_v4()): Định danh duy nhất cho mỗi chương trình.
+agent_id (UUID, khóa ngoại): Liên kết đến bảng user, xác định đại lý.
+discount_type_id (UUID, khóa ngoại): Liên kết đến bảng discount_type.
+promotion_name (VARCHAR(100)): Tên chương trình khuyến mãi.
+description (TEXT): Mô tả chi tiết.
+discount_value (DECIMAL(10,2)): Giá trị giảm giá (VD: 10% hoặc 100,000 VNĐ).
+start_date (TIMESTAMP): Thời gian bắt đầu khuyến mãi.
+end_date (TIMESTAMP): Thời gian kết thúc khuyến mãi.
+is_active (BOOLEAN, mặc định TRUE): Trạng thái chương trình (TRUE = hoạt động).
+created_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian tạo.
+updated_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian cập nhật.
+
+Ứng dụng:
+
+Quản lý chương trình khuyến mãi để thu hút khách hàng.
+Hỗ trợ đại lý tạo chiến dịch khuyến mãi linh hoạt.
+
+Tương tác: Liên kết với user và discount_type, được tham chiếu bởi voucher.
+
+18. Bảng voucher
+Mục đích: Lưu trữ mã giảm giá liên quan đến chương trình khuyến mãi.
+Các cột:
+
+voucher_id (UUID, khóa chính, mặc định uuid_generate_v4()): Định danh duy nhất cho mỗi mã.
+promotion_id (UUID, khóa ngoại): Liên kết đến bảng promotion.
+voucher_code (VARCHAR(50), UNIQUE): Mã giảm giá (VD: "SALE20").
+min_order_value (DECIMAL(10,2)): Giá trị đơn hàng tối thiểu để áp dụng mã.
+max_discount_value (DECIMAL(10,2)): Giá trị giảm tối đa.
+usage_limit (INT): Số lần sử dụng tối đa của mã.
+used_count (INT, mặc định 0): Số lần mã đã được sử dụng.
+start_date (TIMESTAMP): Thời gian bắt đầu hiệu lực.
+end_date (TIMESTAMP): Thời gian hết hiệu lực.
+is_active (BOOLEAN, mặc định TRUE): Trạng thái mã (TRUE = hoạt động).
+created_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian tạo.
+updated_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian cập nhật.
+
+Ứng dụng:
+
+Hỗ trợ áp dụng mã giảm giá cho đơn hàng.
+Theo dõi số lần sử dụng và hiệu lực của mã.
+
+Tương tác: Liên kết với promotion qua promotion_id.
+
+19. Bảng review
+Mục đích: Lưu trữ đánh giá và bình luận của khách hàng về sản phẩm.
+Các cột:
+
+review_id (UUID, khóa chính, mặc định uuid_generate_v4()): Định danh duy nhất cho mỗi đánh giá.
+product_id (UUID, khóa ngoại): Liên kết đến bảng product.
+customer_id (UUID, khóa ngoại): Liên kết đến bảng user, xác định khách hàng.
+rating (INT, CHECK 1-5): Điểm đánh giá (1-5 sao).
+comment (TEXT): Bình luận chi tiết về sản phẩm.
+created_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian tạo.
+updated_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian cập nhật.
+
+Ứng dụng:
+
+Hỗ trợ khách hàng đánh giá sản phẩm, cung cấp phản hồi cho đại lý.
+Giúp xây dựng uy tín và tăng độ tin cậy của sản phẩm.
+
+Tương tác: Liên kết với product và user.
+
+20. Bảng wishlist
+Mục đích: Lưu trữ danh sách sản phẩm yêu thích của khách hàng.
+Các cột:
+
+wishlist_id (UUID, khóa chính, mặc định uuid_generate_v4()): Định danh duy nhất cho mỗi mục.
+customer_id (UUID, khóa ngoại): Liên kết đến bảng user.
+product_id (UUID, khóa ngoại): Liên kết đến bảng product.
+created_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian thêm vào danh sách.
+
+Ứng dụng:
+
+Cho phép khách hàng lưu sản phẩm yêu thích để xem lại hoặc mua sau.
+Tăng trải nghiệm người dùng trên sàn TMĐT.
+
+Tương tác: Liên kết với user và product.
+
+21. Bảng ai_consultation
+Mục đích: Lưu trữ thông tin tư vấn AI về bệnh cây trồng dựa trên triệu chứng và giai đoạn sinh trưởng.
+Các cột:
+
+consultation_id (UUID, khóa chính, mặc định uuid_generate_v4()): Định danh duy nhất cho mỗi tư vấn.
+customer_id (UUID, khóa ngoại): Liên kết đến bảng user, xác định khách hàng.
+crop_type (VARCHAR(100)): Loại cây trồng (VD: lúa, cà phê).
+symptom_description (TEXT): Mô tả triệu chứng bệnh, cung cấp dữ liệu cho AI.
+growth_stage (VARCHAR(50)): Giai đoạn sinh trưởng của cây (VD: "ra hoa", "trưởng thành").
+recommended_treatment (TEXT): Phương pháp điều trị được AI đề xuất.
+created_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian tạo.
+updated_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian cập nhật.
+
+Ứng dụng:
+
+Hỗ trợ tư vấn AI, lưu trữ thông tin để khách hàng tham khảo.
+Cung cấp dữ liệu cho lộ trình điều trị (treatment_plan).
+
+Tương tác: Liên kết với user và được tham chiếu bởi treatment_plan.
+
+22. Bảng treatment_plan
+Mục đích: Lưu trữ lộ trình điều trị chi tiết theo ngày, dựa trên tư vấn AI.
+Các cột:
+
+treatment_plan_id (UUID, khóa chính, mặc định uuid_generate_v4()): Định danh duy nhất cho mỗi mục trong lộ trình.
+consultation_id (UUID, khóa ngoại): Liên kết đến bảng ai_consultation.
+day_number (INT): Ngày thứ bao nhiêu trong lộ trình điều trị.
+treatment_instruction (TEXT): Hướng dẫn điều trị cụ thể (VD: "Phun 10ml thuốc vào ngày 1").
+product_id (UUID, khóa ngoại): Liên kết đến bảng product, chỉ định sản phẩm sử dụng.
+created_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian tạo.
+
+Ứng dụng:
+
+Hỗ trợ khách hàng thực hiện điều trị theo lộ trình, đảm bảo sử dụng thuốc đúng cách.
+Tăng cường hiệu quả tư vấn AI bằng cách liên kết với sản phẩm cụ thể.
+
+Tương tác: Liên kết với ai_consultation và product.
+
+23. Bảng agent_request
+Mục đích: Lưu trữ yêu cầu đăng ký trở thành đại lý.
+Các cột:
+
+request_id (UUID, khóa chính, mặc định uuid_generate_v4()): Định danh duy nhất cho mỗi yêu cầu.
+user_id (UUID, khóa ngoại): Liên kết đến bảng user, xác định người gửi yêu cầu.
+request_status_id (UUID, khóa ngoại): Liên kết đến bảng order_status, xác định trạng thái yêu cầu (VD: pending, approved).
+request_date (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian gửi yêu cầu.
+approved_date (TIMESTAMP): Thời gian phê duyệt (nếu có).
+admin_id (UUID, khóa ngoại): Liên kết đến bảng user, xác định quản trị viên xử lý.
+
+Ứng dụng:
+
+Quản lý quy trình xét duyệt đại lý, hỗ trợ mở rộng mạng lưới đại lý.
+Theo dõi trạng thái và lịch sử yêu cầu.
+
+Tương tác: Liên kết với user và order_status.
+
+24. Bảng cart
+Mục đích: Lưu trữ giỏ hàng của khách hàng, là bước trung gian trước khi đặt hàng.
+Các cột:
+
+cart_id (UUID, khóa chính, mặc định uuid_generate_v4()): Định danh duy nhất cho mỗi giỏ hàng.
+customer_id (UUID, khóa ngoại): Liên kết đến bảng user, xác định khách hàng.
+created_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian tạo giỏ hàng.
+updated_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian cập nhật giỏ hàng.
+
+Ứng dụng:
+
+Quản lý giỏ hàng, cho phép khách hàng thêm sản phẩm trước khi đặt hàng.
+Hỗ trợ trải nghiệm mua sắm mượt mà.
+
+Tương tác: Liên kết với user và được tham chiếu bởi cart_item.
+
+25. Bảng cart_item
+Mục đích: Lưu trữ chi tiết sản phẩm trong giỏ hàng, liên kết với lô sản phẩm cụ thể.
+Các cột:
+
+cart_item_id (UUID, khóa chính, mặc định uuid_generate_v4()): Định danh duy nhất cho mỗi mục trong giỏ.
+cart_id (UUID, khóa ngoại): Liên kết đến bảng cart.
+batch_id (UUID, khóa ngoại): Liên kết đến bảng batch, xác định lô sản phẩm.
+quantity (INT): Số lượng sản phẩm trong giỏ.
+unit_price (DECIMAL(10,2)): Giá đơn vị của lô sản phẩm tại thời điểm thêm vào giỏ.
+created_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian thêm vào giỏ.
+updated_at (TIMESTAMP, mặc định CURRENT_TIMESTAMP): Thời gian cập nhật.
+
+Ứng dụng:
+
+Hỗ trợ khách hàng thêm sản phẩm vào giỏ, kiểm tra tồn kho và giá cả.
+Đảm bảo chọn đúng lô sản phẩm, phù hợp với đặc trưng của thuốc BVTV (ngày hết hạn, số lượng).
+
+Tương tác: Liên kết với cart và batch.
+
+Tương tác giữa các bảng
+
+Người dùng và phân quyền: Bảng user liên kết với role để xác định vai trò. Các bảng như address, order, cart, review, wishlist, ai_consultation, và agent_request đều tham chiếu đến user.
+Sản phẩm và lô hàng: Bảng product liên kết với category, product_type, active_ingredient (qua product_ingredient), và batch. batch được sử dụng trong order_detail và cart_item để đảm bảo chọn đúng lô sản phẩm.
+Thành phần đặc trị và bệnh: active_ingredient liên kết với disease qua ingredient_disease, cung cấp thông tin cho tư vấn AI và hiển thị trên sản phẩm.
+Tư vấn AI: ai_consultation lưu thông tin tư vấn, liên kết với treatment_plan để cung cấp lộ trình điều trị, và treatment_plan liên kết với product để đề xuất thuốc.
+Đơn hàng và giỏ hàng: cart và cart_item hỗ trợ thêm sản phẩm vào giỏ, sau đó chuyển sang order và order_detail khi đặt hàng. order liên kết với address, order_status, và payment_method.
+Khuyến mãi: promotion liên kết với user (đại lý) và discount_type, được tham chiếu bởi voucher để quản lý mã giảm giá.
+Đánh giá và yêu thích: review và wishlist liên kết với user và product, hỗ trợ phản hồi và lưu sản phẩm yêu thích.
+Quản lý đại lý: agent_request liên kết với user và order_status để quản lý quy trình xét duyệt.
+
+
+Đặc trưng của sàn TMĐT bán thuốc BVTV
+
+Quản lý lô sản phẩm:
+
+Bảng batch lưu thông tin batch_number, quantity, manufactured_date, expiry_date, và low_stock_threshold, cho phép cảnh báo đại lý khi lô gần hết hoặc gần hết hạn.
+order_detail và cart_item liên kết với batch để đảm bảo chọn đúng lô sản phẩm, phù hợp với đặc thù thuốc BVTV.
+
+
+Thành phần đặc trị:
+
+Bảng active_ingredient lưu hazard_level để cảnh báo an toàn.
+product_ingredient chỉ định thành phần chính (is_primary) và nồng độ (concentration).
+ingredient_disease liên kết thành phần với bệnh cây trồng, cung cấp thông tin chi tiết cho tư vấn AI.
+
+
+Tư vấn AI:
+
+ai_consultation lưu thông tin về cây trồng, triệu chứng, và giai đoạn sinh trưởng, hỗ trợ AI phân tích và đề xuất phương pháp điều trị.
+treatment_plan cung cấp lộ trình điều trị theo ngày, liên kết với sản phẩm cụ thể để đảm bảo sử dụng đúng thuốc.
+
+
+Hướng dẫn sử dụng:
+
+Cột usage_instructions trong product cung cấp hướng dẫn chi tiết (VD: liều lượng, cách pha), giúp nông dân sử dụng thuốc an toàn và hiệu quả.
+
+
+Định vị và giao hàng:
+
+Bảng address với latitude và longitude hỗ trợ tìm đại lý gần nhất và giao hàng chính xác.
+
+
+Khuyến mãi và đánh giá:
+
+promotion và voucher hỗ trợ đại lý tạo chương trình khuyến mãi.
+review cho phép khách hàng đánh giá, tăng uy tín cho đại lý và sản phẩm.
+
+
+
+
+Tổng kết
+Cơ sở dữ liệu được thiết kế để đáp ứng đầy đủ các yêu cầu của sàn TMĐT bán thuốc BVTV, với các đặc điểm:
+
+Atomic và chuẩn hóa: Mỗi bảng chỉ lưu một loại thông tin, giảm dư thừa dữ liệu.
+Khả năng mở rộng: Sử dụng UUID và các bảng như product_type, order_status, disease cho phép thêm giá trị mới dễ dàng.
+Hỗ trợ đặc trưng ngành BVTV: Quản lý lô sản phẩm, thành phần đặc trị, bệnh cây trồng, và tư vấn AI.
+Tích hợp chặt chẽ: Các bảng tương tác thông qua khóa ngoại, đảm bảo toàn vẹn dữ liệu.
+
+Tài liệu này cung cấp cái nhìn toàn diện về cấu trúc cơ sở dữ liệu, giúp nhà phát triển và quản trị viên hiểu rõ cách triển khai và bảo trì hệ thống.
