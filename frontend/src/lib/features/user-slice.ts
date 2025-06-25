@@ -51,7 +51,6 @@ const initialState: UserState = {
   profileError: null,
 };
 
-
 // Async thunks
 export const loginUser = createAsyncThunk(
   "user/login",
@@ -277,13 +276,13 @@ const userSlice = createSlice({
         if (state.currentUser) {
           state.currentUser = {
             ...state.currentUser,
-            id: action.payload.id,
+            id: action.payload.user_id,
             email: action.payload.email,
-            phone: action.payload.phone,
+            phone: action.payload.phone_number,
             address: action.payload.address,
             avatar: action.payload.avatar,
-            roleName: action.payload.roleName,
-            fullName: action.payload.fullName,
+            roleName: action.payload.role_name,
+            fullName: action.payload.full_name,
           };
         }
       })
@@ -304,9 +303,9 @@ const userSlice = createSlice({
           state.currentUser = {
             ...state.currentUser,
             email: action.payload.email,
-            phone: action.payload.phone,
+            phone: action.payload.phone_number,
             address: action.payload.address,
-            fullName: action.payload.fullName,
+            fullName: action.payload.full_name,
           };
         }
       })

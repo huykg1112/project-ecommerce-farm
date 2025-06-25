@@ -1,7 +1,7 @@
 export interface Token {
   id?: string;
-  accessToken: string;
-  refreshToken: string;
-  accessTokenExpiresAt?: Date;
-  refreshTokenExpiresAt?: Date;
+  access_token: string;
+  refresh_token: string;
+  access_token_expires_at?: Date;
+  refresh_token_expires_at?: Date;
 }

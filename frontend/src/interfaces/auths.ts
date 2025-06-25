@@ -24,8 +24,8 @@ export interface RegisterFormProps {
   setUsername: (value: string) => void;
   email: string;
   setEmail: (value: string) => void;
-  phone: string;
-  setPhone: (value: string) => void;
+  phone_number: string;
+  setPhoneNumber: (value: string) => void;
   password: string;
   setPassword: (value: string) => void;
   showPassword: boolean;
@@ -50,16 +50,14 @@ export interface LoginResponse {
   refresh_token: string;
 }
 
-
-
 export interface RegisterResponse {
   username: string;
   email: string;
-  fullName: string;
-  phone: string;
+  full_name: string;
+  phone_number: string;
   address: string;
   cccd: string;
-  license: string;
+  license_number: string;
   lat: number;
   lng: number;
 }

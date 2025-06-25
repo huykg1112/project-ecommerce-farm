@@ -20,8 +20,8 @@ export default function RegisterForm({
   setUsername,
   email,
   setEmail,
-  phone,
-  setPhone,
+  phone_number,
+  setPhoneNumber,
   password,
   setPassword,
   showPassword,
@@ -85,8 +85,8 @@ export default function RegisterForm({
               id="register-phone"
               type="tel"
               placeholder="0912345678"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              value={phone_number}
+              onChange={(e) => setPhoneNumber(e.target.value)}
             />
           </div>
           <div className="space-y-2">

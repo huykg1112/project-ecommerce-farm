@@ -23,11 +23,11 @@ export default function RegisterStoreForm({
     email: "",
     password: "",
     confirmPassword: "",
-    fullName: "",
-    phone: "",
+    full_name: "",
+    phone_number: "",
     address: "",
     cccd: "",
-    license: "",
+    license_number: "",
     lat: 0,
     lng: 0,
   });
@@ -91,7 +91,7 @@ export default function RegisterStoreForm({
           id="fullName"
           name="fullName"
           type="text"
-          value={formData.fullName}
+          value={formData.full_name}
           onChange={handleInputChange}
           required
         />
@@ -103,7 +103,7 @@ export default function RegisterStoreForm({
           id="phone"
           name="phone"
           type="tel"
-          value={formData.phone}
+          value={formData.phone_number}
           onChange={handleInputChange}
           required
         />
@@ -127,7 +127,7 @@ export default function RegisterStoreForm({
           id="license"
           name="license"
           type="text"
-          value={formData.license}
+          value={formData.license_number}
           onChange={handleInputChange}
           required
         />

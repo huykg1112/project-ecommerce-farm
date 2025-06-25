@@ -54,14 +54,14 @@ export default function LoginPage() {
           const profile = await userService.getProfile(); // Gọi userService thay vì fetchUserProfile
           dispatch(
             setUser({
-              id: profile.id,
+              id: profile.user_id,
               username: profile.username,
               email: profile.email,
-              fullName: profile.fullName,
-              phone: profile.phone,
+              fullName: profile.full_name,
+              phone: profile.phone_number,
               address: profile.address,
               avatar: profile.avatar,
-              roleName: profile.roleName,
+              roleName: profile.role_name,
             })
           );
           router.push(callbackUrl);
@@ -84,14 +84,14 @@ export default function LoginPage() {
           const profile = await userService.getProfile();
           dispatch(
             setUser({
-              id: profile.id,
+              id: profile.user_id,
               username: profile.username,
               email: profile.email,
-              fullName: profile.fullName,
-              phone: profile.phone,
+              fullName: profile.full_name,
+              phone: profile.phone_number,
               address: profile.address,
               avatar: profile.avatar,
-              roleName: profile.roleName,
+              roleName: profile.role_name,
             })
           );
           router.push(callbackUrl);
@@ -121,7 +121,9 @@ export default function LoginPage() {
       })
     );
     if (loginUser.fulfilled.match(result)) {
-      showToast.success("Đăng nhập thành công. Chào mừng bạn đến với Nông Sàn!");
+      showToast.success(
+        "Đăng nhập thành công. Chào mừng bạn đến với Nông Sàn!"
+      );
       router.push(callbackUrl);
     }
   };
@@ -133,7 +135,7 @@ export default function LoginPage() {
         username: registerUsername,
         email: registerEmail,
         password: registerPassword,
-        phone: registerPhone,
+        phone_number: registerPhone,
       })
     );
     if (registerUser.fulfilled.match(result)) {
@@ -178,8 +180,8 @@ export default function LoginPage() {
               setUsername={setRegisterUsername}
               email={registerEmail}
               setEmail={setRegisterEmail}
-              phone={registerPhone}
-              setPhone={setRegisterPhone}
+              phone_number={registerPhone}
+              setPhoneNumber={setRegisterPhone}
               password={registerPassword}
               setPassword={setRegisterPassword}
               showPassword={showRegisterPassword}

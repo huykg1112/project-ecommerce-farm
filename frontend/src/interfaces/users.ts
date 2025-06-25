@@ -6,21 +6,21 @@ import { Role } from "./roles";
 import { Token } from "./tokens";
 
 export interface User {
-  id: string;
+  user_id: string;
   email: string;
   password?: string;
   username?: string;
-  fullName?: string;
-  phone?: string;
+  full_name?: string;
+  phone_number?: string;
   address?: string;
   avatar?: string;
-  isVerified?: boolean;
-  isActive?: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
+  is_verified?: boolean;
+  is_active?: boolean;
+  created_at?: Date;
+  updated_at?: Date;
   roles?: Role;
-  Orders?: any[];
-  CartItems?: CartItem[];
+  orders?: any[];
+  cart_items?: CartItem[];
   favorites?: FavoriteProduct[];
   token?: Token;
   products?: Product[];
@@ -28,33 +28,33 @@ export interface User {
 }
 
 export interface UserProfile {
-  id: string;
+  user_id: string;
   username: string;
   email: string;
-  phone?: string;
-  fullName?: string;
+  phone_number?: string;
+  full_name?: string;
   lat?: number;
   lng?: number;
-  isActive?: boolean;
-  isVerified?: boolean;
+  is_active?: boolean;
+  is_verified?: boolean;
   address?: string;
   cccd?: string;
-  license?: string;
+  license_number?: string;
   avatar?: string;
-  roleName: string;
-  createdAt: string;
-  updatedAt: string;
+  role_name: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface UpdateProfileDto {
-  fullName?: string;
-  phone?: string;
+  full_name?: string;
+  phone_number?: string;
   address?: string;
   email?: string;
   lat?: number;
   lng?: number;
   cccd?: string;
-  license?: string;
+  license_number?: string;
 }
 
 export interface ChangePasswordDto {
@@ -64,56 +64,56 @@ export interface ChangePasswordDto {
 }
 
 export interface UpdateStoreDto {
-  fullName?: string;
-  phone?: string;
+  full_name?: string;
+  phone_number?: string;
   email?: string;
   cccd?: string;
-  license?: string;
-  nameStore?: string;
-  addressStore?: string;
+  license_number?: string;
+  name_store?: string;
+  address_store?: string;
   lat?: number;
   lng?: number;
-  imageStore?: string;
-  imageStorePublicId?: string;
+  image_store?: string;
+  image_store_public_id?: string;
 }
 
 export interface RegisterRequest {
   username?: string;
   email: string;
   password?: string;
-  phone?: string;
-  fullName?: string;
+  phone_number?: string;
+  full_name?: string;
   address?: string;
   cccd?: string;
   license?: string;
   lat?: number;
   lng?: number;
-  nameStore?: string;
-  addressStore?: string;
-  imageStore?: string;
-  imageStorePublicId?: string;
+  name_store?: string;
+  address_store?: string;
+  image_store?: string;
+  image_store_public_id?: string;
 }
 
 //admin
 export interface UserRole {
-  id: string
-  name: string
-  description?: string
-  isActive: boolean
+  role_id: string;
+  name: string;
+  description?: string;
+  is_active: boolean;
 }
 
 export interface UserStatistics {
   pieChart: {
-    label: string
-    value: number
-  }[]
+    label: string;
+    value: number;
+  }[];
   barChart: {
-    label: string
-    value: number
-  }[]
+    label: string;
+    value: number;
+  }[];
   totalStats: {
-    totalUsers: number
-    activeUsers: number
-    verifiedUsers: number
-  }
+    totalUsers: number;
+    activeUsers: number;
+    verifiedUsers: number;
+  };
 }

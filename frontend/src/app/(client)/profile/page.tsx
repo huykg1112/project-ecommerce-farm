@@ -57,14 +57,14 @@ function ProfilePage() {
 
   // Form states
   const [formData, setFormData] = useState<UpdateProfileDto>({
-    fullName: "",
-    phone: "",
+    full_name: "",
+    phone_number: "",
     address: "",
     email: "",
     lat: 0,
     lng: 0,
     cccd: "",
-    license: "",
+    license_number: "",
   });
 
   const [passwordData, setPasswordData] = useState<ChangePasswordDto>({
@@ -73,8 +73,6 @@ function ProfilePage() {
     confirmPassword: "",
   });
 
-
-
   // Fetch profile data
   useEffect(() => {
     setLoading(true);
@@ -82,20 +80,20 @@ function ProfilePage() {
       try {
         const data = await userService.getProfile();
         console.log(data);
-        
+
         // Kiểm tra và xác thực tọa độ
         const lat = data.lat && !isNaN(Number(data.lat)) ? Number(data.lat) : 0;
         const lng = data.lng && !isNaN(Number(data.lng)) ? Number(data.lng) : 0;
 
         setFormData({
-          fullName: data.fullName || "",
-          phone: data.phone || "",
+          full_name: data.full_name || "",
+          phone_number: data.phone_number || "",
           address: data.address || "",
           email: data.email || "",
           lat: lat,
           lng: lng,
           cccd: data.cccd || "",
-          license: data.license || "",
+          license_number: data.license_number || "",
         });
         setProfile(data);
       } catch (error: any) {
@@ -146,7 +144,7 @@ function ProfilePage() {
 
   // Handle address change from map picker
   const handleAddressChange = (address: AddressData) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       address: address.fullAddress,
       lat: address.latitude,
@@ -210,7 +208,7 @@ function ProfilePage() {
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-  
+
     // Kiểm tra định dạng và kích thước file
     const validTypes = ["image/jpeg", "image/png", "image/gif"];
     const maxSize = 10 * 1024 * 1024; // 10MB
@@ -222,7 +220,7 @@ function ProfilePage() {
       showToast.error("Kích thước file không được vượt quá 10MB");
       return;
     }
-  
+
     try {
       setUploadingAvatar(true);
       await dispatch(updateAvatar(file)).unwrap();
@@ -273,8 +271,8 @@ function ProfilePage() {
             <CardContent className="p-6">
               <div className="flex flex-col items-center mb-6">
                 <div className="relative">
-                  <Avatar 
-                    className="h-24 w-24 mb-4 cursor-pointer hover:opacity-80 transition-opacity" 
+                  <Avatar
+                    className="h-24 w-24 mb-4 cursor-pointer hover:opacity-80 transition-opacity"
                     onClick={handleAvatarClick}
                   >
                     <AvatarImage
@@ -299,12 +297,12 @@ function ProfilePage() {
                   className="hidden"
                 />
                 <h2 className="text-xl font-bold">
-                  {profile?.fullName || profile?.username}
+                  {profile?.full_name || profile?.username}
                 </h2>
                 <p className="text-sm text-gray-500">{profile?.email}</p>
                 <div className="flex items-center space-x-2 mt-2">
                   <span className="px-2 py-1 bg-green-100 text-green-600 text-xs font-medium rounded-full">
-                    {profile?.roleName}
+                    {profile?.role_name}
                   </span>
                 </div>
               </div>
@@ -386,7 +384,7 @@ function ProfilePage() {
                           <Input
                             id="fullName"
                             name="fullName"
-                            value={formData.fullName}
+                            value={formData.full_name}
                             onChange={handleInputChange}
                             className="pl-10"
                             placeholder="Nguyễn Văn A"
@@ -400,7 +398,7 @@ function ProfilePage() {
                           <Input
                             id="phone"
                             name="phone"
-                            value={formData.phone}
+                            value={formData.phone_number}
                             onChange={handleInputChange}
                             className="pl-10"
                             placeholder="0912345678"
@@ -409,22 +407,22 @@ function ProfilePage() {
                       </div>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="email">Email</Label>
-                          <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                            <Input
-                              id="email"
-                              name="email"
-                              value={formData.email}
-                              onChange={handleInputChange}
-                              className="pl-10"
-                              placeholder="example@example.com"
-                            />
-                          </div>
+                      <div>
+                        <Label htmlFor="email">Email</Label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                          <Input
+                            id="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleInputChange}
+                            className="pl-10"
+                            placeholder="example@example.com"
+                          />
                         </div>
-                        <div>
-                          <Label htmlFor="cccd">Căn cước công dân</Label>
+                      </div>
+                      <div>
+                        <Label htmlFor="cccd">Căn cước công dân</Label>
                         <div className="relative">
                           <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                           <Input
@@ -436,26 +434,28 @@ function ProfilePage() {
                             placeholder="Nhập số CCCD"
                           />
                         </div>
-                        </div>
                       </div>
-                      {profile?.roleName !== "Client" && (
-                         <div className="md:col-span-2">
+                    </div>
+                    {profile?.role_name !== "Client" && (
+                      <div className="md:col-span-2">
                         <div>
-                          <Label htmlFor="license">Mã giấy phép kinh doanh</Label>
+                          <Label htmlFor="license">
+                            Mã giấy phép kinh doanh
+                          </Label>
                           <div className="relative">
                             <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                             <Input
                               id="license"
                               name="license"
-                              value={formData.license}
+                              value={formData.license_number}
                               onChange={handleInputChange}
                               className="pl-10"
                               placeholder="Nhập mã giấy phép kinh doanh"
                             />
                           </div>
                         </div>
-                      </div >
-                      )}
+                      </div>
+                    )}
 
                     {/* Address Map Picker */}
                     <div>
