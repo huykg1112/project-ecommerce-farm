@@ -9,9 +9,9 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Category } from '../../category/entities/category.entity';
-import { User } from '../../user/entities/user.entity';
-import { Review } from '../../review/entities/review.entity';
 import { ProductIngredient } from '../../product-ingredient/entities/product-ingredient.entity';
+import { Review } from '../../review/entities/review.entity';
+import { User } from '../../user/entities/user.entity';
 
 @Entity('product')
 export class Product {
@@ -43,6 +43,9 @@ export class Product {
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at!: Date;
+
+  @Column({ type: 'float', nullable: false, default: 0 })
+  unit_product_price: number;
 
   // một sản phẩm có nhiều review thông qua review
   @OneToMany(() => Review, (review) => review.product, {

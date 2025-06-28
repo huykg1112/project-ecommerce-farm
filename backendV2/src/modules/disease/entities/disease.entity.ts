@@ -1,11 +1,4 @@
-import {
-  Column,
-  Entity,
-  ManyToMany,
-  OneToMany,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
-import { ActiveIngredient } from '../../active-ingredient/entities/active-ingredient.entity';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { IngredientDisease } from '../../ingredient-disease/entities/ingredient-disease.entity';
 
 @Entity('disease')
@@ -29,9 +22,6 @@ export class Disease {
   updated_at!: Date;
 
   // một bệnh có thể có nhiều thành phần đặt trị thông qua active_ingredient
-  @OneToMany(
-    () => IngredientDisease,
-    (ingredientDisease) => ingredientDisease.disease,
-  )
-  ingredient_diseases: IngredientDisease[];
+  @OneToMany(() => IngredientDisease, (id) => id.ingredient)
+  ingredientDiseases: IngredientDisease[];
 }

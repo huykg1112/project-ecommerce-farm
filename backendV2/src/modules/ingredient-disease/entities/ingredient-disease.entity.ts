@@ -12,11 +12,17 @@ export class IngredientDisease {
 
   @ManyToOne(() => ActiveIngredient)
   @JoinColumn({ name: 'ingredient_id' })
-  ingredient!: ActiveIngredient;
+  ingredient: ActiveIngredient;
 
   @ManyToOne(() => Disease)
   @JoinColumn({ name: 'disease_id' })
-  disease!: Disease;
+  disease: Disease;
+
+  @Column({ type: 'boolean', default: false })
+  is_primary: boolean; // true: đặc trị, false: hỗ trợ
+
+  @Column({ type: 'text', nullable: true })
+  note: string; // ghi chú thêm nếu cần
 
   @Column({ type: 'text', nullable: true })
   effectiveness_description!: string;

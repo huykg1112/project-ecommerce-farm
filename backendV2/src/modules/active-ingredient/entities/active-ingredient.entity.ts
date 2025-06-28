@@ -36,9 +36,6 @@ export class ActiveIngredient {
   product_ingredients: ProductIngredient[];
 
   // thành phần đặt trị này có thể trị nhiều bệnh, một bệnh có thể có nhiều thành phần có thể trị
-  @OneToMany(
-    () => IngredientDisease,
-    (ingredientDisease) => ingredientDisease.ingredient,
-  )
-  ingredient_diseases: IngredientDisease[];
+  @OneToMany(() => IngredientDisease, (id) => id.disease)
+  ingredientDiseases: IngredientDisease[];
 }
