@@ -13,7 +13,6 @@ import { BatchModule } from './modules/batch-product/batch-product.module';
 import { CartItemModule } from './modules/cart-item/cart-item.module';
 import { CartModule } from './modules/cart/cart.module';
 import { CategoryModule } from './modules/category/category.module';
-import { DiscountTypeModule } from './modules/discount-type/discount-type.module';
 import { DiseaseModule } from './modules/disease/disease.module';
 import { IngredientDiseaseModule } from './modules/ingredient-disease/ingredient-disease.module';
 import { InvenstoryModule } from './modules/invenstory/invenstory.module';
@@ -72,7 +71,6 @@ import { WishlistModule } from './modules/wishlist/wishlist.module';
     PaymentMethodModule,
     OrderModule,
     OrderDetailModule,
-    DiscountTypeModule,
     PromotionModule,
     VoucherModule,
     ReviewModule,

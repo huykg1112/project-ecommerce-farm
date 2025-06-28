@@ -7,7 +7,6 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { BatchProduct } from '../../batch-product/entities/batch-product.entity';
-import { DiscountType } from '../../discount-type/entities/discount-type.entity';
 import { User } from '../../user/entities/user.entity';
 
 @Entity('promotion')
@@ -17,11 +16,7 @@ export class Promotion {
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'distributor_id' })
-  distributor: User;
-
-  @ManyToOne(() => DiscountType)
-  @JoinColumn({ name: 'discount_type_id' })
-  discount_type!: DiscountType;
+  created_by: User;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
   promotion_name!: string;

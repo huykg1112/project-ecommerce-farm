@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { DiseaseService } from './disease.service';
 import { CreateDiseaseDto } from './dto/create-disease.dto';
 import { UpdateDiseaseDto } from './dto/update-disease.dto';
@@ -8,27 +16,30 @@ export class DiseaseController {
   constructor(private readonly diseaseService: DiseaseService) {}
 
   @Post()
-  create(@Body() createDiseaseDto: CreateDiseaseDto) {
-    return this.diseaseService.create(createDiseaseDto);
+  async create(@Body() createDiseaseDto: CreateDiseaseDto) {
+    return await this.diseaseService.create(createDiseaseDto);
   }
 
   @Get()
-  findAll() {
-    return this.diseaseService.findAll();
+  async findAll() {
+    return await this.diseaseService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.diseaseService.findOne(+id);
+  async findOne(@Param('id') id: string) {
+    return await this.diseaseService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateDiseaseDto: UpdateDiseaseDto) {
-    return this.diseaseService.update(+id, updateDiseaseDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateDiseaseDto: UpdateDiseaseDto,
+  ) {
+    return await this.diseaseService.update(id, updateDiseaseDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.diseaseService.remove(+id);
+  async remove(@Param('id') id: string) {
+    return await this.diseaseService.remove(id);
   }
 }

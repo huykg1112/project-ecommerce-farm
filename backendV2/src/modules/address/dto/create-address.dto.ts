@@ -1,4 +1,11 @@
-import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsLatitude,
+  IsLongitude,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateAddressDto {
   @IsString({ message: 'Địa chỉ phải là chuỗi' })
@@ -6,10 +13,12 @@ export class CreateAddressDto {
   address_detail?: string;
 
   @IsNumber({ allowNaN: false }, { message: 'Vĩ độ phải là số' })
+  @IsLatitude({ message: 'Vĩ độ không hợp lệ' })
   @IsOptional()
   latitude?: number;
 
   @IsNumber({ allowNaN: false }, { message: 'Kinh độ phải là số' })
+  @IsLongitude({ message: 'Kinh độ không hợp lệ' })
   @IsOptional()
   longitude?: number;
 

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
 import { User } from '../user/entities/user.entity';
@@ -16,43 +20,70 @@ export class AddressService {
   ) {}
 
   async create(user_id: string, createAddressDto: CreateAddressDto) {
+    // Kiểm tra user có tồn tại không
     const user = await this.userRepository.findOneBy({ user_id: user_id });
     if (!user) {
       throw new NotFoundException(`User with ID ${user_id} not found`);
     }
-    //kiểm tra đây có phải là địa chỉ mật định không, nếu phỉa thì tìm địa chỉ mật định cũ tắt đi và lấy địa chỉ này làm địa chỉ mật định
+
+    // Kiểm tra nếu đây là địa chỉ mặc định thì tắt địa chỉ mặc định cũ
     if (createAddressDto.is_default) {
-      const defaultAddress = await this.addressRepository.findOne({
-        where: { user: { user_id: user_id }, is_default: true },
-      });
-      if (defaultAddress) {
-        defaultAddress.is_default = false;
-        await this.addressRepository.save(defaultAddress);
-      }
+      await this.setDefaultAddress(user_id, null);
     }
+
     const address = this.addressRepository.create({
       ...createAddressDto,
       user,
     });
-    return this.addressRepository.save(address);
+
+    const savedAddress = await this.addressRepository.save(address);
+
+    return {
+      message: 'Địa chỉ đã được tạo thành công',
+      data: savedAddress,
+    };
   }
 
   async findAll(user_id: string) {
-    return this.addressRepository.find({
-      where: { user: { user_id: user_id } },
+    // Kiểm tra user có tồn tại không
+    const user = await this.userRepository.findOneBy({ user_id: user_id });
+    if (!user) {
+      throw new NotFoundException(`User with ID ${user_id} not found`);
+    }
+
+    const addresses = await this.addressRepository.find({
+      where: { user: { user_id: user_id }, is_active: true },
+      order: { is_default: 'DESC', created_at: 'DESC' },
     });
+
+    return {
+      message: 'Lấy danh sách địa chỉ thành công',
+      data: addresses,
+      total: addresses.length,
+    };
   }
 
   async findOne(user_id: string, id: string) {
+    // Kiểm tra user có tồn tại không
+    const user = await this.userRepository.findOneBy({ user_id: user_id });
+    if (!user) {
+      throw new NotFoundException(`User with ID ${user_id} not found`);
+    }
+
     const address = await this.addressRepository.findOne({
-      where: { address_id: id, user: { user_id: user_id } },
+      where: { address_id: id, user: { user_id: user_id }, is_active: true },
     });
+
     if (!address) {
       throw new NotFoundException(
         `Address with ID ${id} not found for this user`,
       );
     }
-    return address;
+
+    return {
+      message: 'Lấy thông tin địa chỉ thành công',
+      data: address,
+    };
   }
 
   async update(
@@ -60,27 +91,126 @@ export class AddressService {
     id: string,
     updateAddressDto: UpdateAddressDto,
   ) {
-    const address = await this.findOne(user_id, id);
+    // Kiểm tra user có tồn tại không
+    const user = await this.userRepository.findOneBy({ user_id: user_id });
+    if (!user) {
+      throw new NotFoundException(`User with ID ${user_id} not found`);
+    }
+
+    const address = await this.addressRepository.findOne({
+      where: { address_id: id, user: { user_id: user_id }, is_active: true },
+    });
+
+    if (!address) {
+      throw new NotFoundException(
+        `Address with ID ${id} not found for this user`,
+      );
+    }
+
+    // Kiểm tra nếu đang set địa chỉ này làm mặc định
+    if (updateAddressDto.is_default && !address.is_default) {
+      await this.setDefaultAddress(user_id, id);
+    }
+
     Object.assign(address, updateAddressDto);
-    return this.addressRepository.save(address);
+    const updatedAddress = await this.addressRepository.save(address);
+
+    return {
+      message: 'Cập nhật địa chỉ thành công',
+      data: updatedAddress,
+    };
   }
 
   async remove(user_id: string, id: string) {
-    const address = await this.findOne(user_id, id);
+    // Kiểm tra user có tồn tại không
+    const user = await this.userRepository.findOneBy({ user_id: user_id });
+    if (!user) {
+      throw new NotFoundException(`User with ID ${user_id} not found`);
+    }
 
-    //kiểm tra đây có phải là địa chỉ mật định không, nếu phải thì lấy địa chỉ mới nhất ko phải cái này làm địa chỉ mật định
+    const address = await this.addressRepository.findOne({
+      where: { address_id: id, user: { user_id: user_id }, is_active: true },
+    });
+
+    if (!address) {
+      throw new NotFoundException(
+        `Address with ID ${id} not found for this user`,
+      );
+    }
+
+    // Nếu đây là địa chỉ mặc định, tìm địa chỉ khác làm mặc định
     if (address.is_default) {
-      //lấy địa chỉ mới nhất ko phải địa chỉ hiện tại làm địa chỉ, mật định
       const newDefaultAddress = await this.addressRepository.findOne({
-        where: { user: { user_id: user_id }, address_id: Not(id) },
+        where: {
+          user: { user_id: user_id },
+          address_id: Not(id),
+          is_active: true,
+        },
         order: { created_at: 'DESC' },
       });
+
       if (newDefaultAddress) {
         newDefaultAddress.is_default = true;
         await this.addressRepository.save(newDefaultAddress);
       }
     }
-    await this.addressRepository.remove(address);
-    return { message: 'Address removed successfully' };
+
+    // Soft delete bằng cách set is_active = false
+    address.is_active = false;
+    await this.addressRepository.save(address);
+
+    return {
+      message: 'Xóa địa chỉ thành công',
+      data: { address_id: id },
+    };
+  }
+
+  // Helper method để set địa chỉ mặc định
+  private async setDefaultAddress(
+    user_id: string,
+    newDefaultId: string | null,
+  ) {
+    const defaultAddresses = await this.addressRepository.find({
+      where: { user: { user_id: user_id }, is_default: true, is_active: true },
+    });
+
+    for (const address of defaultAddresses) {
+      if (address.address_id !== newDefaultId) {
+        address.is_default = false;
+        await this.addressRepository.save(address);
+      }
+    }
+  }
+
+  // Method để set địa chỉ mặc định
+  async setDefault(user_id: string, id: string) {
+    // Kiểm tra user có tồn tại không
+    const user = await this.userRepository.findOneBy({ user_id: user_id });
+    if (!user) {
+      throw new NotFoundException(`User with ID ${user_id} not found`);
+    }
+
+    const address = await this.addressRepository.findOne({
+      where: { address_id: id, user: { user_id: user_id }, is_active: true },
+    });
+
+    if (!address) {
+      throw new NotFoundException(
+        `Address with ID ${id} not found for this user`,
+      );
+    }
+
+    if (address.is_default) {
+      throw new BadRequestException('Địa chỉ này đã là địa chỉ mặc định');
+    }
+
+    await this.setDefaultAddress(user_id, id);
+    address.is_default = true;
+    const updatedAddress = await this.addressRepository.save(address);
+
+    return {
+      message: 'Đã set địa chỉ mặc định thành công',
+      data: updatedAddress,
+    };
   }
 }

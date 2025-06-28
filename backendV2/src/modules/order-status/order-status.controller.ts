@@ -1,16 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { OrderStatusService } from './order-status.service';
-import { CreateOrderStatusDto } from './dto/create-order-status.dto';
+import { Body, Controller, Get, Param, Patch } from '@nestjs/common';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
+import { OrderStatusService } from './order-status.service';
 
 @Controller('order-status')
 export class OrderStatusController {
   constructor(private readonly orderStatusService: OrderStatusService) {}
-
-  @Post()
-  create(@Body() createOrderStatusDto: CreateOrderStatusDto) {
-    return this.orderStatusService.create(createOrderStatusDto);
-  }
 
   @Get()
   findAll() {
@@ -19,16 +13,14 @@ export class OrderStatusController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.orderStatusService.findOne(+id);
+    return this.orderStatusService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateOrderStatusDto: UpdateOrderStatusDto) {
-    return this.orderStatusService.update(+id, updateOrderStatusDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.orderStatusService.remove(+id);
+  update(
+    @Param('id') id: string,
+    @Body() updateOrderStatusDto: UpdateOrderStatusDto,
+  ) {
+    return this.orderStatusService.update(id, updateOrderStatusDto);
   }
 }

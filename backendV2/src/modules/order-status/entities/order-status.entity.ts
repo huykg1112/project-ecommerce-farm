@@ -1,5 +1,16 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { Order } from '../../order/entities/order.entity';
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+
+export enum OrderStatusEnum {
+  PENDING = 'PENDING', // Chờ xác nhận
+  CONFIRMED = 'CONFIRMED', // Đã xác nhận
+  SHIPPING = 'SHIPPING', // Đang giao hàng
+  DELIVERED = 'DELIVERED', // Đã giao hàng
+  CANCELLED = 'CANCELLED', // Đã hủy
+  RETURNED = 'RETURNED', // Đã trả hàng
+  FAILED = 'FAILED', // Giao hàng thất bại
+  REFUNDED = 'REFUNDED', // Đã hoàn tiền
+  COMPLETED = 'COMPLETED', // Hoàn thành
+}
 
 @Entity('order_status')
 export class OrderStatus {

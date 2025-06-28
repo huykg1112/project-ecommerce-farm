@@ -1,7 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { ProductTypeService } from './product-type.service';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { CreateProductTypeDto } from './dto/create-product-type.dto';
 import { UpdateProductTypeDto } from './dto/update-product-type.dto';
+import { ProductTypeService } from './product-type.service';
 
 @Controller('product-type')
 export class ProductTypeController {
@@ -19,16 +27,24 @@ export class ProductTypeController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.productTypeService.findOne(+id);
+    return this.productTypeService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProductTypeDto: UpdateProductTypeDto) {
-    return this.productTypeService.update(+id, updateProductTypeDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateProductTypeDto: UpdateProductTypeDto,
+  ) {
+    return this.productTypeService.update(id, updateProductTypeDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.productTypeService.remove(+id);
+    return this.productTypeService.remove(id);
+  }
+
+  @Patch(':id/restore')
+  restore(@Param('id') id: string) {
+    return this.productTypeService.restore(id);
   }
 }

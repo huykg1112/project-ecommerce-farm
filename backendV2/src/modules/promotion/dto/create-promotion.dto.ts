@@ -1,1 +1,35 @@
-export class CreatePromotionDto {}
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsBoolean,
+  IsDateString,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+
+export class CreatePromotionDto {
+  @IsString({ message: 'Tên chương trình phải là chuỗi' })
+  promotion_name: string;
+
+  @IsString({ message: 'Mô tả phải là chuỗi' })
+  @IsOptional()
+  description?: string;
+
+  @IsNumber({}, { message: 'Giá trị giảm giá phải là số' })
+  discount_value: number;
+
+  @IsDateString({}, { message: 'Ngày bắt đầu không hợp lệ' })
+  start_date: string;
+
+  @IsDateString({}, { message: 'Ngày kết thúc không hợp lệ' })
+  end_date: string;
+
+  @IsBoolean({ message: 'Trạng thái phải là boolean' })
+  @IsOptional()
+  is_active?: boolean;
+
+  @IsArray({ message: 'Danh sách batch_product_ids phải là mảng' })
+  @ArrayNotEmpty({ message: 'Phải chọn ít nhất 1 sản phẩm áp dụng' })
+  batch_product_ids: string[];
+}

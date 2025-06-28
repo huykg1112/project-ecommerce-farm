@@ -1,26 +1,75 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { User } from '../user/entities/user.entity';
 import { CreateInvenstoryDto } from './dto/create-invenstory.dto';
 import { UpdateInvenstoryDto } from './dto/update-invenstory.dto';
+import { Invenstory } from './entities/invenstory.entity';
 
 @Injectable()
 export class InvenstoryService {
-  create(createInvenstoryDto: CreateInvenstoryDto) {
-    return 'This action adds a new invenstory';
+  constructor(
+    @InjectRepository(Invenstory)
+    private readonly invenstoryRepo: Repository<Invenstory>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+  ) {}
+
+  async create(createInvenstoryDto: CreateInvenstoryDto) {
+    let distributor: User | undefined;
+    if (createInvenstoryDto.distributor_id) {
+      distributor = (await this.userRepo.findOne({
+        where: { user_id: createInvenstoryDto.distributor_id },
+      })) as User;
+      if (!distributor) throw new NotFoundException('Distributor not found');
+    }
+    const invenstory = this.invenstoryRepo.create({
+      ...createInvenstoryDto,
+      distributor,
+    });
+    return this.invenstoryRepo.save(invenstory);
   }
 
-  findAll() {
-    return `This action returns all invenstory`;
+  async findAll() {
+    return this.invenstoryRepo.find({ relations: ['distributor'] });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} invenstory`;
+  async findOne(id: string) {
+    return this.invenstoryRepo.findOne({
+      where: { invenstory_id: id },
+      relations: ['distributor'],
+    });
   }
 
-  update(id: number, updateInvenstoryDto: UpdateInvenstoryDto) {
-    return `This action updates a #${id} invenstory`;
+  async update(id: string, updateInvenstoryDto: UpdateInvenstoryDto) {
+    const invenstory = await this.invenstoryRepo.findOne({
+      where: { invenstory_id: id },
+    });
+    if (!invenstory) throw new Error('Invenstory not found');
+    Object.assign(invenstory, updateInvenstoryDto);
+    return this.invenstoryRepo.save(invenstory);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} invenstory`;
+  async remove(id: string) {
+    const invenstory = await this.invenstoryRepo.findOne({
+      where: { invenstory_id: id },
+    });
+    if (!invenstory) throw new Error('Invenstory not found');
+    await this.invenstoryRepo.remove(invenstory);
+    return { message: 'Invenstory deleted' };
+  }
+
+  // Hàm tạo invenstory từ store_owner_request nếu cần dùng riêng
+  async createFromRequest(user: User, request: any) {
+    const invenstory = this.invenstoryRepo.create({
+      distributor: user,
+      name: request.name,
+      business_license: request.business_license,
+      invenstory_address: request.invenstory_address,
+      invenstory_lat: request.invenstory_lat,
+      invenstory_lng: request.invenstory_lng,
+      invenstory_img: request.invenstory_img,
+    });
+    return this.invenstoryRepo.save(invenstory);
   }
 }

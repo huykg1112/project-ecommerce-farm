@@ -1,34 +1,45 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { InvenstoryService } from './invenstory.service';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { CreateInvenstoryDto } from './dto/create-invenstory.dto';
 import { UpdateInvenstoryDto } from './dto/update-invenstory.dto';
+import { InvenstoryService } from './invenstory.service';
 
 @Controller('invenstory')
 export class InvenstoryController {
   constructor(private readonly invenstoryService: InvenstoryService) {}
 
   @Post()
-  create(@Body() createInvenstoryDto: CreateInvenstoryDto) {
-    return this.invenstoryService.create(createInvenstoryDto);
+  async create(@Body() createInvenstoryDto: CreateInvenstoryDto) {
+    return await this.invenstoryService.create(createInvenstoryDto);
   }
 
   @Get()
-  findAll() {
-    return this.invenstoryService.findAll();
+  async findAll() {
+    return await this.invenstoryService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.invenstoryService.findOne(+id);
+  async findOne(@Param('id') id: string) {
+    return await this.invenstoryService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateInvenstoryDto: UpdateInvenstoryDto) {
-    return this.invenstoryService.update(+id, updateInvenstoryDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateInvenstoryDto: UpdateInvenstoryDto,
+  ) {
+    return await this.invenstoryService.update(id, updateInvenstoryDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.invenstoryService.remove(+id);
+  async remove(@Param('id') id: string) {
+    return await this.invenstoryService.remove(id);
   }
 }

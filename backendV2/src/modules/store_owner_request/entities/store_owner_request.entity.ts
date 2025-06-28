@@ -24,4 +24,23 @@ export class StoreOwnerRequest {
 
   @Column({ type: 'timestamp', nullable: true })
   approved_date!: Date;
+
+  // Thông tin kho đăng ký
+  @Column({ type: 'varchar', length: 255 })
+  name: string;
+
+  @Column({ type: 'varchar', length: 255 })
+  business_license: string;
+
+  @Column({ type: 'varchar', length: 255 })
+  invenstory_address: string;
+
+  @Column({ type: 'decimal', precision: 9, scale: 6, nullable: true })
+  invenstory_lat: number;
+
+  @Column({ type: 'decimal', precision: 9, scale: 6, nullable: true })
+  invenstory_lng: number;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  invenstory_img: string;
 }
