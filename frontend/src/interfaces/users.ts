@@ -27,6 +27,17 @@ export interface User {
   inventory?: Inventory;
 }
 
+export interface UserAddress {
+  address_id: string;
+  address_detail: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  is_default: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface UserProfile {
   user_id: string;
   username: string;
@@ -42,8 +53,10 @@ export interface UserProfile {
   license_number?: string;
   avatar?: string;
   role_name: string;
+  role_id?: string;
   created_at: string;
   updated_at: string;
+  addresses: UserAddress[];
 }
 
 export interface UpdateProfileDto {
@@ -58,9 +71,9 @@ export interface UpdateProfileDto {
 }
 
 export interface ChangePasswordDto {
-  oldPassword: string;
-  newPassword: string;
-  confirmPassword: string;
+  old_password: string;
+  new_password: string;
+  confirm_password: string;
 }
 
 export interface UpdateStoreDto {

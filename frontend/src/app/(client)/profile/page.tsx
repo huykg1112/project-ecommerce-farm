@@ -23,11 +23,26 @@ import { userService } from "@/lib/services/user-service";
 import AddressMapPicker, {
   type AddressData,
 } from "@/components/map/address-map-picker";
-import { ChangePasswordDto, UpdateProfileDto, UserProfile } from "@/interfaces";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  ChangePasswordDto,
+  UpdateProfileDto,
+  UserAddress,
+  UserProfile,
+} from "@/interfaces";
 import { withAuth } from "@/lib/auth/with-auth";
 import { showToast } from "@/lib/toast-provider";
 import { deleteCookie } from "@/lib/utils";
 import {
+  EyeIcon,
+  EyeOffIcon,
   Heart,
   LogOut,
   Mail,
@@ -52,6 +67,19 @@ function ProfilePage() {
   const [changingPassword, setChangingPassword] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [addresses, setAddresses] = useState<UserAddress[]>([]);
+  const [isShowCurrentPassword, setIsShowCurrentPassword] = useState(false);
+  const [isShowNewPassword, setIsShowNewPassword] = useState(false);
+  const [isShowConfirmPassword, setIsShowConfirmPassword] = useState(false);
+  const [defaultAddressId, setDefaultAddressId] = useState<
+    string | undefined
+  >();
+  const [showAddAddress, setShowAddAddress] = useState(false);
+  const [newAddress, setNewAddress] = useState<Partial<UserAddress>>({
+    address_detail: "",
+    latitude: 0,
+    longitude: 0,
+  });
 
   const dispatch = useDispatch<AppDispatch>();
 
@@ -68,9 +96,9 @@ function ProfilePage() {
   });
 
   const [passwordData, setPasswordData] = useState<ChangePasswordDto>({
-    oldPassword: "",
-    newPassword: "",
-    confirmPassword: "",
+    old_password: "",
+    new_password: "",
+    confirm_password: "",
   });
 
   // Fetch profile data
@@ -79,16 +107,30 @@ function ProfilePage() {
     const fetchProfile = async () => {
       try {
         const data = await userService.getProfile();
-        console.log(data);
-
+        let address = [
+          {
+            address_detail: "",
+            latitude: 0,
+            longitude: 0,
+          },
+        ] as UserAddress[];
+        if (data.addresses.length) {
+          address = data.addresses;
+        }
         // Kiểm tra và xác thực tọa độ
-        const lat = data.lat && !isNaN(Number(data.lat)) ? Number(data.lat) : 0;
-        const lng = data.lng && !isNaN(Number(data.lng)) ? Number(data.lng) : 0;
+        const lat =
+          address[0].latitude && !isNaN(Number(address[0].latitude))
+            ? Number(address[0].latitude)
+            : 0;
+        const lng =
+          address[0].longitude && !isNaN(Number(address[0].longitude))
+            ? Number(address[0].longitude)
+            : 0;
 
         setFormData({
           full_name: data.full_name || "",
           phone_number: data.phone_number || "",
-          address: data.address || "",
+          address: address[0].address_detail || "",
           email: data.email || "",
           lat: lat,
           lng: lng,
@@ -96,6 +138,9 @@ function ProfilePage() {
           license_number: data.license_number || "",
         });
         setProfile(data);
+        setAddresses(address);
+        const def = address.find((a) => a.is_default);
+        setDefaultAddressId(def?.address_id);
       } catch (error: any) {
         console.error("Failed to fetch profile:", error);
         if (
@@ -177,7 +222,7 @@ function ProfilePage() {
     e.preventDefault();
 
     // Validate password confirmation
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
+    if (passwordData.new_password !== passwordData.confirm_password) {
       showToast.error("Mật khẩu xác nhận không khớp");
       return;
     }
@@ -189,9 +234,9 @@ function ProfilePage() {
 
       // Reset password form
       setPasswordData({
-        oldPassword: "",
-        newPassword: "",
-        confirmPassword: "",
+        old_password: "",
+        new_password: "",
+        confirm_password: "",
       });
     } catch (error: any) {
       console.error("Failed to change password:", error);
@@ -232,6 +277,46 @@ function ProfilePage() {
     }
   };
 
+  const handleSetDefault = async (address_id: string) => {
+    try {
+      await userService.setDefaultAddress(address_id);
+      const updatedProfile = await userService.getProfile();
+      setProfile(updatedProfile);
+      showToast.success("Đã cập nhật địa chỉ mặc định");
+    } catch (error: any) {
+      showToast.error(error.message || "Không thể cập nhật địa chỉ mặc định");
+    }
+  };
+
+  const handleDeleteAddress = async (address_id: string) => {
+    try {
+      await userService.deleteAddress(address_id);
+      const updatedProfile = await userService.getProfile();
+      setProfile(updatedProfile);
+      showToast.success("Đã xóa địa chỉ");
+    } catch (error: any) {
+      showToast.error(error.message || "Không thể xóa địa chỉ");
+    }
+  };
+
+  const handleAddAddress = async () => {
+    try {
+      await userService.addAddress({
+        address_detail: newAddress.address_detail,
+        latitude: newAddress.latitude,
+        longitude: newAddress.longitude,
+        is_default: false,
+      });
+      setShowAddAddress(false);
+      setNewAddress({ address_detail: "", latitude: 0, longitude: 0 });
+      const updatedProfile = await userService.getProfile();
+      setProfile(updatedProfile);
+      showToast.success("Đã thêm địa chỉ mới");
+    } catch (error: any) {
+      showToast.error(error.message || "Không thể thêm địa chỉ");
+    }
+  };
+
   if (loading) {
     return (
       <div className="container py-8">
@@ -253,6 +338,17 @@ function ProfilePage() {
     }
   };
 
+  const handleShowCurrentPassword = () => {
+    setIsShowCurrentPassword((prev) => !prev);
+  };
+
+  const handleShowConfirmPassword = () => {
+    setIsShowConfirmPassword((prev) => !prev);
+  };
+
+  const handleShowNewPassword = () => {
+    setIsShowNewPassword((prev) => !prev);
+  };
   return (
     <div className="container py-8">
       {/* Breadcrumb */}
@@ -378,12 +474,12 @@ function ProfilePage() {
                   <form onSubmit={handleUpdateProfile} className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="fullName">Họ và tên</Label>
+                        <Label htmlFor="full_name">Họ và tên</Label>
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                           <Input
-                            id="fullName"
-                            name="fullName"
+                            id="full_name"
+                            name="full_name"
                             value={formData.full_name}
                             onChange={handleInputChange}
                             className="pl-10"
@@ -392,12 +488,12 @@ function ProfilePage() {
                         </div>
                       </div>
                       <div>
-                        <Label htmlFor="phone">Số điện thoại</Label>
+                        <Label htmlFor="phone_number">Số điện thoại</Label>
                         <div className="relative">
                           <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                           <Input
-                            id="phone"
-                            name="phone"
+                            id="phone_number"
+                            name="phone_number"
                             value={formData.phone_number}
                             onChange={handleInputChange}
                             className="pl-10"
@@ -436,7 +532,7 @@ function ProfilePage() {
                         </div>
                       </div>
                     </div>
-                    {profile?.role_name !== "Client" && (
+                    {profile?.role_name === "Distributor" && (
                       <div className="md:col-span-2">
                         <div>
                           <Label htmlFor="license">
@@ -456,6 +552,51 @@ function ProfilePage() {
                         </div>
                       </div>
                     )}
+
+                    {/* Address List UI */}
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <Label className="font-bold">Địa chỉ giao hàng</Label>
+                        <Button
+                          type="button"
+                          onClick={() => setShowAddAddress(true)}
+                        >
+                          Thêm địa chỉ
+                        </Button>
+                      </div>
+                      <RadioGroup
+                        value={defaultAddressId}
+                        onValueChange={handleSetDefault}
+                      >
+                        {addresses &&
+                          addresses.length > 0 &&
+                          addresses[0].address_detail !== "" &&
+                          addresses.map((addr) => (
+                            <div
+                              key={addr.address_id}
+                              className="flex items-center gap-2 mb-2"
+                            >
+                              <RadioGroupItem value={addr.address_id} />
+                              <span>{addr.address_detail}</span>
+                              <span className="text-xs text-gray-500 ml-2">
+                                {addr.is_default ? "(Mặc định)" : ""}
+                              </span>
+                              {!addr.is_default && (
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  type="button"
+                                  onClick={() =>
+                                    handleDeleteAddress(addr.address_id)
+                                  }
+                                >
+                                  Xóa
+                                </Button>
+                              )}
+                            </div>
+                          ))}
+                      </RadioGroup>
+                    </div>
 
                     {/* Address Map Picker */}
                     <div>
@@ -479,6 +620,54 @@ function ProfilePage() {
                   </form>
                 </CardContent>
               </Card>
+              {/* Dialog thêm địa chỉ */}
+              <Dialog open={showAddAddress} onOpenChange={setShowAddAddress}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Thêm địa chỉ mới</DialogTitle>
+                  </DialogHeader>
+                  <div className="mb-4">
+                    <Label>Địa chỉ</Label>
+                    <Input
+                      value={newAddress.address_detail || ""}
+                      onChange={(e) =>
+                        setNewAddress({
+                          ...newAddress,
+                          address_detail: e.target.value,
+                        })
+                      }
+                      placeholder="Nhập địa chỉ"
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <Label>Chọn vị trí trên bản đồ</Label>
+                    <AddressMapPicker
+                      onAddressChange={(addr) =>
+                        setNewAddress({
+                          ...newAddress,
+                          address_detail: addr.fullAddress,
+                          latitude: addr.latitude,
+                          longitude: addr.longitude,
+                        })
+                      }
+                      initialAddress={{
+                        fullAddress: newAddress.address_detail || "",
+                        latitude: newAddress.latitude || 0,
+                        longitude: newAddress.longitude || 0,
+                      }}
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button onClick={handleAddAddress}>Lưu</Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => setShowAddAddress(false)}
+                    >
+                      Hủy
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </TabsContent>
 
             {/* Password Tab */}
@@ -494,27 +683,53 @@ function ProfilePage() {
                   <form onSubmit={handleChangePassword}>
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="oldPassword">Mật khẩu hiện tại</Label>
-                        <Input
-                          id="oldPassword"
-                          name="oldPassword"
-                          type="password"
-                          value={passwordData.oldPassword}
-                          onChange={handlePasswordChange}
-                          required
-                        />
+                        <Label htmlFor="old_password">Mật khẩu hiện tại</Label>
+                        <div className="relative">
+                          <Input
+                            id="old_password"
+                            name="old_password"
+                            type={isShowCurrentPassword ? "text" : "password"}
+                            value={passwordData.old_password}
+                            onChange={handlePasswordChange}
+                            required
+                          />
+                          {isShowCurrentPassword ? (
+                            <EyeIcon
+                              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+                              onClick={handleShowCurrentPassword}
+                            />
+                          ) : (
+                            <EyeOffIcon
+                              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+                              onClick={handleShowCurrentPassword}
+                            />
+                          )}
+                        </div>
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="newPassword">Mật khẩu mới</Label>
-                        <Input
-                          id="newPassword"
-                          name="newPassword"
-                          type="password"
-                          value={passwordData.newPassword}
-                          onChange={handlePasswordChange}
-                          required
-                        />
+                        <Label htmlFor="new_password">Mật khẩu mới</Label>
+                        <div className="relative">
+                          <Input
+                            id="new_password"
+                            name="new_password"
+                            type={isShowNewPassword ? "text" : "password"}
+                            value={passwordData.new_password}
+                            onChange={handlePasswordChange}
+                            required
+                          />
+                          {isShowNewPassword ? (
+                            <EyeIcon
+                              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+                              onClick={handleShowNewPassword}
+                            />
+                          ) : (
+                            <EyeOffIcon
+                              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+                              onClick={handleShowNewPassword}
+                            />
+                          )}
+                        </div>
                         <p className="text-xs text-gray-500">
                           Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ
                           thường, số và ký tự đặc biệt
@@ -522,17 +737,30 @@ function ProfilePage() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label htmlFor="confirmPassword">
+                        <Label htmlFor="confirm_password">
                           Xác nhận mật khẩu mới
                         </Label>
-                        <Input
-                          id="confirmPassword"
-                          name="confirmPassword"
-                          type="password"
-                          value={passwordData.confirmPassword}
-                          onChange={handlePasswordChange}
-                          required
-                        />
+                        <div className="relative">
+                          <Input
+                            id="confirm_password"
+                            name="confirm_password"
+                            type={isShowConfirmPassword ? "text" : "password"}
+                            value={passwordData.confirm_password}
+                            onChange={handlePasswordChange}
+                            required
+                          />
+                          {isShowConfirmPassword ? (
+                            <EyeIcon
+                              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+                              onClick={handleShowConfirmPassword}
+                            />
+                          ) : (
+                            <EyeOffIcon
+                              className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer"
+                              onClick={handleShowConfirmPassword}
+                            />
+                          )}
+                        </div>
                       </div>
                     </div>
 

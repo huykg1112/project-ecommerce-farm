@@ -7,8 +7,13 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { ILike, Repository } from 'typeorm';
+
+import { UserProfileType } from '@root/src/serializers/TypeSerializer/UserProfile.type';
+import { UserProfileSerializer } from '@root/src/serializers/UserSerializers';
+import { AddressService } from '../address/address.service';
 import { RoleService } from '../role/role.service';
 import { TokenService } from '../token/token.service';
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { User } from './entities/user.entity';
@@ -22,8 +27,7 @@ export class UserService {
     private readonly configService: ConfigService,
     public readonly tokenService: TokenService,
     public readonly rolesService: RoleService,
-    // @Inject(forwardRef(() => AddressModule))
-    // public readonly addressService: AddressService,
+    private readonly addressService: AddressService,
   ) {
     this.saltRounds = Number(
       this.configService.get<number>('BCRYPT_SALT_ROUNDS') ?? 10,
@@ -54,7 +58,11 @@ export class UserService {
   }
   // tìm user bằng id
   async findUserById(id: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { user_id: id } });
+    return this.userRepository.findOne({
+      where: { user_id: id },
+      relations: ['role', 'addresses'],
+      order: { addresses: { is_default: 'DESC', created_at: 'DESC' } },
+    });
   }
 
   // lưu user
@@ -109,18 +117,18 @@ export class UserService {
   async updateProfile(
     id: string,
     updateProfileDto: UpdateProfileDto,
-  ): Promise<{ message: string; user: User }> {
+  ): Promise<{ message: string; user: UserProfileType }> {
     const user = await this.findUserById(id);
     if (!user) {
       throw new NotFoundException('Người dùng không tồn tại');
     }
     // kiểm tra email đã tồn tại chưa
-    if (updateProfileDto.email) {
-      const existingUser = await this.checkEmailExists(updateProfileDto.email);
-      if (existingUser) {
-        throw new BadRequestException('Email đã tồn tại');
-      }
-    }
+    // if (updateProfileDto.email) {
+    //   const existingUser = await this.checkEmailExists(updateProfileDto.email);
+    //   if (existingUser) {
+    //     throw new BadRequestException('Email đã tồn tại');
+    //   }
+    // }
     // cập nhật thông tin người dùng
     Object.assign(user, {
       full_name: updateProfileDto.full_name,
@@ -128,20 +136,56 @@ export class UserService {
       phone_number: updateProfileDto.phone_number,
       avatar: updateProfileDto.avatar,
       is_active: updateProfileDto.is_active,
+      cccd: updateProfileDto.cccd,
     });
-    // // cập nhật địa chỉ mới
-    // if (updateProfileDto.address) {
-    //   const address = await this.addressService.create(
-    //     user.user_id,
-    //     updateProfileDto.address,
-    //   );
-    //   user.addresses = [...user.addresses, address];
-    // }
+    // Xử lý cập nhật địa chỉ nếu có thay đổi
+    if (
+      updateProfileDto.address ||
+      updateProfileDto.lat ||
+      updateProfileDto.lng
+    ) {
+      // Lấy địa chỉ mặc định hiện tại
+      const addresses = Array.isArray(user.addresses) ? user.addresses : [];
+      const defaultAddress = addresses.find((a) => a.is_default);
+      // Kiểm tra nếu có thay đổi địa chỉ
+      const isAddressChanged =
+        !defaultAddress ||
+        defaultAddress.address_detail !== updateProfileDto.address ||
+        defaultAddress.latitude !== updateProfileDto.lat ||
+        defaultAddress.longitude !== updateProfileDto.lng;
+      if (isAddressChanged) {
+        // Nếu có defaultAddress thì update, không thì tạo mới
+        if (defaultAddress) {
+          await this.addressService.update(
+            user.user_id,
+            defaultAddress.address_id,
+            {
+              address_detail: updateProfileDto.address,
+              latitude: updateProfileDto.lat,
+              longitude: updateProfileDto.lng,
+              is_default: true,
+            },
+          );
+        } else {
+          await this.addressService.create(user.user_id, {
+            address_detail: updateProfileDto.address,
+            latitude: updateProfileDto.lat,
+            longitude: updateProfileDto.lng,
+            is_default: true,
+          });
+        }
+      }
+    }
     const updatedUser = await this.saveUser(user);
+    console.log('updatedUser', updatedUser);
+    // Lấy lại user với relations để trả về đúng dữ liệu
+    const userWithRelations = await this.findUserById(updatedUser.user_id);
+    if (!userWithRelations) {
+      throw new NotFoundException('Người dùng không tồn tại sau khi cập nhật');
+    }
     return {
       message: 'Cập nhật thông tin người dùng thành công',
-      user: updatedUser,
-      // address: user.addresses[user.addresses.length - 1],
+      user: UserProfileSerializer.serialize(userWithRelations),
     };
   }
   // xóa người dùng
@@ -158,12 +202,12 @@ export class UserService {
     return this.userRepository.find();
   }
 
-  async getProfile(id: string): Promise<User> {
+  async getProfile(id: string): Promise<UserProfileType> {
     const user = await this.findUserById(id);
     if (!user) {
       throw new NotFoundException('Người dùng không tồn tại');
     }
-    return user;
+    return UserProfileSerializer.serialize(user);
   }
 
   async findByUsername(username: string): Promise<User> {
@@ -172,5 +216,35 @@ export class UserService {
       throw new NotFoundException('Người dùng không tồn tại');
     }
     return user;
+  }
+  // đổi mật khẩu
+  async changePassword(
+    id: string,
+    changePasswordDto: ChangePasswordDto,
+  ): Promise<{ message: string; user: UserProfileType }> {
+    const user = await this.findUserById(id);
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại');
+    }
+    // kiểm tra mật khẩu cũ
+    const isPasswordValid = await bcrypt.compare(
+      changePasswordDto.old_password,
+      user.password,
+    );
+    if (!isPasswordValid) {
+      throw new BadRequestException('Mật khẩu cũ không chính xác');
+    }
+    // mã hóa mật khẩu mới
+    const hashedPassword = await bcrypt.hash(
+      changePasswordDto.new_password,
+      this.saltRounds,
+    );
+    // cập nhật mật khẩu
+    user.password = hashedPassword;
+    const updatedUser = await this.saveUser(user);
+    return {
+      message: 'Đổi mật khẩu thành công',
+      user: UserProfileSerializer.serialize(updatedUser),
+    };
   }
 }
