@@ -1,10 +1,14 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class InitDatabase1751082822023 implements MigrationInterface {
-    name = 'InitDatabase1751082822023'
+export class InitDatabase1751208672918 implements MigrationInterface {
+    name = 'InitDatabase1751208672918'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TABLE "category" ("category_id" uuid NOT NULL DEFAULT uuid_generate_v4(), "category_name" character varying(100), "description" text, "is_active" boolean DEFAULT true, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_cc7f32b7ab33c70b9e715afae84" PRIMARY KEY ("category_id"))`);
+        await queryRunner.query(`CREATE TABLE "disease" ("disease_id" uuid NOT NULL DEFAULT uuid_generate_v4(), "disease_name" character varying(100), "description" text, "is_active" boolean DEFAULT true, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_43c8ddf9bbd685cb44ea7159be5" PRIMARY KEY ("disease_id"))`);
+        await queryRunner.query(`CREATE TABLE "ingredient_disease" ("ingredient_id" uuid NOT NULL, "disease_id" uuid NOT NULL, "is_primary" boolean NOT NULL DEFAULT false, "note" text, "effectiveness_description" text, "created_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_820b3429edcbac23d1edf79aad0" PRIMARY KEY ("ingredient_id", "disease_id"))`);
+        await queryRunner.query(`CREATE TABLE "active_ingredient" ("ingredient_id" uuid NOT NULL DEFAULT uuid_generate_v4(), "ingredient_name" character varying(100), "description" text, "hazard_level" character varying(50), "is_active" boolean DEFAULT true, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_0210580ea4202b49a90513b89bb" PRIMARY KEY ("ingredient_id"))`);
+        await queryRunner.query(`CREATE TABLE "product_ingredient" ("product_id" uuid NOT NULL, "ingredient_id" uuid NOT NULL, "concentration" numeric(5,2), "is_primary" boolean DEFAULT false, "created_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_f67be6dcd1883f638cba90662ca" PRIMARY KEY ("product_id", "ingredient_id"))`);
         await queryRunner.query(`CREATE TABLE "address" ("address_id" uuid NOT NULL DEFAULT uuid_generate_v4(), "address_detail" character varying(500), "latitude" numeric(9,6), "longitude" numeric(9,6), "is_default" boolean DEFAULT false, "is_active" boolean DEFAULT true, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "user_id" uuid, CONSTRAINT "PK_db4aae0a059fd4ef7709cb802b0" PRIMARY KEY ("address_id"))`);
         await queryRunner.query(`CREATE TABLE "treatment_plan" ("treatment_plan_id" uuid NOT NULL DEFAULT uuid_generate_v4(), "day_number" integer, "treatment_instruction" text NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "consultation_id" uuid, "product_id" uuid, CONSTRAINT "PK_57adb85a1d7be0ee4ddcc29bdff" PRIMARY KEY ("treatment_plan_id"))`);
         await queryRunner.query(`CREATE TABLE "ai_consultation" ("consultation_id" uuid NOT NULL DEFAULT uuid_generate_v4(), "crop_type" character varying(100), "symptom_description" text, "growth_stage" character varying(50), "recommended_treatment" text, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "user_id" uuid, CONSTRAINT "PK_f06fa8f353be07a09883edf1437" PRIMARY KEY ("consultation_id"))`);
@@ -18,7 +22,6 @@ export class InitDatabase1751082822023 implements MigrationInterface {
         await queryRunner.query(`CREATE TABLE "batch_product" ("batch_id" uuid NOT NULL DEFAULT uuid_generate_v4(), "batch_number" character varying(50) NOT NULL, "quantity" integer, "manufactured_date" date, "expiry_date" date, "low_stock_threshold" integer DEFAULT '10', "is_active" boolean DEFAULT true, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "product_id" uuid, "invenstory_id" uuid, CONSTRAINT "UQ_00282182dc332b5202e0454a121" UNIQUE ("batch_number"), CONSTRAINT "PK_9783ad350db6a237292093bad9e" PRIMARY KEY ("batch_id"))`);
         await queryRunner.query(`CREATE TABLE "cart_item" ("cart_item_id" uuid NOT NULL DEFAULT uuid_generate_v4(), "quantity" integer, "unit_price" numeric(10,2), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "cart_id" uuid, "batch_id" uuid, CONSTRAINT "PK_a96f2f9a014485fe47477c26c4a" PRIMARY KEY ("cart_item_id"))`);
         await queryRunner.query(`CREATE TABLE "cart" ("cart_id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "user_id" uuid, CONSTRAINT "PK_c741cd2adcfb2f2d1c2743d76b6" PRIMARY KEY ("cart_id"))`);
-        await queryRunner.query(`CREATE TABLE "review" ("review_id" uuid NOT NULL DEFAULT uuid_generate_v4(), "rating" integer, "comment" text, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "product_id" uuid, "user_id" uuid, "distributor_id" uuid, "parent_review_id" uuid, CONSTRAINT "REL_42f559b5675aaf6deaa62a08bc" UNIQUE ("parent_review_id"), CONSTRAINT "PK_0106a233019ba9f4ee80aca2958" PRIMARY KEY ("review_id"))`);
         await queryRunner.query(`CREATE TABLE "role" ("role_id" uuid NOT NULL DEFAULT uuid_generate_v4(), "role_name" character varying(50), "description" text, "is_active" boolean DEFAULT true, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_df46160e6aa79943b83c81e496e" PRIMARY KEY ("role_id"))`);
         await queryRunner.query(`CREATE TABLE "store_owner_request" ("store_owner_request_id" uuid NOT NULL DEFAULT uuid_generate_v4(), "request_date" TIMESTAMP NOT NULL DEFAULT now(), "request_status" boolean NOT NULL DEFAULT false, "approved_date" TIMESTAMP, "name" character varying(255) NOT NULL, "business_license" character varying(255) NOT NULL, "invenstory_address" character varying(255) NOT NULL, "invenstory_lat" numeric(9,6), "invenstory_lng" numeric(9,6), "invenstory_img" character varying(255), "user_id" uuid, CONSTRAINT "REL_2dc0ed4b4f3de021c88d95c130" UNIQUE ("user_id"), CONSTRAINT "PK_74993a0d4321ed7f580a437a7f4" PRIMARY KEY ("store_owner_request_id"))`);
         await queryRunner.query(`CREATE TABLE "token" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "access_token" character varying(500), "access_token_expires_at" TIMESTAMP, "refresh_token" character varying(500), "refresh_token_expires_at" TIMESTAMP, "user_id" uuid, CONSTRAINT "PK_82fae97f905930df5d62a702fc9" PRIMARY KEY ("id"))`);
@@ -29,11 +32,8 @@ export class InitDatabase1751082822023 implements MigrationInterface {
         await queryRunner.query(`CREATE INDEX "IDX_758b8ce7c18b9d347461b30228" ON "user" ("user_id") `);
         await queryRunner.query(`CREATE INDEX "IDX_78a916df40e02a9deb1c4b75ed" ON "user" ("username") `);
         await queryRunner.query(`CREATE INDEX "IDX_e12875dfb3b1d92d7d7c5377e2" ON "user" ("email") `);
-        await queryRunner.query(`CREATE TABLE "disease" ("disease_id" uuid NOT NULL DEFAULT uuid_generate_v4(), "disease_name" character varying(100), "description" text, "is_active" boolean DEFAULT true, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_43c8ddf9bbd685cb44ea7159be5" PRIMARY KEY ("disease_id"))`);
-        await queryRunner.query(`CREATE TABLE "ingredient_disease" ("ingredient_id" uuid NOT NULL, "disease_id" uuid NOT NULL, "is_primary" boolean NOT NULL DEFAULT false, "note" text, "effectiveness_description" text, "created_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_820b3429edcbac23d1edf79aad0" PRIMARY KEY ("ingredient_id", "disease_id"))`);
-        await queryRunner.query(`CREATE TABLE "active_ingredient" ("ingredient_id" uuid NOT NULL DEFAULT uuid_generate_v4(), "ingredient_name" character varying(100), "description" text, "hazard_level" character varying(50), "is_active" boolean DEFAULT true, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_0210580ea4202b49a90513b89bb" PRIMARY KEY ("ingredient_id"))`);
-        await queryRunner.query(`CREATE TABLE "product_ingredient" ("product_id" uuid NOT NULL, "ingredient_id" uuid NOT NULL, "concentration" numeric(5,2), "is_primary" boolean DEFAULT false, "created_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_f67be6dcd1883f638cba90662ca" PRIMARY KEY ("product_id", "ingredient_id"))`);
-        await queryRunner.query(`CREATE TABLE "product" ("product_id" uuid NOT NULL DEFAULT uuid_generate_v4(), "product_name" character varying(100), "description" text, "usage_instructions" text, "is_active" boolean DEFAULT true, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "distributor_id" uuid, CONSTRAINT "PK_1de6a4421ff0c410d75af27aeee" PRIMARY KEY ("product_id"))`);
+        await queryRunner.query(`CREATE TABLE "review" ("review_id" uuid NOT NULL DEFAULT uuid_generate_v4(), "rating" integer, "comment" text, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "product_id" uuid, "user_id" uuid, "distributor_id" uuid, "parent_review_id" uuid, CONSTRAINT "REL_42f559b5675aaf6deaa62a08bc" UNIQUE ("parent_review_id"), CONSTRAINT "PK_0106a233019ba9f4ee80aca2958" PRIMARY KEY ("review_id"))`);
+        await queryRunner.query(`CREATE TABLE "product" ("product_id" uuid NOT NULL DEFAULT uuid_generate_v4(), "product_name" character varying(100), "description" text, "usage_instructions" text, "is_active" boolean DEFAULT true, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "unit_product_price" double precision NOT NULL DEFAULT '0', "distributor_id" uuid, CONSTRAINT "PK_1de6a4421ff0c410d75af27aeee" PRIMARY KEY ("product_id"))`);
         await queryRunner.query(`CREATE TABLE "wishlist" ("wishlist_id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP NOT NULL DEFAULT now(), "user_id" uuid, "product_id" uuid, CONSTRAINT "REL_512bf776587ad5fc4f804277d7" UNIQUE ("user_id"), CONSTRAINT "PK_bf0b54a57200f8116d7366bf42c" PRIMARY KEY ("wishlist_id"))`);
         await queryRunner.query(`CREATE TABLE "product_image" ("product_image_id" uuid NOT NULL DEFAULT uuid_generate_v4(), "image_url" character varying(255) NOT NULL, "description" text, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "product_id" uuid, CONSTRAINT "PK_c0532fda47499dffa32b81e4d90" PRIMARY KEY ("product_image_id"))`);
         await queryRunner.query(`CREATE TABLE "batch_product_type" ("productTypeProductTypeId" uuid NOT NULL, "batchProductBatchId" uuid NOT NULL, CONSTRAINT "PK_feaad865de6a6caabb0dde75389" PRIMARY KEY ("productTypeProductTypeId", "batchProductBatchId"))`);
@@ -48,6 +48,10 @@ export class InitDatabase1751082822023 implements MigrationInterface {
         await queryRunner.query(`CREATE TABLE "product_category" ("productProductId" uuid NOT NULL, "categoryCategoryId" uuid NOT NULL, CONSTRAINT "PK_4c73a1c2d5d2112cf08b1f1038c" PRIMARY KEY ("productProductId", "categoryCategoryId"))`);
         await queryRunner.query(`CREATE INDEX "IDX_8d3fb31ab54261ff8755eebc3e" ON "product_category" ("productProductId") `);
         await queryRunner.query(`CREATE INDEX "IDX_4b7c62655ed69ca4bf462a4f02" ON "product_category" ("categoryCategoryId") `);
+        await queryRunner.query(`ALTER TABLE "ingredient_disease" ADD CONSTRAINT "FK_9cdb632c14611a0352621283e41" FOREIGN KEY ("ingredient_id") REFERENCES "active_ingredient"("ingredient_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "ingredient_disease" ADD CONSTRAINT "FK_30fac8a30b4d05a1f26855b8a30" FOREIGN KEY ("disease_id") REFERENCES "disease"("disease_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "product_ingredient" ADD CONSTRAINT "FK_a7a4b2de441d2ab00df5b0d4cdd" FOREIGN KEY ("product_id") REFERENCES "product"("product_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "product_ingredient" ADD CONSTRAINT "FK_3f9b3e7181dc8cd771e6d513b7b" FOREIGN KEY ("ingredient_id") REFERENCES "active_ingredient"("ingredient_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "address" ADD CONSTRAINT "FK_35cd6c3fafec0bb5d072e24ea20" FOREIGN KEY ("user_id") REFERENCES "user"("user_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "treatment_plan" ADD CONSTRAINT "FK_2abc33dbc5cb40142c50005781d" FOREIGN KEY ("consultation_id") REFERENCES "ai_consultation"("consultation_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "treatment_plan" ADD CONSTRAINT "FK_3033471e08f961bc0e342d877a8" FOREIGN KEY ("product_id") REFERENCES "product"("product_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
@@ -65,19 +69,15 @@ export class InitDatabase1751082822023 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "cart_item" ADD CONSTRAINT "FK_b6b2a4f1f533d89d218e70db941" FOREIGN KEY ("cart_id") REFERENCES "cart"("cart_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "cart_item" ADD CONSTRAINT "FK_133f100e56d9b2a562f16ff7208" FOREIGN KEY ("batch_id") REFERENCES "batch_product"("batch_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "cart" ADD CONSTRAINT "FK_f091e86a234693a49084b4c2c86" FOREIGN KEY ("user_id") REFERENCES "user"("user_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "review" ADD CONSTRAINT "FK_26b533e15b5f2334c96339a1f08" FOREIGN KEY ("product_id") REFERENCES "product"("product_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "review" ADD CONSTRAINT "FK_81446f2ee100305f42645d4d6c2" FOREIGN KEY ("user_id") REFERENCES "user"("user_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "review" ADD CONSTRAINT "FK_6d31943ee59e2a4b00f78b40836" FOREIGN KEY ("distributor_id") REFERENCES "user"("user_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "review" ADD CONSTRAINT "FK_42f559b5675aaf6deaa62a08bc4" FOREIGN KEY ("parent_review_id") REFERENCES "review"("review_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "store_owner_request" ADD CONSTRAINT "FK_2dc0ed4b4f3de021c88d95c130e" FOREIGN KEY ("user_id") REFERENCES "user"("user_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "token" ADD CONSTRAINT "FK_e50ca89d635960fda2ffeb17639" FOREIGN KEY ("user_id") REFERENCES "user"("user_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "voucher" ADD CONSTRAINT "FK_022016a80c2d6013d396e340e93" FOREIGN KEY ("promotion_id") REFERENCES "promotion"("promotion_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "voucher" ADD CONSTRAINT "FK_1da5d93c7dacaff28a6e965e4c1" FOREIGN KEY ("distributorUserId") REFERENCES "user"("user_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "user" ADD CONSTRAINT "FK_fb2e442d14add3cefbdf33c4561" FOREIGN KEY ("role_id") REFERENCES "role"("role_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "ingredient_disease" ADD CONSTRAINT "FK_9cdb632c14611a0352621283e41" FOREIGN KEY ("ingredient_id") REFERENCES "active_ingredient"("ingredient_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "ingredient_disease" ADD CONSTRAINT "FK_30fac8a30b4d05a1f26855b8a30" FOREIGN KEY ("disease_id") REFERENCES "disease"("disease_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "product_ingredient" ADD CONSTRAINT "FK_a7a4b2de441d2ab00df5b0d4cdd" FOREIGN KEY ("product_id") REFERENCES "product"("product_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "product_ingredient" ADD CONSTRAINT "FK_3f9b3e7181dc8cd771e6d513b7b" FOREIGN KEY ("ingredient_id") REFERENCES "active_ingredient"("ingredient_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "review" ADD CONSTRAINT "FK_26b533e15b5f2334c96339a1f08" FOREIGN KEY ("product_id") REFERENCES "product"("product_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "review" ADD CONSTRAINT "FK_81446f2ee100305f42645d4d6c2" FOREIGN KEY ("user_id") REFERENCES "user"("user_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "review" ADD CONSTRAINT "FK_6d31943ee59e2a4b00f78b40836" FOREIGN KEY ("distributor_id") REFERENCES "user"("user_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "review" ADD CONSTRAINT "FK_42f559b5675aaf6deaa62a08bc4" FOREIGN KEY ("parent_review_id") REFERENCES "review"("review_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "product" ADD CONSTRAINT "FK_29624c341939d2f286f552a95bc" FOREIGN KEY ("distributor_id") REFERENCES "user"("user_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "wishlist" ADD CONSTRAINT "FK_512bf776587ad5fc4f804277d76" FOREIGN KEY ("user_id") REFERENCES "user"("user_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "wishlist" ADD CONSTRAINT "FK_16f64e06715ce4fea8257cc42c5" FOREIGN KEY ("product_id") REFERENCES "product"("product_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
@@ -105,19 +105,15 @@ export class InitDatabase1751082822023 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "wishlist" DROP CONSTRAINT "FK_16f64e06715ce4fea8257cc42c5"`);
         await queryRunner.query(`ALTER TABLE "wishlist" DROP CONSTRAINT "FK_512bf776587ad5fc4f804277d76"`);
         await queryRunner.query(`ALTER TABLE "product" DROP CONSTRAINT "FK_29624c341939d2f286f552a95bc"`);
-        await queryRunner.query(`ALTER TABLE "product_ingredient" DROP CONSTRAINT "FK_3f9b3e7181dc8cd771e6d513b7b"`);
-        await queryRunner.query(`ALTER TABLE "product_ingredient" DROP CONSTRAINT "FK_a7a4b2de441d2ab00df5b0d4cdd"`);
-        await queryRunner.query(`ALTER TABLE "ingredient_disease" DROP CONSTRAINT "FK_30fac8a30b4d05a1f26855b8a30"`);
-        await queryRunner.query(`ALTER TABLE "ingredient_disease" DROP CONSTRAINT "FK_9cdb632c14611a0352621283e41"`);
+        await queryRunner.query(`ALTER TABLE "review" DROP CONSTRAINT "FK_42f559b5675aaf6deaa62a08bc4"`);
+        await queryRunner.query(`ALTER TABLE "review" DROP CONSTRAINT "FK_6d31943ee59e2a4b00f78b40836"`);
+        await queryRunner.query(`ALTER TABLE "review" DROP CONSTRAINT "FK_81446f2ee100305f42645d4d6c2"`);
+        await queryRunner.query(`ALTER TABLE "review" DROP CONSTRAINT "FK_26b533e15b5f2334c96339a1f08"`);
         await queryRunner.query(`ALTER TABLE "user" DROP CONSTRAINT "FK_fb2e442d14add3cefbdf33c4561"`);
         await queryRunner.query(`ALTER TABLE "voucher" DROP CONSTRAINT "FK_1da5d93c7dacaff28a6e965e4c1"`);
         await queryRunner.query(`ALTER TABLE "voucher" DROP CONSTRAINT "FK_022016a80c2d6013d396e340e93"`);
         await queryRunner.query(`ALTER TABLE "token" DROP CONSTRAINT "FK_e50ca89d635960fda2ffeb17639"`);
         await queryRunner.query(`ALTER TABLE "store_owner_request" DROP CONSTRAINT "FK_2dc0ed4b4f3de021c88d95c130e"`);
-        await queryRunner.query(`ALTER TABLE "review" DROP CONSTRAINT "FK_42f559b5675aaf6deaa62a08bc4"`);
-        await queryRunner.query(`ALTER TABLE "review" DROP CONSTRAINT "FK_6d31943ee59e2a4b00f78b40836"`);
-        await queryRunner.query(`ALTER TABLE "review" DROP CONSTRAINT "FK_81446f2ee100305f42645d4d6c2"`);
-        await queryRunner.query(`ALTER TABLE "review" DROP CONSTRAINT "FK_26b533e15b5f2334c96339a1f08"`);
         await queryRunner.query(`ALTER TABLE "cart" DROP CONSTRAINT "FK_f091e86a234693a49084b4c2c86"`);
         await queryRunner.query(`ALTER TABLE "cart_item" DROP CONSTRAINT "FK_133f100e56d9b2a562f16ff7208"`);
         await queryRunner.query(`ALTER TABLE "cart_item" DROP CONSTRAINT "FK_b6b2a4f1f533d89d218e70db941"`);
@@ -135,6 +131,10 @@ export class InitDatabase1751082822023 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "treatment_plan" DROP CONSTRAINT "FK_3033471e08f961bc0e342d877a8"`);
         await queryRunner.query(`ALTER TABLE "treatment_plan" DROP CONSTRAINT "FK_2abc33dbc5cb40142c50005781d"`);
         await queryRunner.query(`ALTER TABLE "address" DROP CONSTRAINT "FK_35cd6c3fafec0bb5d072e24ea20"`);
+        await queryRunner.query(`ALTER TABLE "product_ingredient" DROP CONSTRAINT "FK_3f9b3e7181dc8cd771e6d513b7b"`);
+        await queryRunner.query(`ALTER TABLE "product_ingredient" DROP CONSTRAINT "FK_a7a4b2de441d2ab00df5b0d4cdd"`);
+        await queryRunner.query(`ALTER TABLE "ingredient_disease" DROP CONSTRAINT "FK_30fac8a30b4d05a1f26855b8a30"`);
+        await queryRunner.query(`ALTER TABLE "ingredient_disease" DROP CONSTRAINT "FK_9cdb632c14611a0352621283e41"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_4b7c62655ed69ca4bf462a4f02"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_8d3fb31ab54261ff8755eebc3e"`);
         await queryRunner.query(`DROP TABLE "product_category"`);
@@ -150,10 +150,7 @@ export class InitDatabase1751082822023 implements MigrationInterface {
         await queryRunner.query(`DROP TABLE "product_image"`);
         await queryRunner.query(`DROP TABLE "wishlist"`);
         await queryRunner.query(`DROP TABLE "product"`);
-        await queryRunner.query(`DROP TABLE "product_ingredient"`);
-        await queryRunner.query(`DROP TABLE "active_ingredient"`);
-        await queryRunner.query(`DROP TABLE "ingredient_disease"`);
-        await queryRunner.query(`DROP TABLE "disease"`);
+        await queryRunner.query(`DROP TABLE "review"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_e12875dfb3b1d92d7d7c5377e2"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_78a916df40e02a9deb1c4b75ed"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_758b8ce7c18b9d347461b30228"`);
@@ -164,7 +161,6 @@ export class InitDatabase1751082822023 implements MigrationInterface {
         await queryRunner.query(`DROP TABLE "token"`);
         await queryRunner.query(`DROP TABLE "store_owner_request"`);
         await queryRunner.query(`DROP TABLE "role"`);
-        await queryRunner.query(`DROP TABLE "review"`);
         await queryRunner.query(`DROP TABLE "cart"`);
         await queryRunner.query(`DROP TABLE "cart_item"`);
         await queryRunner.query(`DROP TABLE "batch_product"`);
@@ -178,6 +174,10 @@ export class InitDatabase1751082822023 implements MigrationInterface {
         await queryRunner.query(`DROP TABLE "ai_consultation"`);
         await queryRunner.query(`DROP TABLE "treatment_plan"`);
         await queryRunner.query(`DROP TABLE "address"`);
+        await queryRunner.query(`DROP TABLE "product_ingredient"`);
+        await queryRunner.query(`DROP TABLE "active_ingredient"`);
+        await queryRunner.query(`DROP TABLE "ingredient_disease"`);
+        await queryRunner.query(`DROP TABLE "disease"`);
         await queryRunner.query(`DROP TABLE "category"`);
     }
 

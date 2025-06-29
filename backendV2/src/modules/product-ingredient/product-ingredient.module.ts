@@ -12,5 +12,6 @@ import { ProductIngredientService } from './product-ingredient.service';
   ],
   controllers: [ProductIngredientController],
   providers: [ProductIngredientService],
+  exports: [TypeOrmModule],
 })
 export class ProductIngredientModule {}
