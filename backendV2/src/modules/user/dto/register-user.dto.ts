@@ -35,6 +35,10 @@ export class RegisterUserDto {
 
   @IsOptional()
   @IsString()
+  cccd?: string;
+
+  @IsOptional()
+  @IsString()
   avatar?: string;
 }
 // Compare this snippet from src/modules/users/user.controller.ts:

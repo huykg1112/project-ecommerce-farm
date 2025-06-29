@@ -1,4 +1,10 @@
-import { IsBoolean, IsOptional, IsString, Matches } from 'class-validator';
+import {
+  IsBoolean,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Matches,
+} from 'class-validator';
 
 export class UpdateProfileDto {
   @IsOptional()
@@ -21,8 +27,28 @@ export class UpdateProfileDto {
   avatar?: string;
 
   @IsOptional()
+  @IsString()
+  cccd?: string;
+
+  @IsOptional()
   @IsBoolean({ message: 'is_active phải là boolean' })
   is_active?: boolean;
+
+  @IsOptional()
+  @IsString()
+  license_number?: string;
+
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @IsOptional()
+  @IsNumber()
+  lat?: number;
+
+  @IsOptional()
+  @IsNumber()
+  lng?: number;
 
   // @IsOptional()
   // @IsObject({ message: 'Địa chỉ phải là object' })

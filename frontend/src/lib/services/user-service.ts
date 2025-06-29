@@ -1,4 +1,10 @@
-import { ChangePasswordDto, RegisterRequest, UpdateProfileDto, UserProfile } from "@/interfaces";
+import {
+  ChangePasswordDto,
+  RegisterRequest,
+  UpdateProfileDto,
+  UserAddress,
+  UserProfile,
+} from "@/interfaces";
 import { getCookie } from "../utils";
 
 const API_URL = "http://localhost:4200";
@@ -19,34 +25,43 @@ export const userService = {
   },
 
   async updateProfile(data: UpdateProfileDto): Promise<{ message: string }> {
-    const response = await fetch(`${API_URL}/user/profile`, {
+    // console.log("data", data);
+    const token = getCookie("access_token");
+    console.log("token", token);
+    console.log("data", data);
+    const response = await fetch(`${API_URL}/user/updateProfile`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${getCookie("access_token")}`,
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(data),
     });
+    console.log("response", response);
 
     if (!response.ok) {
-      throw new Error("Failed to update profile");
+      throw new Error("Cập nhật thông tin thất bại");
     }
 
     return response.json();
   },
 
   async changePassword(data: ChangePasswordDto): Promise<{ message: string }> {
-    const response = await fetch(`${API_URL}/user/change-password`, {
+    const body = {
+      old_password: data.old_password,
+      new_password: data.new_password,
+    };
+    const response = await fetch(`${API_URL}/user/changePassword`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${getCookie("access_token")}`,
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(body),
     });
 
     if (!response.ok) {
-      throw new Error("Failed to change password");
+      throw new Error("Thay đổi mật khẩu thất bại");
     }
 
     return response.json();
@@ -65,14 +80,13 @@ export const userService = {
     });
 
     if (!response.ok) {
-      throw new Error("Failed to update avatar");
+      throw new Error("Cập nhật ảnh đại diện thất bại");
     }
 
     return response.json();
   },
 
   async registerStore(data: RegisterRequest): Promise<{ message: string }> {
-
     const response = await fetch(`${API_URL}/user/registerDistributor`, {
       method: "POST",
       headers: {
@@ -86,9 +100,60 @@ export const userService = {
 
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.message || "Failed to register store");
+      throw new Error(error.message || "Đăng ký cửa hàng thất bại");
     }
 
     return response.json();
   },
+
+  async getAddresses(): Promise<UserAddress[]> {
+    const response = await fetch(`${API_URL}/address`, {
+      headers: {
+        Authorization: `Bearer ${getCookie("access_token")}`,
+      },
+    });
+    if (!response.ok) throw new Error("Không lấy được danh sách địa chỉ");
+    const data = await response.json();
+    return data.data; // BE trả về { message, data, total }
+  },
+
+  async addAddress(address: Partial<UserAddress>): Promise<UserAddress> {
+    const response = await fetch(`${API_URL}/address`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getCookie("access_token")}`,
+      },
+      body: JSON.stringify(address),
+    });
+    if (!response.ok) throw new Error("Không thêm được địa chỉ");
+    const data = await response.json();
+    return data.data;
+  },
+
+  async setDefaultAddress(address_id: string): Promise<UserAddress> {
+    const response = await fetch(
+      `${API_URL}/address/${address_id}/set-default`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${getCookie("access_token")}`,
+        },
+      }
+    );
+    if (!response.ok) throw new Error("Không cập nhật địa chỉ mặc định");
+    const data = await response.json();
+    return data.data;
+  },
+
+  async deleteAddress(address_id: string): Promise<void> {
+    const response = await fetch(`${API_URL}/address/${address_id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${getCookie("access_token")}`,
+      },
+    });
+    if (!response.ok) throw new Error("Không xóa được địa chỉ");
+  },
 };
+// Thêm các hàm mới:

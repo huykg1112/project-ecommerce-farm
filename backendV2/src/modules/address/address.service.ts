@@ -1,8 +1,4 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
 import { User } from '../user/entities/user.entity';
@@ -200,11 +196,13 @@ export class AddressService {
       );
     }
 
-    if (address.is_default) {
-      throw new BadRequestException('Địa chỉ này đã là địa chỉ mặc định');
-    }
+    // Tắt toàn bộ địa chỉ mặc định khác của user
+    await this.addressRepository.update(
+      { user: { user_id: user_id }, is_default: true, is_active: true },
+      { is_default: false },
+    );
 
-    await this.setDefaultAddress(user_id, id);
+    // Set địa chỉ này là mặc định
     address.is_default = true;
     const updatedAddress = await this.addressRepository.save(address);
 
