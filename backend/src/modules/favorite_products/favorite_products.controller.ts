@@ -1,13 +1,12 @@
 import {
-    Body,
-    Controller,
-    Delete,
-    Get,
-    Param,
-    Patch,
-    Post,
-    Request,
-    UseGuards,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Request,
 } from '@nestjs/common';
 
 import { CreateFavoriteProductDto } from './dto/create-favorite_product.dto';
@@ -16,10 +15,15 @@ import { FavoriteProductsService } from './favorite_products.service';
 
 @Controller('favorite-products')
 export class FavoriteProductsController {
-  constructor(private readonly favoriteProductsService: FavoriteProductsService) {}
+  constructor(
+    private readonly favoriteProductsService: FavoriteProductsService,
+  ) {}
 
   @Post()
-  create(@Body() createFavoriteProductDto: CreateFavoriteProductDto, @Request() req) {
+  create(
+    @Body() createFavoriteProductDto: CreateFavoriteProductDto,
+    @Request() req,
+  ) {
     createFavoriteProductDto.user = req.user;
     return this.favoriteProductsService.create(createFavoriteProductDto);
   }

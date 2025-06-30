@@ -13,12 +13,10 @@ import {
   Query,
   Req,
   UploadedFile,
-  UseGuards,
-  UseInterceptors
+  UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Public } from '@root/src/public.decorator';
-import { Roles } from 'src/auth/roles.decorator';
 import { validate as isUUID } from 'uuid';
 import { CloudinaryService } from '../../cloudinary/cloudinary.service';
 import { AssignRoleDto } from './dto/assign-role.dto';
@@ -37,7 +35,7 @@ export class UserController {
   constructor(
     private readonly userService: UserService,
     private readonly cloudinaryService: CloudinaryService,
-  ) { }
+  ) {}
 
   @Get('profile')
   async getProfile(@Req() req): Promise<UserProfileSerializer> {
@@ -134,15 +132,20 @@ export class UserController {
   }
 
   @Post('avatar')
-  @UseInterceptors(FileInterceptor('image', {
-    fileFilter: (req, file, cb) => {
-      if (!file.mimetype.match(/image\/(jpg|jpeg|png|gif)$/)) {
-        return cb(new BadRequestException('Only image files are allowed'), false);
-      }
-      cb(null, true);
-    },
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  }))
+  @UseInterceptors(
+    FileInterceptor('image', {
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.match(/image\/(jpg|jpeg|png|gif)$/)) {
+          return cb(
+            new BadRequestException('Only image files are allowed'),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    }),
+  )
   async uploadAvatar(@Req() req, @UploadedFile() file: Express.Multer.File) {
     const userId = req.user.id;
     if (!file) {
@@ -152,10 +155,16 @@ export class UserController {
     try {
       const result = await this.cloudinaryService.uploadImage(file);
       if (!result || !result.url || !result.public_id) {
-        throw new BadRequestException('Failed to upload image to cloud storage');
+        throw new BadRequestException(
+          'Failed to upload image to cloud storage',
+        );
       }
 
-      const updatedUser = await this.userService.updateAvatar(userId, result.url, result.public_id);
+      const updatedUser = await this.userService.updateAvatar(
+        userId,
+        result.url,
+        result.public_id,
+      );
       return {
         message: 'Avatar updated successfully',
         avatar: updatedUser.avatar,
@@ -167,11 +176,11 @@ export class UserController {
   }
 
   @Post('registerDistributor')
-  async registerStore(@Body() registerStoreDto: RegisterStoreDto,
-    @Req() req,
-  ) {
-
-    const user = await this.userService.registerStore(registerStoreDto, req.user.id);
+  async registerStore(@Body() registerStoreDto: RegisterStoreDto, @Req() req) {
+    const user = await this.userService.registerStore(
+      registerStoreDto,
+      req.user.id,
+    );
     return {
       message: 'Đăng ký chủ đại lý thành công',
       user: {
