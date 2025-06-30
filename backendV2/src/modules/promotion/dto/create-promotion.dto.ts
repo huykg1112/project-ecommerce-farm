@@ -33,3 +33,15 @@ export class CreatePromotionDto {
   @ArrayNotEmpty({ message: 'Phải chọn ít nhất 1 sản phẩm áp dụng' })
   batch_product_ids: string[];
 }
+
+/*
+{
+  "promotion_name": "Chương trình giảm giá 10%",
+  "description": "Giảm giá 10% cho tất cả sản phẩm",
+  "discount_value": 10,
+  "start_date": "2025-01-01",
+  "end_date": "2025-01-31",
+  "is_active": true,
+  "batch_product_ids": ["1", "2", "3"]
+}
+*/

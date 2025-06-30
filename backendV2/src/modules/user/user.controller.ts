@@ -11,7 +11,10 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Public } from '@root/src/public.decorator';
-import { UserProfileType } from '@root/src/serializers/TypeSerializer/UserProfile.type';
+import {
+  DistributorProfileType,
+  UserProfileType,
+} from '@root/src/serializers/TypeSerializer/UserProfile.type';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
@@ -29,7 +32,7 @@ export class UserController {
   }
 
   @Get('profile')
-  getProfile(@Req() req): Promise<UserProfileType> {
+  getProfile(@Req() req): Promise<UserProfileType | DistributorProfileType> {
     if (!req.user) {
       throw new UnauthorizedException('Vui lòng đăng nhập');
     }
@@ -67,4 +70,16 @@ export class UserController {
   remove(@Param('id') id: string) {
     return this.userService.removeUser(id);
   }
+
+  @Put('changeRole')
+  changeRole(@Body() body: { user_id: string; roleId: string }) {
+    return this.userService.changeRole(body.user_id, body.roleId);
+  }
+  /*
+  body API:
+  {
+    "user_id": "1",
+    "roleId": "1"
+  }
+  */
 }

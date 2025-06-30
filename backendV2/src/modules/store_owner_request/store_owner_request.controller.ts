@@ -29,36 +29,37 @@ export class StoreOwnerRequestController {
   // Admin: get all requests
   @Get()
   async findAll(@Req() req) {
-    if (!req.user || req.user.role?.role_name !== 'admin')
-      throw new ForbiddenException('Admin only');
+    if (!req.user || req.user.role?.role_name !== 'Admin')
+      throw new ForbiddenException('Chỉ admin mới có thể xem tất cả yêu cầu');
     return await this.storeOwnerRequestService.findAll();
   }
 
   // Admin or owner: get one request
-  @Get(':id')
-  async findOne(@Param('id') id: string, @Req() req) {
-    const request = await this.storeOwnerRequestService.findOne(id);
-    if (
-      req.user.role?.role_name !== 'admin' &&
-      req.user.user_id !== request.user.user_id
-    ) {
-      throw new ForbiddenException('Forbidden');
+  @Get('getOne')
+  async findOne(@Body() body: { id: string }, @Req() req) {
+    const request = await this.storeOwnerRequestService.findOne(body.id);
+    if (req.user.role?.role_name !== 'Admin') {
+      throw new ForbiddenException('Chỉ admin mới có thể xem yêu cầu của mình');
     }
     return request;
   }
+  //người đăng ký xem yêu cầu của mình
+  @Get('getMyRequest')
+  async getMyRequest(@Req() req) {
+    return await this.storeOwnerRequestService.getMyRequest(req.user.user_id);
+  }
 
   // Admin: approve/reject
-  @Patch(':id')
+  @Patch('approve')
   async update(
-    @Param('id') id: string,
-    @Body() body: { approve: boolean },
+    @Body() body: { request_id: string; approve: boolean },
     @Req() req,
   ) {
-    if (!req.user || req.user.role?.role_name !== 'admin')
-      throw new ForbiddenException('Admin only');
+    if (!req.user || req.user.role?.role_name !== 'Admin')
+      throw new ForbiddenException('Chỉ admin mới có thể phê duyệt yêu cầu');
+    console.log(body);
     return await this.storeOwnerRequestService.update(
-      id,
-      req.user.user_id,
+      body.request_id,
       body.approve,
     );
   }

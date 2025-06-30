@@ -13,3 +13,11 @@ export class CreateDiseaseDto {
   @IsBoolean()
   is_active?: boolean;
 }
+
+/*
+{
+  "disease_name": "Bệnh nấm",
+  "description": "Bệnh nấm là bệnh có thể gây hại cho cây trồng",
+  "is_active": true
+}
+*/

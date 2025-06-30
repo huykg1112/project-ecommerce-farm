@@ -35,13 +35,13 @@ export class StoreOwnerRequestService {
       where: { user_id: userId },
       relations: ['role', 'store_owner_request'],
     });
-    if (!user) throw new NotFoundException('User not found');
-    if (user.role.role_name !== 'user')
+    if (!user) throw new NotFoundException('Không tìm thấy người dùng');
+    if (user.role.role_name !== 'Client')
       throw new ForbiddenException(
-        'Only users can request to become distributor',
+        'Chỉ người dùng mới có thể yêu cầu trở thành đại lý',
       );
     if (user.store_owner_request && !user.store_owner_request.request_status) {
-      throw new BadRequestException('You already have a pending request');
+      throw new BadRequestException('Bạn đã có yêu cầu chờ phê duyệt');
     }
     const request = this.requestRepo.create({
       user,
@@ -63,27 +63,35 @@ export class StoreOwnerRequestService {
     return req;
   }
 
+  async getMyRequest(userId: string): Promise<StoreOwnerRequest> {
+    const req = await this.requestRepo.findOne({
+      where: { user: { user_id: userId } },
+      relations: ['user'],
+    });
+    if (!req) throw new NotFoundException('Không tìm thấy yêu cầu');
+    return req;
+  }
+
   async update(
-    id: string,
-    adminId: string,
+    request_id: string,
     approve: boolean,
   ): Promise<{ message: string }> {
     const req = await this.requestRepo.findOne({
-      where: { store_owner_request_id: id },
+      where: { store_owner_request_id: request_id },
       relations: ['user'],
     });
-    if (!req) throw new NotFoundException('Request not found');
+    if (!req) throw new NotFoundException('Không tìm thấy yêu cầu');
     if (req.request_status)
-      throw new BadRequestException('Request already approved');
+      throw new BadRequestException('Yêu cầu đã được phê duyệt');
     req.request_status = approve;
     req.approved_date = new Date();
     await this.requestRepo.save(req);
     if (approve) {
       // update user role to distributor
       const role = (await this.userRepo.manager.findOne('Role', {
-        where: { role_name: 'distributor' },
+        where: { role_name: 'Distributor' },
       })) as Role;
-      if (!role) throw new NotFoundException('Role not found');
+      if (!role) throw new NotFoundException('Vai trò không tồn tại');
       req.user.role = role;
       // tạo invenstory mới từ thông tin đã lưu trong request
       const invenstory = this.invenstoryRepo.create({
@@ -100,10 +108,10 @@ export class StoreOwnerRequestService {
       await this.userRepo.save(req.user);
       return {
         message:
-          'Request approved, user is now a distributor and inventory created',
+          'Yêu cầu đã được phê duyệt, người dùng đã trở thành đại lý và kho hàng đã được tạo',
       };
     } else {
-      return { message: 'Request rejected' };
+      return { message: 'Yêu cầu đã bị từ chối' };
     }
   }
 
@@ -111,8 +119,8 @@ export class StoreOwnerRequestService {
     const req = await this.requestRepo.findOne({
       where: { store_owner_request_id: id },
     });
-    if (!req) throw new NotFoundException('Request not found');
+    if (!req) throw new NotFoundException('Không tìm thấy yêu cầu');
     await this.requestRepo.remove(req);
-    return { message: 'Request deleted' };
+    return { message: 'Yêu cầu đã bị xóa' };
   }
 }

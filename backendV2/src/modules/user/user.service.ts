@@ -8,8 +8,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { ILike, Repository } from 'typeorm';
 
-import { UserProfileType } from '@root/src/serializers/TypeSerializer/UserProfile.type';
-import { UserProfileSerializer } from '@root/src/serializers/UserSerializers';
+import {
+  DistributorProfileType,
+  UserProfileType,
+} from '@root/src/serializers/TypeSerializer/UserProfile.type';
+import {
+  DistributorProfileSerializer,
+  UserProfileSerializer,
+} from '@root/src/serializers/UserSerializers';
 import { AddressService } from '../address/address.service';
 import { RoleService } from '../role/role.service';
 import { TokenService } from '../token/token.service';
@@ -60,7 +66,7 @@ export class UserService {
   async findUserById(id: string): Promise<User | null> {
     return this.userRepository.findOne({
       where: { user_id: id },
-      relations: ['role', 'addresses'],
+      relations: ['role', 'addresses', 'inventory'],
       order: { addresses: { is_default: 'DESC', created_at: 'DESC' } },
     });
   }
@@ -202,10 +208,15 @@ export class UserService {
     return this.userRepository.find();
   }
 
-  async getProfile(id: string): Promise<UserProfileType> {
+  async getProfile(
+    id: string,
+  ): Promise<UserProfileType | DistributorProfileType> {
     const user = await this.findUserById(id);
     if (!user) {
       throw new NotFoundException('Người dùng không tồn tại');
+    }
+    if (user.role.role_name === 'Distributor') {
+      return DistributorProfileSerializer.serialize(user);
     }
     return UserProfileSerializer.serialize(user);
   }
@@ -246,5 +257,19 @@ export class UserService {
       message: 'Đổi mật khẩu thành công',
       user: UserProfileSerializer.serialize(updatedUser),
     };
+  }
+  // đổi vai trò của người dùng
+  async changeRole(id: string, roleId: string): Promise<{ message: string }> {
+    const user = await this.findUserById(id);
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại');
+    }
+    const role = await this.rolesService.findRoleById(roleId);
+    if (!role) {
+      throw new NotFoundException('Vai trò không tồn tại');
+    }
+    user.role = role;
+    await this.saveUser(user);
+    return { message: 'Đổi vai trò thành công' };
   }
 }
