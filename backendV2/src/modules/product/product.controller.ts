@@ -76,4 +76,10 @@ export class ProductController {
     // TODO: Serialize output
     return products;
   }
+
+  // GET /product/:id/diseases
+  @Get(':id/diseases')
+  getDiseases(@Param('id') id: string) {
+    return this.productService.getDiseasesForProduct(id);
+  }
 }

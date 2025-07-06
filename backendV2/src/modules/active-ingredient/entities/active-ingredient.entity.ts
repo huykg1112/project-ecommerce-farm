@@ -1,5 +1,4 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { IngredientDisease } from '../../ingredient-disease/entities/ingredient-disease.entity';
 import { ProductIngredient } from '../../product-ingredient/entities/product-ingredient.entity';
 
 @Entity('active_ingredient')
@@ -34,8 +33,4 @@ export class ActiveIngredient {
     },
   )
   product_ingredients: ProductIngredient[];
-
-  // thành phần đặt trị này có thể trị nhiều bệnh, một bệnh có thể có nhiều thành phần có thể trị
-  @OneToMany(() => IngredientDisease, (id) => id.disease)
-  ingredientDiseases: IngredientDisease[];
 }

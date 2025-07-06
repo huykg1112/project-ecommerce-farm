@@ -1,5 +1,5 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
-import { IngredientDisease } from '../../ingredient-disease/entities/ingredient-disease.entity';
+import { ProductDisease } from '../../product_disease/entities/product_disease.entity';
 
 @Entity('disease')
 export class Disease {
@@ -21,7 +21,6 @@ export class Disease {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at!: Date;
 
-  // một bệnh có thể có nhiều thành phần đặt trị thông qua active_ingredient
-  @OneToMany(() => IngredientDisease, (id) => id.ingredient)
-  ingredientDiseases: IngredientDisease[];
+  @OneToMany(() => ProductDisease, (pd) => pd.disease, { nullable: true })
+  productDiseases: ProductDisease[];
 }

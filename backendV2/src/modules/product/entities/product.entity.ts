@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { Category } from '../../category/entities/category.entity';
 import { ProductIngredient } from '../../product-ingredient/entities/product-ingredient.entity';
+import { ProductDisease } from '../../product_disease/entities/product_disease.entity';
 import { Review } from '../../review/entities/review.entity';
 import { User } from '../../user/entities/user.entity';
 
@@ -62,4 +63,7 @@ export class Product {
     },
   )
   product_ingredients: ProductIngredient[];
+
+  @OneToMany(() => ProductDisease, (pd) => pd.product, { nullable: true })
+  productDiseases: ProductDisease[];
 }

@@ -9,6 +9,7 @@ import { In } from 'typeorm/find-options/operator/In';
 import { Role } from '../../auth/enums/role.enum';
 import { Category } from '../category/entities/category.entity';
 import { ProductIngredient } from '../product-ingredient/entities/product-ingredient.entity';
+import { ProductDisease } from '../product_disease/entities/product_disease.entity';
 import { User } from '../user/entities/user.entity';
 import { AdvancedProductFilterDto } from './dto/advanced-product-filter.dto';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -26,6 +27,8 @@ export class ProductService {
     private readonly categoryRepo: Repository<Category>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    @InjectRepository(ProductDisease)
+    private readonly productDiseaseRepo: Repository<ProductDisease>,
   ) {}
 
   async create(createProductDto: CreateProductDto, user: User) {
@@ -84,8 +87,8 @@ export class ProductService {
         'distributor',
         'product_ingredients',
         'product_ingredients.ingredient',
-        'product_ingredients.ingredient.ingredientDiseases',
-        'product_ingredients.ingredient.ingredientDiseases.disease',
+        'productDiseases',
+        'productDiseases.disease',
       ],
     });
     if (!product) throw new NotFoundException('Không tìm thấy sản phẩm');
@@ -147,6 +150,13 @@ export class ProductService {
     });
   }
 
+  async getDiseasesForProduct(product_id: string) {
+    return await this.productDiseaseRepo.find({
+      where: { product_id },
+      relations: ['disease'],
+    });
+  }
+
   serializeProduct(product: Product) {
     // Tính avg rating
     const reviews = product.reviews || [];
@@ -185,11 +195,11 @@ export class ProductService {
         ingredient_id: pi.ingredient?.ingredient_id,
         ingredient_name: pi.ingredient?.ingredient_name,
         is_primary: pi.is_primary,
-        diseases: (pi.ingredient?.ingredientDiseases || []).map((id) => ({
-          disease_id: id.disease?.disease_id,
-          disease_name: id.disease?.disease_name,
-          is_primary: id.is_primary,
-        })),
+      })),
+      diseases: (product.productDiseases || []).map((pd) => ({
+        disease_id: pd.disease?.disease_id,
+        disease_name: pd.disease?.disease_name,
+        is_primary: pd.is_primary,
       })),
     };
   }
@@ -201,8 +211,8 @@ export class ProductService {
       .leftJoinAndSelect('product.distributor', 'distributor')
       .leftJoinAndSelect('product.product_ingredients', 'product_ingredient')
       .leftJoinAndSelect('product_ingredient.ingredient', 'ingredient')
-      .leftJoinAndSelect('ingredient.ingredientDiseases', 'ingredientDisease')
-      .leftJoinAndSelect('ingredientDisease.disease', 'disease')
+      .leftJoinAndSelect('product.productDiseases', 'productDisease')
+      .leftJoinAndSelect('productDisease.disease', 'disease')
       .leftJoinAndSelect('product.reviews', 'review');
 
     // Giá

@@ -9,12 +9,12 @@ import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { ActiveIngredientModule } from './modules/active-ingredient/active-ingredient.module';
 import { AddressModule } from './modules/address/address.module';
 import { AiConsultationModule } from './modules/ai-consultation/ai-consultation.module';
-import { BatchModule } from './modules/batch-product/batch-product.module';
+import { BatchProductModule } from './modules/batch-product/batch-product.module';
 import { CartItemModule } from './modules/cart-item/cart-item.module';
 import { CartModule } from './modules/cart/cart.module';
 import { CategoryModule } from './modules/category/category.module';
 import { DiseaseModule } from './modules/disease/disease.module';
-import { IngredientDiseaseModule } from './modules/ingredient-disease/ingredient-disease.module';
+
 import { InvenstoryModule } from './modules/invenstory/invenstory.module';
 import { OrderDetailModule } from './modules/order-detail/order-detail.module';
 import { OrderStatusModule } from './modules/order-status/order-status.module';
@@ -23,6 +23,7 @@ import { PaymentMethodModule } from './modules/payment-method/payment-method.mod
 import { ProductIngredientModule } from './modules/product-ingredient/product-ingredient.module';
 import { ProductTypeModule } from './modules/product-type/product-type.module';
 import { ProductModule } from './modules/product/product.module';
+import { ProductDiseaseModule } from './modules/product_disease/product_disease.module';
 import { ProductImageModule } from './modules/product_image/product_image.module';
 import { PromotionModule } from './modules/promotion/promotion.module';
 import { ReviewModule } from './modules/review/review.module';
@@ -63,10 +64,10 @@ import { WishlistModule } from './modules/wishlist/wishlist.module';
     ProductTypeModule,
     DiseaseModule,
     ActiveIngredientModule,
-    IngredientDiseaseModule,
+
     ProductModule,
     ProductIngredientModule,
-    BatchModule,
+    BatchProductModule,
     OrderStatusModule,
     PaymentMethodModule,
     OrderModule,
@@ -84,6 +85,7 @@ import { WishlistModule } from './modules/wishlist/wishlist.module';
     ProductImageModule,
     StoreOwnerRequestModule,
     AuthModule,
+    ProductDiseaseModule,
   ],
   controllers: [AppController],
   providers: [
