@@ -22,6 +22,11 @@ import { Token } from '../../token/entities/token.entity';
 import { Voucher } from '../../voucher/entities/voucher.entity';
 import { Wishlist } from '../../wishlist/entities/wishlist.entity';
 
+export enum UserRole {
+  ADMIN = 'Admin',
+  DISTRIBUTOR = 'Distributor',
+  CUSTOMER = 'Client',
+}
 @Entity('user')
 export class User {
   @Index()

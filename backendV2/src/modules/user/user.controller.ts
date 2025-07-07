@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
   Put,
+  Query,
   Req,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -18,12 +19,18 @@ import {
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UserFiltersDto } from './dto/user-filters.dto';
 import { UserService } from './user.service';
 
 // @UseGuards(JwtAuthGuard)
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @Get()
+  getUsers(@Query() filters: UserFiltersDto) {
+    return this.userService.getUsers(filters);
+  }
 
   @Public()
   @Post('register')
@@ -75,6 +82,7 @@ export class UserController {
   changeRole(@Body() body: { user_id: string; roleId: string }) {
     return this.userService.changeRole(body.user_id, body.roleId);
   }
+
   /*
   body API:
   {

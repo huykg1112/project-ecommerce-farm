@@ -16,12 +16,14 @@ import {
   DistributorProfileSerializer,
   UserProfileSerializer,
 } from '@root/src/serializers/UserSerializers';
+import { PaginatedResponse } from '@root/src/types/paginatedResponse';
 import { AddressService } from '../address/address.service';
 import { RoleService } from '../role/role.service';
 import { TokenService } from '../token/token.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UserFiltersDto } from './dto/user-filters.dto';
 import { User } from './entities/user.entity';
 
 @Injectable()
@@ -271,5 +273,33 @@ export class UserService {
     user.role = role;
     await this.saveUser(user);
     return { message: 'Đổi vai trò thành công' };
+  }
+
+  // admin Management
+
+  async getUsers(filters: UserFiltersDto): Promise<PaginatedResponse<User>> {
+    const { search, role_name, status, page = 1, limit = 10 } = filters;
+    const skip = (page - 1) * limit;
+    const queryBuilder = this.userRepository.createQueryBuilder('user');
+    if (search) {
+      queryBuilder.where([{ full_name: ILike(`%${search}%`) }]);
+    }
+    if (role_name) {
+      queryBuilder.andWhere('user.role.role_name = :role_name', { role_name });
+    }
+    if (status) {
+      queryBuilder.andWhere('user.is_active = :status', { status });
+    }
+    const [items, total] = await queryBuilder
+      .skip(skip)
+      .take(limit)
+      .getManyAndCount();
+    return {
+      items,
+      total,
+      currentPage: page,
+      itemsPerPage: limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 }
