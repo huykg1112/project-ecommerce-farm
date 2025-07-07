@@ -5,6 +5,7 @@ import {
   RefreshTokenResponse,
   RegisterRequest,
   RegisterResponse,
+  User,
 } from "@/interfaces";
 
 // Import hàm kiểm tra token hết hạn
@@ -63,7 +64,7 @@ export const authService = {
 
   // Đăng xuất
   async logout(): Promise<{ message: string }> {
-    const token = isClient ? getCookie("access_token")  : null;
+    const token = isClient ? getCookie("access_token") : null;
 
     try {
       const response = await fetch(`${API_URL}/auth/logout`, {
@@ -198,6 +199,21 @@ export const authService = {
       throw errorData;
     }
 
+    return await response.json();
+  },
+  // manage user
+  async getAllUser(): Promise<User[]> {
+    const response = await fetch(`${API_URL}/user/findAll`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getCookie("access_token")}`,
+      },
+    });
+    if (!response.ok) {
+      const errorData: ApiError = await response.json();
+      throw errorData;
+    }
     return await response.json();
   },
 };

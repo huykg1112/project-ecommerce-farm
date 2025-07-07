@@ -1,36 +1,31 @@
 "use client";
 
-import { BatchActions } from "@/components/(dashboard)/users/batch-actions";
-import { DeleteUserModal } from "@/components/(dashboard)/users/delete-user-modal";
-import { UserFilters } from "@/components/(dashboard)/users/user-filters";
-import { UserFormModal } from "@/components/(dashboard)/users/user-form-modal";
-import { UserPagination } from "@/components/(dashboard)/users/user-pagination";
-import { UserTable } from "@/components/(dashboard)/users/user-table";
+import { DeleteWarehouseModal } from "@/components/(dashboard)/warehouses/delete-warehouse-modal";
+import { WarehouseFilters } from "@/components/(dashboard)/warehouses/warehouse-filters";
+import { WarehouseFormModal } from "@/components/(dashboard)/warehouses/warehouse-form-modal";
+import { WarehousePagination } from "@/components/(dashboard)/warehouses/warehouse-pagination";
+import { WarehouseTable } from "@/components/(dashboard)/warehouses/warehouse-table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useUserForm, useUsers } from "@/hooks/use-users";
-import { Download, Plus, UserCheck, Users, UserX } from "lucide-react";
+import { useWarehouseForm, useWarehouses } from "@/hooks/use-warehouses";
+import { Building, Download, Lock, Plus, Unlock } from "lucide-react";
 import { useCallback, useMemo } from "react";
 
-export default function UsersPage() {
+export default function WarehousesPage() {
   const { toast } = useToast();
 
   const {
-    users,
+    warehouses,
+    distributors,
     loading,
     pagination,
     filters,
-    selectedUsers,
-    fetchUsers,
+    fetchWarehouses,
     updateFilters,
     resetFilters,
-    toggleUserSelection,
-    toggleSelectAll,
-    toggleUserStatus,
-    batchToggleStatus,
-    batchDeleteUsers,
-  } = useUsers();
+    toggleWarehouseLock,
+  } = useWarehouses();
 
   const {
     formData,
@@ -38,15 +33,15 @@ export default function UsersPage() {
     addModalOpen,
     editModalOpen,
     deleteModalOpen,
-    selectedUserId,
+    selectedWarehouseId,
     openAddModal,
     openEditModal,
     openDeleteModal,
     closeModals,
-    createUser,
-    updateUser,
-    deleteUser,
-  } = useUserForm();
+    createWarehouse,
+    updateWarehouse,
+    deleteWarehouse,
+  } = useWarehouseForm();
 
   // Filter handlers
   const handleSearchChange = useCallback(
@@ -56,16 +51,19 @@ export default function UsersPage() {
     [updateFilters]
   );
 
-  const handleRoleChange = useCallback(
-    (role: string) => {
-      updateFilters({ role: role === "all" ? "" : role, page: 1 });
+  const handleStatusChange = useCallback(
+    (status: string) => {
+      updateFilters({ status: status === "all" ? "" : status, page: 1 });
     },
     [updateFilters]
   );
 
-  const handleStatusChange = useCallback(
-    (status: string) => {
-      updateFilters({ status: status === "all" ? "" : status, page: 1 });
+  const handleDistributorChange = useCallback(
+    (distributor: string) => {
+      updateFilters({
+        distributor: distributor === "all" ? "" : distributor,
+        page: 1,
+      });
     },
     [updateFilters]
   );
@@ -86,26 +84,16 @@ export default function UsersPage() {
   );
 
   // Action handlers
-  const handleViewDetails = useCallback(
-    (userId: string) => {
-      toast({
-        title: "Thông báo",
-        description: "Tính năng xem chi tiết đang được phát triển",
-      });
-    },
-    [toast]
-  );
-
-  const handleEditUser = useCallback(
-    (userId: string) => {
-      openEditModal(userId);
+  const handleEditWarehouse = useCallback(
+    (warehouseId: string) => {
+      openEditModal(warehouseId);
     },
     [openEditModal]
   );
 
-  const handleDeleteUser = useCallback(
-    (userId: string) => {
-      openDeleteModal(userId);
+  const handleDeleteWarehouse = useCallback(
+    (warehouseId: string) => {
+      openDeleteModal(warehouseId);
     },
     [openDeleteModal]
   );
@@ -118,57 +106,57 @@ export default function UsersPage() {
   }, [toast]);
 
   // Form handlers
-  const handleCreateUser = useCallback(async () => {
-    const success = await createUser();
+  const handleCreateWarehouse = useCallback(async () => {
+    const success = await createWarehouse();
     if (success) {
-      await fetchUsers();
+      await fetchWarehouses();
     }
     return success;
-  }, [createUser, fetchUsers]);
+  }, [createWarehouse, fetchWarehouses]);
 
-  const handleUpdateUser = useCallback(async () => {
-    const success = await updateUser();
+  const handleUpdateWarehouse = useCallback(async () => {
+    const success = await updateWarehouse();
     if (success) {
-      await fetchUsers();
+      await fetchWarehouses();
     }
     return success;
-  }, [updateUser, fetchUsers]);
+  }, [updateWarehouse, fetchWarehouses]);
 
-  const handleDeleteUserConfirm = useCallback(async () => {
-    const success = await deleteUser();
+  const handleDeleteWarehouseConfirm = useCallback(async () => {
+    const success = await deleteWarehouse();
     if (success) {
-      await fetchUsers();
+      await fetchWarehouses();
     }
     return success;
-  }, [deleteUser, fetchUsers]);
+  }, [deleteWarehouse, fetchWarehouses]);
 
-  // Batch action handlers
-  const handleBatchActivate = useCallback(async () => {
-    await batchToggleStatus(true);
-  }, [batchToggleStatus]);
-
-  const handleBatchDeactivate = useCallback(async () => {
-    await batchToggleStatus(false);
-  }, [batchToggleStatus]);
-
-  const handleBatchDelete = useCallback(async () => {
-    await batchDeleteUsers();
-  }, [batchDeleteUsers]);
+  const handleToggleLock = useCallback(
+    async (warehouseId: string) => {
+      await toggleWarehouseLock(warehouseId);
+    },
+    [toggleWarehouseLock]
+  );
 
   // Statistics
   const stats = useMemo(() => {
-    const totalUsers = pagination.total;
-    const activeUsers = users.filter((user) => user.is_active).length;
-    const inactiveUsers = users.filter((user) => !user.is_active).length;
+    const totalWarehouses = pagination.total;
+    const activeWarehouses = warehouses.filter(
+      (warehouse) => !warehouse.is_locked
+    ).length;
+    const lockedWarehouses = warehouses.filter(
+      (warehouse) => warehouse.is_locked
+    ).length;
 
-    return { totalUsers, activeUsers, inactiveUsers };
-  }, [users, pagination.total]);
+    return { totalWarehouses, activeWarehouses, lockedWarehouses };
+  }, [warehouses, pagination.total]);
 
-  // Get selected user name for delete modal
-  const selectedUserName = useMemo(() => {
-    const user = users.find((u) => u.user_id === selectedUserId);
-    return user?.full_name;
-  }, [users, selectedUserId]);
+  // Get selected warehouse name for delete modal
+  const selectedWarehouseName = useMemo(() => {
+    const warehouse = warehouses.find(
+      (w) => w.invenstory_id === selectedWarehouseId
+    );
+    return warehouse?.name;
+  }, [warehouses, selectedWarehouseId]);
 
   return (
     <div className="space-y-6">
@@ -176,10 +164,10 @@ export default function UsersPage() {
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-[#44703d]">
-            👥 Quản lý người dùng
+            🏪 Quản lý kho đại lý
           </h1>
           <p className="text-[#74a65d] mt-1">
-            Quản lý thông tin và trạng thái tài khoản người dùng trong hệ thống
+            Quản lý kho hàng của các nhà phân phối trên nền tảng
           </p>
         </div>
 
@@ -197,7 +185,7 @@ export default function UsersPage() {
             className="bg-[#90c577] hover:bg-[#74a65d] text-white"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Thêm người dùng
+            Thêm kho hàng
           </Button>
         </div>
       </div>
@@ -207,16 +195,16 @@ export default function UsersPage() {
         <Card className="card-agricultural">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-semibold text-[#44703d]">
-              Tổng số người dùng
+              Tổng số kho
             </CardTitle>
-            <Users className="h-5 w-5 text-[#74a65d]" />
+            <Building className="h-5 w-5 text-[#74a65d]" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-[#44703d]">
-              {stats.totalUsers}
+              {stats.totalWarehouses}
             </div>
             <p className="text-xs text-[#74a65d]">
-              Tất cả người dùng trong hệ thống
+              Tất cả kho hàng trong hệ thống
             </p>
           </CardContent>
         </Card>
@@ -226,67 +214,59 @@ export default function UsersPage() {
             <CardTitle className="text-sm font-semibold text-[#44703d]">
               Đang hoạt động
             </CardTitle>
-            <UserCheck className="h-5 w-5 text-[#90c577]" />
+            <Unlock className="h-5 w-5 text-[#90c577]" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-[#44703d]">
-              {stats.activeUsers}
+              {stats.activeWarehouses}
             </div>
-            <p className="text-xs text-[#74a65d]">Tài khoản có thể đăng nhập</p>
+            <p className="text-xs text-[#74a65d]">
+              Kho đang vận hành bình thường
+            </p>
           </CardContent>
         </Card>
 
         <Card className="card-agricultural">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-semibold text-[#44703d]">
-              Đã bị khóa
+              Đã khóa
             </CardTitle>
-            <UserX className="h-5 w-5 text-red-500" />
+            <Lock className="h-5 w-5 text-red-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-[#44703d]">
-              {stats.inactiveUsers}
+              {stats.lockedWarehouses}
             </div>
-            <p className="text-xs text-[#74a65d]">Tài khoản bị tạm khóa</p>
+            <p className="text-xs text-[#74a65d]">
+              Kho tạm thời ngừng hoạt động
+            </p>
           </CardContent>
         </Card>
       </div>
 
       {/* Filters */}
-      <UserFilters
+      <WarehouseFilters
         search={filters.search || ""}
-        role={filters.role || "all"}
         status={filters.status || "all"}
+        distributor={filters.distributor || "all"}
+        distributors={distributors}
         onSearchChange={handleSearchChange}
-        onRoleChange={handleRoleChange}
         onStatusChange={handleStatusChange}
+        onDistributorChange={handleDistributorChange}
         onReset={resetFilters}
       />
 
-      {/* Batch Actions */}
-      <BatchActions
-        selectedCount={selectedUsers.length}
-        onBatchActivate={handleBatchActivate}
-        onBatchDeactivate={handleBatchDeactivate}
-        onBatchDelete={handleBatchDelete}
-        loading={loading}
-      />
-
-      {/* Users Table */}
-      <UserTable
-        users={users}
-        selectedUsers={selectedUsers}
-        onSelectUser={toggleUserSelection}
-        onSelectAll={toggleSelectAll}
-        onToggleStatus={toggleUserStatus}
-        onViewDetails={handleViewDetails}
-        onEditUser={handleEditUser}
-        onDeleteUser={handleDeleteUser}
+      {/* Warehouses Table */}
+      <WarehouseTable
+        warehouses={warehouses}
+        onToggleLock={handleToggleLock}
+        onEditWarehouse={handleEditWarehouse}
+        onDeleteWarehouse={handleDeleteWarehouse}
         loading={loading}
       />
 
       {/* Pagination */}
-      <UserPagination
+      <WarehousePagination
         currentPage={filters.page || 1}
         totalPages={pagination.totalPages}
         totalItems={pagination.total}
@@ -296,32 +276,34 @@ export default function UsersPage() {
       />
 
       {/* Modals */}
-      <UserFormModal
+      <WarehouseFormModal
         open={addModalOpen}
         onClose={closeModals}
-        onSubmit={handleCreateUser}
+        onSubmit={handleCreateWarehouse}
         formData={formData}
         onUpdateFormData={updateFormData}
-        title="Thêm người dùng mới"
-        submitText="Tạo người dùng"
+        distributors={distributors}
+        title="Thêm kho hàng mới"
+        submitText="Tạo kho hàng"
       />
 
-      <UserFormModal
+      <WarehouseFormModal
         open={editModalOpen}
         onClose={closeModals}
-        onSubmit={handleUpdateUser}
+        onSubmit={handleUpdateWarehouse}
         formData={formData}
         onUpdateFormData={updateFormData}
-        title="Chỉnh sửa thông tin người dùng"
+        distributors={distributors}
+        title="Chỉnh sửa kho hàng"
         submitText="Cập nhật"
         isEdit
       />
 
-      <DeleteUserModal
+      <DeleteWarehouseModal
         open={deleteModalOpen}
         onClose={closeModals}
-        onConfirm={handleDeleteUserConfirm}
-        userName={selectedUserName}
+        onConfirm={handleDeleteWarehouseConfirm}
+        warehouseName={selectedWarehouseName}
       />
     </div>
   );

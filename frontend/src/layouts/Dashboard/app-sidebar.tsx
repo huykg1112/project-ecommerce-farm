@@ -2,6 +2,11 @@
 
 import Logo from "@/assets/logo/logoFarme2.png";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -16,15 +21,22 @@ import {
 } from "@/components/ui/sidebar";
 import {
   BarChart3,
+  BookText,
+  Box,
   ChevronRight,
-  FolderTree,
+  FileCheck,
+  FlaskConical,
+  Home,
   Leaf,
   LogOut,
-  PieChart,
+  Package,
+  Percent,
   Settings,
+  ShoppingBag,
   ShoppingCart,
-  TrendingUp,
   Users,
+  UsersRound,
+  Warehouse,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -33,50 +45,93 @@ import { useState } from "react";
 export function AppSidebar() {
   const [activeItem, setActiveItem] = useState("dashboard");
 
-  const menuItems = [
-    {
-      id: "dashboard",
-      label: "Bảng điều khiển",
-      icon: BarChart3,
-      href: "/dashboard",
-    },
-    {
-      id: "users-management",
-      label: "Quản lý người dùng",
-      icon: Users,
-      href: "/users-management",
-    },
-    {
-      id: "user-statistics",
-      label: "Thống kê người dùng",
-      icon: TrendingUp,
-      href: "/user-statistics",
-    },
-    {
-      id: "categories-management",
-      label: "Quản lý danh mục",
-      icon: FolderTree,
-      href: "/categories-management",
-    },
-    {
-      id: "category-statistics",
-      label: "Thống kê danh mục",
-      icon: PieChart,
-      href: "/category-statistics",
-    },
-    {
-      id: "products-management",
-      label: "Quản lý sản phẩm",
-      icon: ShoppingCart,
-      href: "/products-management",
-    },
-    {
-      id: "ingredients-management",
-      label: "Thành phần sản phẩm",
-      icon: Leaf,
-      href: "/ingredients-management",
-    },
-  ];
+  const menuItems = {
+    navMain: [
+      {
+        title: "Tổng quan",
+        url: "#",
+        icon: BarChart3,
+        items: [
+          {
+            title: "Dashboard",
+            url: "/dashboard",
+            icon: Home,
+          },
+          {
+            title: "Thống kê người dùng",
+            url: "/user-statistics",
+            icon: BarChart3,
+          },
+        ],
+      },
+      {
+        title: "Quản lý người dùng",
+        url: "#",
+        icon: Users,
+        items: [
+          {
+            title: "Người dùng",
+            url: "/users-management",
+            icon: UsersRound,
+          },
+          {
+            title: "Duyệt đại lý",
+            url: "/agency-requests",
+            icon: FileCheck,
+          },
+        ],
+      },
+      {
+        title: "Quản lý sản phẩm",
+        url: "#",
+        icon: Package,
+        items: [
+          {
+            title: "Sản phẩm",
+            url: "/products-management",
+            icon: Box,
+          },
+          {
+            title: "Danh mục",
+            url: "/categories-management",
+            icon: BookText,
+          },
+          {
+            title: "Hoạt chất",
+            url: "/active-ingredients-management",
+            icon: FlaskConical,
+          },
+          {
+            title: "Bệnh cây trồng",
+            url: "/diseases-management",
+            icon: Leaf,
+          },
+        ],
+      },
+      {
+        title: "Quản lý hoạt động",
+        url: "#",
+        icon: ShoppingCart,
+        items: [
+          {
+            title: "Đơn hàng",
+            url: "/orders-management",
+            icon: ShoppingBag,
+          },
+          {
+            title: "Quản lý kho",
+            url: "/warehouses-management",
+            icon: Warehouse,
+          },
+          {
+            title: "Khuyến mãi",
+            url: "/promotions-management",
+            icon: Percent,
+          },
+        ],
+      },
+    ],
+  };
 
   return (
     <Sidebar className="h-screen flex-col w-72 bg-[#44703d] text-white">
@@ -91,45 +146,51 @@ export function AppSidebar() {
           />
         </div>
         <div className="flex flex-col">
-          <span className="text-xl font-bold text-white">FramE</span>
-          <span className="text-xs text-[#accc8b]">Admin Panel</span>
+          <span className="text-2xl font-bold text-white">FramE</span>
+          <span className="text-sm text-[#accc8b]">Admin Panel</span>
         </div>
       </SidebarHeader>
 
-      <SidebarContent className="flex-1 overflow-y-auto">
-        <SidebarGroup>
-          <SidebarGroupLabel className="mt-4 px-3 text-sm font-semibold uppercase text-[#accc8b]">
-            Quản lý hệ thống
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="mt-2 px-2">
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={activeItem === item.id}
-                    className={`flex items-center gap-3 rounded-md px-4 py-5 text-[15px] font-medium transition-colors ${
-                      activeItem === item.id
-                        ? "bg-[#599146] text-white"
-                        : "text-[#e0e0e0] hover:bg-[#599146]/70 hover:text-white"
-                    }`}
-                    onClick={() => setActiveItem(item.id)}
-                  >
-                    <Link href={item.href}>
-                      <item.icon className="h-5 w-5" />
-                      <span className="font-medium text-base">
-                        {item.label}
-                      </span>
-                      {activeItem === item.id && (
-                        <ChevronRight className="ml-auto h-4 w-4" />
-                      )}
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+      <SidebarContent className="flex-1 overflow-y-auto pt-4">
+        {menuItems.navMain.map((item) => (
+          <Collapsible
+            key={item.title}
+            asChild
+            defaultOpen={item.title === "Tổng quan"}
+            className="group/collapsible"
+          >
+            <SidebarGroup>
+              <SidebarGroupLabel asChild>
+                <CollapsibleTrigger className="group/label text-lg font-medium text-white hover:bg-[#599146] hover:text-white">
+                  <div className="flex items-center gap-3">
+                    <item.icon className="size-5" />
+                    <span className="text-lg font-medium">{item.title}</span>
+                  </div>
+                  <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                </CollapsibleTrigger>
+              </SidebarGroupLabel>
+              <CollapsibleContent>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {item.items.map((subItem) => (
+                      <SidebarMenuItem key={subItem.title} className="ml-3">
+                        <SidebarMenuButton
+                          asChild
+                          className="text-white/90 hover:bg-[#599146] hover:text-white text-base font-medium"
+                        >
+                          <Link href={subItem.url}>
+                            <subItem.icon className="size-5" />
+                            {subItem.title}
+                          </Link>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </CollapsibleContent>
+            </SidebarGroup>
+          </Collapsible>
+        ))}
       </SidebarContent>
 
       <SidebarFooter className="mt-auto border-t border-[#599146] p-2">
