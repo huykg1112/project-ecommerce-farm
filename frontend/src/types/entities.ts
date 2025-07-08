@@ -28,7 +28,7 @@ export interface StoreOwnerRequest {
 
 export interface Role {
   role_id: string;
-  role_name: "ADMIN" | "DISTRIBUTOR" | "CUSTOMER";
+  role_name: "Admin" | "Distributor" | "Client";
   description: string;
   is_active: boolean;
 }

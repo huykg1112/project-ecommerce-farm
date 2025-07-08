@@ -1,9 +1,10 @@
 "use client";
 
-import { useToast } from "@/hooks/use-toast";
-import { UserService } from "@/lib_dashboard/services/user-service";
+import { showToast } from "@/lib/toast-provider";
+import { userServiceManagement } from "@/lib_dashboard/services/user-service-management";
 import {
   addUserModalAtom,
+  allUsersDataAtom,
   deleteUserModalAtom,
   editUserModalAtom,
   resetUserFormAtom,
@@ -11,57 +12,66 @@ import {
   selectedUsersAtom,
   userFiltersAtom,
   userFormDataAtom,
-  usersDataAtom,
   usersLoadingAtom,
-  usersPaginationAtom,
 } from "@/lib_dashboard/store/user-store";
 import { useAtom } from "jotai";
 import { useCallback, useEffect } from "react";
 
 export const useUsers = () => {
-  const { toast } = useToast();
-
   const [filters, setFilters] = useAtom(userFiltersAtom);
   const [selectedUsers, setSelectedUsers] = useAtom(selectedUsersAtom);
-  const [users, setUsers] = useAtom(usersDataAtom);
+  const [allUsers, setAllUsers] = useAtom(allUsersDataAtom);
   const [loading, setLoading] = useAtom(usersLoadingAtom);
-  const [pagination, setPagination] = useAtom(usersPaginationAtom);
 
-  // Fetch users
+  // Fetch all users
   const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await UserService.getUsers(filters);
-      setUsers(response.data);
-      setPagination({
-        total: response.total,
-        totalPages: response.totalPages,
-      });
+      const response = await userServiceManagement.getUsers();
+      setAllUsers(response.items || response); // tùy API trả về
     } catch (error) {
-      toast({
-        title: "Lỗi",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Không thể tải danh sách người dùng",
-        variant: "destructive",
-      });
+      showToast.error("Không thể tải danh sách người dùng");
     } finally {
       setLoading(false);
     }
-  }, [filters, setUsers, setPagination, setLoading, toast]);
+  }, [setAllUsers, setLoading]);
 
-  // Auto-fetch when filters change
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
 
-  // Filter operations
+  // Filter users based on filters
+  const filteredUsers = allUsers.filter((u) => {
+    // Search
+    const searchLower = filters.search?.toLowerCase() || "";
+    const matchesSearch =
+      !searchLower ||
+      u.username?.toLowerCase().includes(searchLower) ||
+      u.email?.toLowerCase().includes(searchLower) ||
+      u.full_name?.toLowerCase().includes(searchLower) ||
+      u.phone_number?.toLowerCase().includes(searchLower);
+    // Role
+    const matchesRole = !filters.role || u.role.role_name === filters.role;
+    // Status
+    const matchesStatus =
+      !filters.status ||
+      (filters.status === "active" && u.is_active) ||
+      (filters.status === "inactive" && !u.is_active);
+    return matchesSearch && matchesRole && matchesStatus;
+  });
+
+  // Pagination
+  const start = (filters.page - 1) * filters.limit;
+  const end = start + filters.limit;
+  const paginatedUsers = filteredUsers.slice(start, end);
+
+  // Filter operations (chỉ update state, không gọi API)
   const updateFilters = useCallback(
     (newFilters: Partial<typeof filters>) => {
       setFilters((prev) => ({ ...prev, ...newFilters }));
       setSelectedUsers([]);
     },
+
     [setFilters, setSelectedUsers]
   );
 
@@ -90,9 +100,11 @@ export const useUsers = () => {
 
   const toggleSelectAll = useCallback(
     (checked: boolean) => {
-      setSelectedUsers(checked ? users.map((user) => user.user_id) : []);
+      setSelectedUsers(
+        checked ? paginatedUsers.map((user) => user.user_id) : []
+      );
     },
-    [setSelectedUsers, users]
+    [setSelectedUsers, paginatedUsers]
   );
 
   const clearSelection = useCallback(() => {
@@ -103,78 +115,57 @@ export const useUsers = () => {
   const toggleUserStatus = useCallback(
     async (userId: string) => {
       try {
-        await UserService.toggleUserStatus(userId);
+        await userServiceManagement.updateUserStatus(userId);
         await fetchUsers();
-        toast({
-          title: "Thành công",
-          description: "Đã cập nhật trạng thái người dùng",
-        });
+        showToast.success("Cập nhật trạng thái người dùng thành công");
       } catch (error) {
-        toast({
-          title: "Lỗi",
-          description:
-            error instanceof Error
-              ? error.message
-              : "Không thể cập nhật trạng thái",
-          variant: "destructive",
-        });
+        showToast.error("Không thể cập nhật trạng thái");
       }
     },
-    [fetchUsers, toast]
+    [fetchUsers]
   );
 
   const batchToggleStatus = useCallback(
     async (status: boolean) => {
       try {
-        await UserService.batchToggleStatus(selectedUsers, status);
+        // Gọi API từng user (nếu BE không có batch)
+        await Promise.all(
+          selectedUsers.map((id) => userServiceManagement.updateUserStatus(id))
+        );
+        showToast.success("Cập nhật trạng thái người dùng thành công");
         await fetchUsers();
         clearSelection();
-        toast({
-          title: "Thành công",
-          description: `Đã ${status ? "mở khóa" : "khóa"} ${
-            selectedUsers.length
-          } tài khoản`,
-        });
       } catch (error) {
-        toast({
-          title: "Lỗi",
-          description:
-            error instanceof Error
-              ? error.message
-              : "Không thể cập nhật trạng thái hàng loạt",
-          variant: "destructive",
-        });
+        showToast.error("Không thể cập nhật trạng thái hàng loạt");
       }
     },
-    [selectedUsers, fetchUsers, clearSelection, toast]
+    [selectedUsers, fetchUsers, clearSelection]
   );
 
   const batchDeleteUsers = useCallback(async () => {
     try {
-      await UserService.batchDeleteUsers(selectedUsers);
-      await fetchUsers();
+      await Promise.all(
+        selectedUsers.map((id) => userServiceManagement.deleteUser(id))
+      );
+      showToast.success("Xóa người dùng thành công");
       clearSelection();
-      toast({
-        title: "Thành công",
-        description: `Đã xóa ${selectedUsers.length} người dùng`,
-      });
+      await fetchUsers();
     } catch (error) {
-      toast({
-        title: "Lỗi",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Không thể xóa người dùng hàng loạt",
-        variant: "destructive",
-      });
+      showToast.error("Không thể xóa người dùng hàng loạt");
     }
-  }, [selectedUsers, fetchUsers, clearSelection, toast]);
+  }, [selectedUsers, fetchUsers, clearSelection]);
 
   return {
     // Data
-    users,
+    users: paginatedUsers, // trả về users đã lọc và phân trang
+    allUsers,
     loading,
-    pagination,
+    pagination: {
+      total: filteredUsers.length,
+      totalPages: Math.ceil(filteredUsers.length / filters.limit),
+      page: filters.page,
+      limit: filters.limit,
+    },
     filters,
     selectedUsers,
 
@@ -192,8 +183,6 @@ export const useUsers = () => {
 };
 
 export const useUserForm = () => {
-  const { toast } = useToast();
-
   const [formData, setFormData] = useAtom(userFormDataAtom);
   const [addModalOpen, setAddModalOpen] = useAtom(addUserModalAtom);
   const [editModalOpen, setEditModalOpen] = useAtom(editUserModalAtom);
@@ -216,7 +205,8 @@ export const useUserForm = () => {
   const openEditModal = useCallback(
     async (userId: string) => {
       try {
-        const user = await UserService.getUserById(userId);
+        console.log("userId", userId);
+        const user = await userServiceManagement.getUserById(userId);
         if (user) {
           setFormData({
             user_id: user.user_id,
@@ -229,16 +219,13 @@ export const useUserForm = () => {
             is_active: user.is_active,
           });
           setEditModalOpen(true);
+          // console.log("formData", formData);
         }
       } catch (error) {
-        toast({
-          title: "Lỗi",
-          description: "Không thể tải thông tin người dùng",
-          variant: "destructive",
-        });
+        showToast.error("Không thể tải thông tin người dùng");
       }
     },
-    [setFormData, setEditModalOpen, toast]
+    [setFormData, setEditModalOpen]
   );
 
   const openDeleteModal = useCallback(
@@ -265,39 +252,27 @@ export const useUserForm = () => {
 
   const createUser = useCallback(async () => {
     try {
-      await UserService.createUser({
+      const response = await userServiceManagement.createUser({
         username: formData.username,
         email: formData.email,
         full_name: formData.full_name,
         phone_number: formData.phone_number,
-        role_name: "CUSTOMER", // Always create as customer
         cccd: formData.cccd,
         password: formData.password || "",
       });
-
-      toast({
-        title: "Thành công",
-        description: "Đã tạo người dùng mới",
-      });
-
+      showToast.success("Tạo người dùng thành công");
       closeModals();
       return true;
     } catch (error) {
-      toast({
-        title: "Lỗi",
-        description:
-          error instanceof Error ? error.message : "Không thể tạo người dùng",
-        variant: "destructive",
-      });
       return false;
     }
-  }, [formData, toast, closeModals]);
+  }, [formData, closeModals]);
 
   const updateUser = useCallback(async () => {
     if (!formData.user_id) return false;
 
     try {
-      await UserService.updateUser({
+      await userServiceManagement.updateUser(formData.user_id, {
         user_id: formData.user_id,
         username: formData.username,
         email: formData.email,
@@ -308,49 +283,29 @@ export const useUserForm = () => {
         is_active: formData.is_active,
       });
 
-      toast({
-        title: "Thành công",
-        description: "Đã cập nhật thông tin người dùng",
-      });
+      showToast.success("Cập nhật thông tin người dùng thành công");
 
       closeModals();
       return true;
     } catch (error) {
-      toast({
-        title: "Lỗi",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Không thể cập nhật người dùng",
-        variant: "destructive",
-      });
       return false;
     }
-  }, [formData, toast, closeModals]);
+  }, [formData, closeModals]);
 
   const deleteUser = useCallback(async () => {
     if (!selectedUserId) return false;
 
     try {
-      await UserService.deleteUser(selectedUserId);
+      await userServiceManagement.deleteUser(selectedUserId);
 
-      toast({
-        title: "Thành công",
-        description: "Đã xóa người dùng",
-      });
+      showToast.success("Xóa người dùng thành công");
 
       closeModals();
       return true;
     } catch (error) {
-      toast({
-        title: "Lỗi",
-        description:
-          error instanceof Error ? error.message : "Không thể xóa người dùng",
-        variant: "destructive",
-      });
       return false;
     }
-  }, [selectedUserId, toast, closeModals]);
+  }, [selectedUserId, closeModals]);
 
   return {
     // Form data

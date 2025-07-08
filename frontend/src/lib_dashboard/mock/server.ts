@@ -86,7 +86,7 @@ export interface CreateUserRequest {
   email: string;
   full_name: string;
   phone_number: string;
-  role_name: "ADMIN" | "DISTRIBUTOR" | "CUSTOMER";
+  role_name: string;
   cccd?: string;
   password: string;
 }
@@ -97,7 +97,7 @@ export interface UpdateUserRequest {
   email?: string;
   full_name?: string;
   phone_number?: string;
-  role_name?: "ADMIN" | "DISTRIBUTOR" | "CUSTOMER";
+  role_name?: string;
   cccd?: string;
   is_active?: boolean;
 }
@@ -325,9 +325,9 @@ export const userAPI = {
     }
 
     const roleMap = {
-      ADMIN: { role_id: "1", description: "Quản trị viên hệ thống" },
-      DISTRIBUTOR: { role_id: "2", description: "Nhà phân phối" },
-      CUSTOMER: { role_id: "3", description: "Khách hàng" },
+      Admin: { role_id: "1", description: "Quản trị viên hệ thống" },
+      Distributor: { role_id: "2", description: "Nhà phân phối" },
+      Client: { role_id: "3", description: "Khách hàng" },
     };
 
     const newUser: User = {
@@ -391,14 +391,14 @@ export const userAPI = {
     // Update role if provided
     if (userData.role_name) {
       const roleMap = {
-        ADMIN: { role_id: "1", description: "Quản trị viên hệ thống" },
-        DISTRIBUTOR: { role_id: "2", description: "Nhà phân phối" },
-        CUSTOMER: { role_id: "3", description: "Khách hàng" },
+        Admin: { role_id: "1", description: "Quản trị viên hệ thống" },
+        Distributor: { role_id: "2", description: "Nhà phân phối" },
+        Client: { role_id: "3", description: "Khách hàng" },
       };
 
       updatedUser.role = {
         role_id: roleMap[userData.role_name].role_id,
-        role_name: userData.role_name,
+        role_name: userData.role_name || "Admin",
         description: roleMap[userData.role_name].description,
         is_active: true,
       };
@@ -826,7 +826,7 @@ export const warehouseAPI = {
 
   async getDistributors(): Promise<User[]> {
     await delay(200);
-    return users.filter((user) => user.role.role_name === "DISTRIBUTOR");
+    return users.filter((user) => user.role.role_name === "Distributor");
   },
 };
 
@@ -1754,7 +1754,7 @@ export const storeRequestAPI = {
         ...users[userIndex],
         role: {
           role_id: "2",
-          role_name: "DISTRIBUTOR",
+          role_name: "Distributor",
           description: "Nhà phân phối",
           is_active: true,
         },

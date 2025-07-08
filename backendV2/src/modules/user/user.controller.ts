@@ -35,6 +35,7 @@ export class UserController {
   @Public()
   @Post('register')
   register(@Body() registerUserDto: RegisterUserDto) {
+    console.log(registerUserDto);
     return this.userService.registerUser(registerUserDto);
   }
 
@@ -51,8 +52,8 @@ export class UserController {
   }
 
   @Get('findOne')
-  findOne(@Req() req) {
-    return this.userService.findUserById(req.user.user_id);
+  findOne(@Query('id') id: string) {
+    return this.userService.findUserById(id);
   }
 
   @Put('updateProfile')
@@ -67,20 +68,35 @@ export class UserController {
     return this.userService.changePassword(req.user.user_id, changePasswordDto);
   }
 
-  // lấy tất cả người dùng
+  //management user
+
   @Get('findAll')
   findAll() {
     return this.userService.findAllUsers();
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.userService.removeUser(id);
-  }
-
   @Put('changeRole')
   changeRole(@Body() body: { user_id: string; roleId: string }) {
     return this.userService.changeRole(body.user_id, body.roleId);
+  }
+
+  @Put('updateUser/:id')
+  updateUser(
+    @Body() updateProfileDto: UpdateProfileDto,
+    @Param('id') id: string,
+  ) {
+    console.log('updateProfileDto', updateProfileDto);
+    return this.userService.updateProfile(id, updateProfileDto);
+  }
+
+  @Put('updateUserStatus/:id')
+  updateUserStatus(@Param('id') id: string) {
+    return this.userService.updateUserStatus(id);
+  }
+
+  @Delete('deleteUser/:id')
+  deleteUser(@Param('id') id: string) {
+    return this.userService.deleteUser(id);
   }
 
   /*

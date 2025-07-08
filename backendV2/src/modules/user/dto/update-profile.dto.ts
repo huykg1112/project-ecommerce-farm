@@ -9,6 +9,10 @@ import {
 export class UpdateProfileDto {
   @IsOptional()
   @IsString()
+  username?: string;
+
+  @IsOptional()
+  @IsString()
   full_name?: string;
 
   @IsOptional()
@@ -33,6 +37,10 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsBoolean({ message: 'is_active phải là boolean' })
   is_active?: boolean;
+
+  @IsOptional()
+  @IsString()
+  role_name?: string;
 
   @IsOptional()
   @IsString()

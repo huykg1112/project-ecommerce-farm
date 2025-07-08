@@ -139,6 +139,7 @@ export class UserService {
     // }
     // cập nhật thông tin người dùng
     Object.assign(user, {
+      username: updateProfileDto.username,
       full_name: updateProfileDto.full_name,
       email: updateProfileDto.email,
       phone_number: updateProfileDto.phone_number,
@@ -184,6 +185,16 @@ export class UserService {
         }
       }
     }
+
+    if (updateProfileDto.role_name) {
+      const role = await this.rolesService.findRoleByName(
+        updateProfileDto.role_name,
+      );
+      if (!role) {
+        throw new NotFoundException('Vai trò không tồn tại');
+      }
+      user.role = role;
+    }
     const updatedUser = await this.saveUser(user);
     console.log('updatedUser', updatedUser);
     // Lấy lại user với relations để trả về đúng dữ liệu
@@ -207,7 +218,9 @@ export class UserService {
   }
   // lấy tất cả người dùng
   async findAllUsers(): Promise<User[]> {
-    return this.userRepository.find();
+    return this.userRepository.find({
+      relations: ['role'],
+    });
   }
 
   async getProfile(
@@ -301,5 +314,24 @@ export class UserService {
       itemsPerPage: limit,
       totalPages: Math.ceil(total / limit),
     };
+  }
+
+  async updateUserStatus(id: string): Promise<{ message: string }> {
+    const user = await this.findUserById(id);
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại');
+    }
+    user.is_active = !user.is_active;
+    await this.saveUser(user);
+    return { message: 'Cập nhật trạng thái người dùng thành công' };
+  }
+
+  async deleteUser(id: string): Promise<{ message: string }> {
+    const user = await this.findUserById(id);
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại');
+    }
+    await this.userRepository.remove(user);
+    return { message: 'Xóa người dùng thành công' };
   }
 }

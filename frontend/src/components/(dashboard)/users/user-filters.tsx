@@ -1,26 +1,40 @@
-"use client"
+"use client";
 
-import { memo, useCallback } from "react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Search, RotateCcw } from "lucide-react"
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { RotateCcw, Search } from "lucide-react";
+import { memo, useCallback } from "react";
 
 interface UserFiltersProps {
-  search: string
-  role: string
-  status: string
-  onSearchChange: (value: string) => void
-  onRoleChange: (value: string) => void
-  onStatusChange: (value: string) => void
-  onReset: () => void
+  search: string;
+  role: string;
+  status: string;
+  onSearchChange: (value: string) => void;
+  onRoleChange: (value: string) => void;
+  onStatusChange: (value: string) => void;
+  onReset: () => void;
 }
 
 export const UserFilters = memo<UserFiltersProps>(
-  ({ search, role, status, onSearchChange, onRoleChange, onStatusChange, onReset }) => {
+  ({
+    search,
+    role,
+    status,
+    onSearchChange,
+    onRoleChange,
+    onStatusChange,
+    onReset,
+  }) => {
     const handleReset = useCallback(() => {
-      onReset()
-    }, [onReset])
+      onReset();
+    }, [onReset]);
 
     return (
       <div className="flex flex-col sm:flex-row gap-4 p-4 bg-[#accc8b]/10 rounded-lg border border-[#accc8b]/30">
@@ -40,9 +54,9 @@ export const UserFilters = memo<UserFiltersProps>(
           </SelectTrigger>
           <SelectContent className="bg-white border-[#accc8b]">
             <SelectItem value="all">Tất cả vai trò</SelectItem>
-            <SelectItem value="ADMIN">Quản trị viên</SelectItem>
-            <SelectItem value="DISTRIBUTOR">Đại lý</SelectItem>
-            <SelectItem value="CUSTOMER">Khách hàng</SelectItem>
+            <SelectItem value="Admin">Quản trị viên</SelectItem>
+            <SelectItem value="Distributor">Đại lý</SelectItem>
+            <SelectItem value="Client">Khách hàng</SelectItem>
           </SelectContent>
         </Select>
 
@@ -66,8 +80,8 @@ export const UserFilters = memo<UserFiltersProps>(
           Đặt lại
         </Button>
       </div>
-    )
-  },
-)
+    );
+  }
+);
 
-UserFilters.displayName = "UserFilters"
+UserFilters.displayName = "UserFilters";

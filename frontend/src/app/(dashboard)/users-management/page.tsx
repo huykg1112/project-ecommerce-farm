@@ -8,16 +8,15 @@ import { UserPagination } from "@/components/(dashboard)/users/user-pagination";
 import { UserTable } from "@/components/(dashboard)/users/user-table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
 import { useUserForm, useUsers } from "@/hooks/use-users";
+import { showToast } from "@/lib/toast-provider";
 import { Download, Plus, UserCheck, Users, UserX } from "lucide-react";
 import { useCallback, useMemo } from "react";
 
 export default function UsersPage() {
-  const { toast } = useToast();
-
   const {
-    users,
+    users, // Đã lọc và phân trang
+    allUsers,
     loading,
     pagination,
     filters,
@@ -47,7 +46,6 @@ export default function UsersPage() {
     updateUser,
     deleteUser,
   } = useUserForm();
-
   // Filter handlers
   const handleSearchChange = useCallback(
     (search: string) => {
@@ -86,18 +84,13 @@ export default function UsersPage() {
   );
 
   // Action handlers
-  const handleViewDetails = useCallback(
-    (userId: string) => {
-      toast({
-        title: "Thông báo",
-        description: "Tính năng xem chi tiết đang được phát triển",
-      });
-    },
-    [toast]
-  );
+  const handleViewDetails = useCallback((userId: string) => {
+    showToast.info("Tính năng xem chi tiết đang được phát triển");
+  }, []);
 
   const handleEditUser = useCallback(
     (userId: string) => {
+      console.log("userId", userId);
       openEditModal(userId);
     },
     [openEditModal]
@@ -111,11 +104,8 @@ export default function UsersPage() {
   );
 
   const handleExport = useCallback(() => {
-    toast({
-      title: "Thông báo",
-      description: "Tính năng xuất dữ liệu đang được phát triển",
-    });
-  }, [toast]);
+    showToast.info("Tính năng xuất dữ liệu đang được phát triển");
+  }, []);
 
   // Form handlers
   const handleCreateUser = useCallback(async () => {
@@ -123,6 +113,7 @@ export default function UsersPage() {
     if (success) {
       await fetchUsers();
     }
+    closeModals();
     return success;
   }, [createUser, fetchUsers]);
 
@@ -131,6 +122,7 @@ export default function UsersPage() {
     if (success) {
       await fetchUsers();
     }
+    closeModals();
     return success;
   }, [updateUser, fetchUsers]);
 
@@ -139,6 +131,7 @@ export default function UsersPage() {
     if (success) {
       await fetchUsers();
     }
+    closeModals();
     return success;
   }, [deleteUser, fetchUsers]);
 
@@ -157,18 +150,18 @@ export default function UsersPage() {
 
   // Statistics
   const stats = useMemo(() => {
-    const totalUsers = pagination.total;
-    const activeUsers = users.filter((user) => user.is_active).length;
-    const inactiveUsers = users.filter((user) => !user.is_active).length;
+    const totalUsers = allUsers.length;
+    const activeUsers = allUsers.filter((user) => user.is_active).length;
+    const inactiveUsers = allUsers.filter((user) => !user.is_active).length;
 
     return { totalUsers, activeUsers, inactiveUsers };
-  }, [users, pagination.total]);
+  }, [allUsers, pagination.total]);
 
   // Get selected user name for delete modal
   const selectedUserName = useMemo(() => {
-    const user = users.find((u) => u.user_id === selectedUserId);
+    const user = allUsers.find((u) => u.user_id === selectedUserId);
     return user?.full_name;
-  }, [users, selectedUserId]);
+  }, [allUsers, selectedUserId]);
 
   return (
     <div className="space-y-6">
@@ -274,7 +267,7 @@ export default function UsersPage() {
 
       {/* Users Table */}
       <UserTable
-        users={users}
+        users={users} // Đã lọc và phân trang
         selectedUsers={selectedUsers}
         onSelectUser={toggleUserSelection}
         onSelectAll={toggleSelectAll}

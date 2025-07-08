@@ -13,10 +13,8 @@ const UserAuthSection = dynamic(
 );
 
 export function DashboardHeader() {
-
-
   return (
-    <header className="flex h-16 items-center w-full justify-between border-b border-[#74a65d]/20 bg-white px-6 shadow-sm">
+    <header className="flex h-16 sticky top-0 z-50 items-center w-full justify-between border-b border-[#74a65d]/20 bg-white px-6 shadow-sm">
       <div className="flex items-center gap-4">
         <SidebarTrigger />
         <h1 className="text-xl font-bold text-[#44703d]">Bảng điều khiển</h1>

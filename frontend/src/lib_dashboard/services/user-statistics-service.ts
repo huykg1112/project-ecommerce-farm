@@ -1,9 +1,9 @@
 import { userAPI } from "@/lib_dashboard/mock/server";
 import type {
-  UserStatisticsFilters,
-  UserStatisticsData,
   RegistrationData,
   RoleDistribution,
+  UserStatisticsData,
+  UserStatisticsFilters,
 } from "@/lib_dashboard/store/user-statistics-store";
 import type { User } from "@/types/entities";
 

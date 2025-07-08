@@ -183,11 +183,12 @@ export const UserTable = memo<UserTableProps>(
                           alt={user.full_name}
                         />
                         <AvatarFallback className="bg-[#accc8b] text-[#44703d]">
-                          {user.full_name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .slice(0, 2)}
+                          {user.full_name &&
+                            user.full_name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .slice(0, 2)}
                         </AvatarFallback>
                       </Avatar>
                       <div>

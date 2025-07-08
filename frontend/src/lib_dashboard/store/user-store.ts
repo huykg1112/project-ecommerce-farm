@@ -1,8 +1,15 @@
 import type { User } from "@/types/entities";
 import { atom } from "jotai";
-import { UserFilters } from "../mock/server";
 
-// Filter state
+// Filter state (chỉ dùng cho FE)
+export interface UserFilters {
+  search: string;
+  role: string;
+  status: string;
+  page: number;
+  limit: number;
+}
+
 export const userFiltersAtom = atom<UserFilters>({
   search: "",
   role: "",
@@ -14,17 +21,11 @@ export const userFiltersAtom = atom<UserFilters>({
 // Selected users state
 export const selectedUsersAtom = atom<string[]>([]);
 
-// Users data state
-export const usersDataAtom = atom<User[]>([]);
+// All users data state (lấy hết từ BE)
+export const allUsersDataAtom = atom<User[]>([]);
 
 // Loading state
 export const usersLoadingAtom = atom<boolean>(false);
-
-// Pagination state
-export const usersPaginationAtom = atom({
-  total: 0,
-  totalPages: 0,
-});
 
 // Form state for add/edit user
 export interface UserFormData {
@@ -33,18 +34,19 @@ export interface UserFormData {
   email: string;
   full_name: string;
   phone_number: string;
-  role_name: "ADMIN" | "DISTRIBUTOR" | "CUSTOMER";
+  role_name: string;
   cccd?: string;
   password?: string;
   is_active?: boolean;
 }
 
 export const userFormDataAtom = atom<UserFormData>({
+  user_id: "",
   username: "",
   email: "",
   full_name: "",
   phone_number: "",
-  role_name: "CUSTOMER",
+  role_name: "",
   cccd: "",
   password: "",
   is_active: true,
@@ -56,17 +58,15 @@ export const editUserModalAtom = atom<boolean>(false);
 export const deleteUserModalAtom = atom<boolean>(false);
 export const selectedUserIdAtom = atom<string>("");
 
-// Derived atoms
+// Derived atoms for selection UI
 export const isAllSelectedAtom = atom((get) => {
-  const users = get(usersDataAtom);
-  const selected = get(selectedUsersAtom);
-  return users.length > 0 && selected.length === users.length;
+  // This atom may need to be updated in UI to use the new paginated users from useUsers
+  return false;
 });
 
 export const isIndeterminateAtom = atom((get) => {
-  const users = get(usersDataAtom);
-  const selected = get(selectedUsersAtom);
-  return selected.length > 0 && selected.length < users.length;
+  // This atom may need to be updated in UI to use the new paginated users from useUsers
+  return false;
 });
 
 // Reset form data
@@ -76,7 +76,7 @@ export const resetUserFormAtom = atom(null, (get, set) => {
     email: "",
     full_name: "",
     phone_number: "",
-    role_name: "CUSTOMER",
+    role_name: "",
     cccd: "",
     password: "",
     is_active: true,

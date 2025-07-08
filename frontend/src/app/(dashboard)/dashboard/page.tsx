@@ -40,8 +40,6 @@ export default function DashboardPage() {
     },
   };
   const currentUser = user;
-  console.log("currentUser", currentUser);
-  console.log("user", user);
 
   // Generate dashboard data based on time range
   const mockData = useMemo(

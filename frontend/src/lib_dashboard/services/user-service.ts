@@ -1,5 +1,4 @@
-import { ApiError, User } from "@/interfaces";
-import { getCookie } from "@/lib/utils";
+import { User } from "@/interfaces";
 import {
   userAPI,
   type CreateUserRequest,
@@ -87,22 +86,5 @@ export class UserService {
     } catch (error) {
       throw new Error("Không thể xóa người dùng hàng loạt");
     }
-  }
-  static async getAllUser(): Promise<User[]> {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/user/findAll`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getCookie("access_token")}`,
-        },
-      }
-    );
-    if (!response.ok) {
-      const errorData: ApiError = await response.json();
-      throw errorData;
-    }
-    return await response.json();
   }
 }
