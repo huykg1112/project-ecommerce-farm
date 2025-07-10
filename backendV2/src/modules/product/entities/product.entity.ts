@@ -9,6 +9,7 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { Category } from '../../category/entities/category.entity';
+import { Manufacturer } from '../../manufacturer/entities/manufacturer.entity';
 import { ProductIngredient } from '../../product-ingredient/entities/product-ingredient.entity';
 import { ProductDisease } from '../../product_disease/entities/product_disease.entity';
 import { Review } from '../../review/entities/review.entity';
@@ -66,4 +67,7 @@ export class Product {
 
   @OneToMany(() => ProductDisease, (pd) => pd.product, { nullable: true })
   productDiseases: ProductDisease[];
+
+  @ManyToOne(() => Manufacturer, (manufacturer) => manufacturer.products)
+  manufacturer!: Manufacturer;
 }

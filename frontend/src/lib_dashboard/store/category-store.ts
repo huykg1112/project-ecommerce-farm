@@ -1,5 +1,5 @@
-import type { Category } from "@/types/entities";
 import { atom } from "jotai";
+import { Category } from "../types/category";
 
 export interface CategoryFilters {
   search?: string;
@@ -9,11 +9,11 @@ export interface CategoryFilters {
 }
 
 export interface CategoryFormData {
-  category_id?: string;
-  category_name: string;
+  id?: string; // Sẽ map từ backend 'id'
+  name: string; // Sẽ map từ backend 'name'
   description: string;
-  category_img?: string;
-  is_active: boolean;
+  image?: string; // Sẽ map từ backend 'image'
+  isActive: boolean; // Sẽ map từ backend 'isActive'
 }
 
 // Filter state
@@ -36,12 +36,34 @@ export const categoriesPaginationAtom = atom({
   totalPages: 0,
 });
 
+// Selected categories for batch actions
+export const selectedCategoriesAtom = atom<string[]>([]);
+
+// Derived state for select all checkbox
+export const isAllSelectedAtom = atom((get) => {
+  const categories = get(categoriesDataAtom);
+  const selectedCategories = get(selectedCategoriesAtom);
+  return (
+    categories.length > 0 && selectedCategories.length === categories.length
+  );
+});
+
+// Derived state for indeterminate checkbox
+export const isIndeterminateAtom = atom((get) => {
+  const categories = get(categoriesDataAtom);
+  const selectedCategories = get(selectedCategoriesAtom);
+  return (
+    selectedCategories.length > 0 &&
+    selectedCategories.length < categories.length
+  );
+});
+
 // Form state for add/edit category
 export const categoryFormDataAtom = atom<CategoryFormData>({
-  category_name: "",
+  name: "",
   description: "",
-  category_img: "",
-  is_active: true,
+  image: "",
+  isActive: true,
 });
 
 // Modal states
@@ -53,9 +75,9 @@ export const selectedCategoryIdAtom = atom<string>("");
 // Reset form data
 export const resetCategoryFormAtom = atom(null, (get, set) => {
   set(categoryFormDataAtom, {
-    category_name: "",
+    name: "",
     description: "",
-    category_img: "",
-    is_active: true,
+    image: "",
+    isActive: true,
   });
 });

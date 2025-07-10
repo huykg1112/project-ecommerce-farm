@@ -1,83 +1,90 @@
 "use client";
 
-import { useMemo } from "react";
-
 import { CategoryFilters } from "@/components/(dashboard)/categories/category-filters";
 import { CategoryFormModal } from "@/components/(dashboard)/categories/category-form-modal";
 import { CategoryPagination } from "@/components/(dashboard)/categories/category-pagination";
 import { CategoryTable } from "@/components/(dashboard)/categories/category-table";
-import { DeleteCategoryModal } from "@/components/(dashboard)/categories/delete-category-modal";
+import { BatchActions } from "@/components/common/batch-actions";
+
+import { DeleteModal } from "@/components/common/delete-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCategories } from "@/hooks/use-categories";
 import { useToast } from "@/hooks/use-toast";
 import {
-  addCategoryModalAtom,
-  categoriesDataAtom,
-  categoriesPaginationAtom,
-  categoryFiltersAtom,
-  CategoryFormData,
   categoryFormDataAtom,
-  editCategoryModalAtom,
+  deleteCategoryModalAtom,
   selectedCategoryIdAtom,
+  type CategoryFormData,
 } from "@/lib_dashboard/store/category-store";
-import { useAtomValue, useSetAtom } from "jotai";
-import { Eye, EyeOff, Package, Plus } from "lucide-react";
-import { useCallback, useEffect } from "react";
+import { useAtom, useSetAtom } from "jotai";
+import { Download, Eye, EyeOff, Package, Plus } from "lucide-react";
+import { useCallback, useEffect, useMemo } from "react";
 
 export default function CategoriesPage() {
   const { toast } = useToast();
 
   const {
+    categories,
+    loading,
+    pagination,
+    filters,
+    selectedCategories,
+    formData,
+    addModalOpen,
+    editModalOpen,
+    deleteModalOpen,
+    selectedCategoryId,
     fetchList,
+    updateFilters,
+    resetFilters,
+    toggleCategorySelection,
+    toggleSelectAll,
+    batchToggleStatus,
+    batchDeleteCategories,
     addCategory,
     editCategory,
+    deleteCategory,
     toggleStatus,
     openAddModal,
     openEditModal,
     openDeleteModal,
-    closeAddModal,
-    setFilters,
+    closeModals,
   } = useCategories();
 
-  const categories = useAtomValue(categoriesDataAtom);
-  const pagination = useAtomValue(categoriesPaginationAtom);
-  const formData = useAtomValue(categoryFormDataAtom);
-  const addOpen = useAtomValue(addCategoryModalAtom);
-  const editOpen = useAtomValue(editCategoryModalAtom);
-  const filters = useAtomValue(categoryFiltersAtom);
-  const selectedId = useAtomValue(selectedCategoryIdAtom);
   const setFormData = useSetAtom(categoryFormDataAtom);
-  /* initial load */
+  const [open, setOpen] = useAtom(deleteCategoryModalAtom);
+  const [catId] = useAtom(selectedCategoryIdAtom);
+  const selectedCategory = useMemo(
+    () => categories.find((cat) => cat.id === catId),
+    [categories, catId]
+  );
+  // Fetch categories on mount
   useEffect(() => {
     fetchList();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Filter handlers
+  }, [fetchList]);
 
   // Pagination handlers
-  const handlePageChange = useCallback((page: number) => {
-    setFilters({ ...filters, page });
-  }, []);
+  const handlePageChange = useCallback(
+    (page: number) => {
+      updateFilters({ page });
+    },
+    [updateFilters]
+  );
 
-  const handleItemsPerPageChange = useCallback((limit: number) => {
-    setFilters({ ...filters, limit });
-  }, []);
+  const handleItemsPerPageChange = useCallback(
+    (limit: number) => {
+      updateFilters({ limit, page: 1 }); // Reset to page 1 when changing items per page
+    },
+    [updateFilters]
+  );
 
   // Action handlers
   const handleEditCategory = useCallback(
     (categoryId: string) => {
-      const cat = categories.find((c) => c.category_id === categoryId);
-      if (cat)
-        openEditModal(categoryId, {
-          category_name: cat.category_name,
-          description: cat.description,
-          category_img: cat.category_img,
-          is_active: cat.is_active,
-        });
+      openEditModal(categoryId);
     },
-    [categories, openEditModal]
+    [openEditModal]
   );
 
   const handleDeleteCategory = useCallback(
@@ -95,16 +102,22 @@ export default function CategoriesPage() {
   }, [toast]);
 
   // Form handlers
-  const handleCreateCategory = useCallback(async () => {
-    const success = await addCategory(formData);
-    return success;
-  }, [addCategory, formData]);
+  const handleCreateCategory = useCallback(
+    async (imageFile?: File) => {
+      const success = await addCategory(formData, imageFile);
+      return success;
+    },
+    [addCategory, formData]
+  );
 
-  const handleUpdateCategory = useCallback(async () => {
-    if (!formData.category_id) return false;
-    const success = await editCategory(formData.category_id, formData);
-    return success;
-  }, [editCategory, formData]);
+  const handleUpdateCategory = useCallback(
+    async (imageFile?: File) => {
+      if (!formData.id) return false;
+      const success = await editCategory(formData.id, formData, imageFile);
+      return success;
+    },
+    [editCategory, formData]
+  );
 
   const handleToggleStatus = useCallback(
     async (categoryId: string) => {
@@ -113,14 +126,27 @@ export default function CategoriesPage() {
     [toggleStatus]
   );
 
+  // Batch action handlers
+  const handleBatchActivate = useCallback(async () => {
+    await batchToggleStatus(true);
+  }, [batchToggleStatus]);
+
+  const handleBatchDeactivate = useCallback(async () => {
+    await batchToggleStatus(false);
+  }, [batchToggleStatus]);
+
+  const handleBatchDelete = useCallback(async () => {
+    await batchDeleteCategories();
+  }, [batchDeleteCategories]);
+
   // Statistics
   const stats = useMemo(() => {
     const totalCategories = pagination.total;
     const activeCategories = categories.filter(
-      (category) => category.is_active
+      (category) => category.isActive
     ).length;
     const inactiveCategories = categories.filter(
-      (category) => !category.is_active
+      (category) => !category.isActive
     ).length;
 
     return { totalCategories, activeCategories, inactiveCategories };
@@ -128,13 +154,9 @@ export default function CategoriesPage() {
 
   // Get selected category name for delete modal
   const selectedCategoryName = useMemo(() => {
-    const cat = categories.find((c) => c.category_id === selectedId);
-    return cat?.category_name || "";
-  }, [categories, selectedId]);
-
-  const handleCloseAddModal = useCallback(() => {
-    closeAddModal();
-  }, [closeAddModal]);
+    const cat = categories.find((c) => c.id === selectedCategoryId);
+    return cat?.name || "";
+  }, [categories, selectedCategoryId]);
 
   const updateFormData = useCallback(
     (data: Partial<CategoryFormData>) => {
@@ -143,17 +165,33 @@ export default function CategoriesPage() {
     [setFormData]
   );
 
+  const handleConfirmDelete = useCallback(() => {
+    if (selectedCategoryId) {
+      deleteCategory(selectedCategoryId);
+    }
+  }, [deleteCategory, selectedCategoryId]);
+
   return (
     <section className="p-4 md:p-6">
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
         <h1 className="text-2xl font-bold text-[#44703d]">Quản lý danh mục</h1>
-        <Button
-          className="bg-[#90c577] hover:bg-[#74a65d] text-white"
-          onClick={openAddModal}
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Thêm danh mục
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleExport}
+            className="border-[#90c577] text-[#44703d] hover:bg-[#accc8b]/20"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Xuất dữ liệu
+          </Button>
+          <Button
+            className="bg-[#90c577] hover:bg-[#74a65d] text-white"
+            onClick={openAddModal}
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Thêm danh mục
+          </Button>
+        </div>
       </header>
 
       {/* Statistics Cards */}
@@ -208,51 +246,76 @@ export default function CategoriesPage() {
         </Card>
       </div>
 
-      {/* Filters */}
-      <CategoryFilters />
+      <div className="mt-6 space-y-4">
+        {/* Filters */}
+        <CategoryFilters
+          search={filters.search ?? ""}
+          status={filters.status ?? ""}
+          onSearchChange={(value: string) => updateFilters({ search: value })}
+          onStatusChange={(value: string) => updateFilters({ status: value })}
+          onReset={resetFilters}
+        />
 
-      {/* Table */}
-      <CategoryTable
-        categories={categories}
-        onToggleStatus={handleToggleStatus}
-        onEditCategory={handleEditCategory}
-        onDeleteCategory={handleDeleteCategory}
-      />
+        {/* Batch Actions */}
+        <BatchActions
+          selectedCount={selectedCategories.length}
+          onBatchActivate={handleBatchActivate}
+          onBatchDeactivate={handleBatchDeactivate}
+          onBatchDelete={handleBatchDelete}
+          loading={loading}
+          title="danh mục"
+        />
 
-      {/* Pagination */}
-      <CategoryPagination
-        currentPage={filters.page ?? 1}
-        totalPages={pagination.totalPages}
-        totalItems={pagination.total}
-        itemsPerPage={filters.limit ?? 10}
-        onPageChange={handlePageChange}
-        onItemsPerPageChange={handleItemsPerPageChange}
-      />
+        {/* Table */}
+        <CategoryTable
+          categories={categories}
+          selectedCategories={selectedCategories}
+          onSelectCategory={toggleCategorySelection}
+          onSelectAll={toggleSelectAll}
+          onToggleStatus={handleToggleStatus}
+          onEditCategory={handleEditCategory}
+          onDeleteCategory={handleDeleteCategory}
+          loading={loading}
+        />
 
-      {/* Modals */}
-      {/* Add */}
-      <CategoryFormModal
-        open={addOpen}
-        title="Thêm danh mục mới"
-        submitText="Tạo mới"
-        onClose={handleCloseAddModal}
-        formData={formData}
-        onUpdateFormData={updateFormData}
-        onSubmit={handleCreateCategory}
-      />
-      {/* Edit */}
-      <CategoryFormModal
-        open={editOpen}
-        title="Chỉnh sửa danh mục"
-        submitText="Lưu thay đổi"
-        isEdit
-        onClose={handleCloseAddModal}
-        formData={formData}
-        onUpdateFormData={updateFormData}
-        onSubmit={handleUpdateCategory}
-      />
-      {/* Delete confirmation */}
-      <DeleteCategoryModal />
+        {/* Pagination */}
+        <CategoryPagination
+          currentPage={filters.page ?? 1}
+          totalPages={pagination.totalPages}
+          totalItems={pagination.total}
+          itemsPerPage={filters.limit ?? 10}
+          onPageChange={handlePageChange}
+          onItemsPerPageChange={handleItemsPerPageChange}
+        />
+
+        {/* Modals */}
+        <CategoryFormModal
+          open={addModalOpen}
+          title="Thêm danh mục mới"
+          submitText="Tạo mới"
+          onClose={closeModals}
+          formData={formData}
+          onUpdateFormData={updateFormData}
+          onSubmit={handleCreateCategory}
+        />
+        <CategoryFormModal
+          open={editModalOpen}
+          title="Chỉnh sửa danh mục"
+          submitText="Lưu thay đổi"
+          isEdit
+          onClose={closeModals}
+          formData={formData}
+          onUpdateFormData={updateFormData}
+          onSubmit={handleUpdateCategory}
+        />
+        <DeleteModal
+          open={open}
+          setOpen={setOpen}
+          handleConfirm={handleConfirmDelete}
+          title="Xoá danh mục"
+          nameDelete={selectedCategory?.name}
+        />
+      </div>
     </section>
   );
 }

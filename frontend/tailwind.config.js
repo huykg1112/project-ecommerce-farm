@@ -54,7 +54,6 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -80,5 +79,23 @@ module.exports = {
       },
     },
   },
+  safelist: [
+    "bg-[#90c577]",
+    "bg-[#74a65d]",
+    "bg-[#5f8a4b]",
+    "bg-[#accc8b]/10",
+    "bg-[#accc8b]/20",
+    "bg-[#accc8b]/5",
+    "border-[#90c577]",
+    "border-[#accc8b]/30",
+    "text-[#44703d]",
+    "text-[#74a65d]",
+    "hover:bg-[#90c577]/20",
+    "hover:bg-[#accc8b]/20",
+    "hover:bg-red-50",
+    "text-red-600",
+    "data-[state=checked]:bg-[#74a65d]",
+    "data-[state=checked]:border-[#74a65d]",
+  ],
   plugins: [require("tailwindcss-animate")],
 };

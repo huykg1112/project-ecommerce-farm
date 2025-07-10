@@ -1,15 +1,17 @@
 "use client";
 
-import { BatchActions } from "@/components/(dashboard)/users/batch-actions";
-import { DeleteUserModal } from "@/components/(dashboard)/users/delete-user-modal";
 import { UserFilters } from "@/components/(dashboard)/users/user-filters";
 import { UserFormModal } from "@/components/(dashboard)/users/user-form-modal";
 import { UserPagination } from "@/components/(dashboard)/users/user-pagination";
 import { UserTable } from "@/components/(dashboard)/users/user-table";
+import { BatchActions } from "@/components/common/batch-actions";
+import { DeleteModal } from "@/components/common/delete-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUserForm, useUsers } from "@/hooks/use-users";
 import { showToast } from "@/lib/toast-provider";
+import { selectedUserIdAtom } from "@/lib_dashboard/store/user-store";
+import { useAtom } from "jotai";
 import { Download, Plus, UserCheck, Users, UserX } from "lucide-react";
 import { useCallback, useMemo } from "react";
 
@@ -47,6 +49,14 @@ export default function UsersPage() {
     deleteUser,
   } = useUserForm();
   // Filter handlers
+
+  const [userId] = useAtom(selectedUserIdAtom);
+
+  const selectedUser = useMemo(
+    () => allUsers.find((user) => user.user_id === userId),
+    [allUsers, userId]
+  );
+
   const handleSearchChange = useCallback(
     (search: string) => {
       updateFilters({ search, page: 1 });
@@ -263,6 +273,7 @@ export default function UsersPage() {
         onBatchDeactivate={handleBatchDeactivate}
         onBatchDelete={handleBatchDelete}
         loading={loading}
+        title="người dùng"
       />
 
       {/* Users Table */}
@@ -310,10 +321,11 @@ export default function UsersPage() {
         isEdit
       />
 
-      <DeleteUserModal
+      <DeleteModal
         open={deleteModalOpen}
-        onClose={closeModals}
-        onConfirm={handleDeleteUserConfirm}
+        handleConfirm={handleDeleteUserConfirm}
+        setOpen={closeModals}
+        title="Xoá người dùng"
         userName={selectedUserName}
       />
     </div>

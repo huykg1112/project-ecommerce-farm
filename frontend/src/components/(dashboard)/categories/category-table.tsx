@@ -1,150 +1,239 @@
-"use client"
+"use client";
 
-import { memo, useCallback } from "react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, Edit, Trash2, Package, ImageIcon } from "lucide-react"
-import type { Category } from "@/types/entities"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Switch } from "@/components/ui/switch";
+import { Category } from "@/lib_dashboard/types/category";
+import {
+  Edit,
+  ImageIcon,
+  Lock,
+  MoreHorizontal,
+  Trash2,
+  Unlock,
+} from "lucide-react";
+
+import { Checkbox } from "@/components/ui/checkbox";
+import { memo, useCallback, useMemo, useState } from "react";
+import DataTable, { TableColumn } from "react-data-table-component";
+import { customStyles } from "../user-statistics/user-data-table";
 
 interface CategoryTableProps {
-  categories: Category[]
-  onToggleStatus: (categoryId: string) => void
-  onEditCategory: (categoryId: string) => void
-  onDeleteCategory: (categoryId: string) => void
-  loading?: boolean
+  categories: Category[];
+  selectedCategories: string[];
+  onSelectCategory: (categoryId: string) => void;
+  onSelectAll: (checked: boolean) => void;
+  onToggleStatus: (categoryId: string) => void;
+  onEditCategory: (categoryId: string) => void;
+  onDeleteCategory: (categoryId: string) => void;
+  loading?: boolean;
 }
 
 export const CategoryTable = memo<CategoryTableProps>(
-  ({ categories, onToggleStatus, onEditCategory, onDeleteCategory, loading = false }) => {
+  ({
+    categories,
+    selectedCategories,
+    onSelectCategory,
+    onSelectAll,
+    onToggleStatus,
+    onEditCategory,
+    onDeleteCategory,
+    loading = false,
+  }) => {
+    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+    const isAllSelected = useMemo(() => {
+      return (
+        categories.length > 0 && selectedCategories.length === categories.length
+      );
+    }, [categories.length, selectedCategories.length]);
+
+    const toggleRowExpansion = useCallback((categoryId: string) => {
+      setExpandedRows((prev) => {
+        const newSet = new Set(prev);
+        if (newSet.has(categoryId)) {
+          newSet.delete(categoryId);
+        } else {
+          newSet.add(categoryId);
+        }
+        return newSet;
+      });
+    }, []);
+
     const getStatusBadge = useCallback((isActive: boolean) => {
       return isActive
-        ? { label: "Đang hoạt động", variant: "default" as const, className: "bg-[#90c577] hover:bg-[#74a65d]" }
-        : { label: "Đã tắt", variant: "secondary" as const }
-    }, [])
-
-    // Mock product count for demonstration
-    const getProductCount = useCallback((categoryId: string) => {
-      // In a real app, this would come from the API
-      const mockCounts: Record<string, number> = {
-        cat_001: 15,
-        cat_002: 23,
-        cat_003: 18,
-        cat_004: 12,
-        cat_005: 8,
-        cat_006: 5,
-        cat_007: 0,
-        cat_008: 7,
-        cat_009: 0,
-        cat_010: 3,
-      }
-      return mockCounts[categoryId] || 0
-    }, [])
+        ? {
+            label: "Đang hoạt động",
+            variant: "default" as const,
+            className: "bg-[#90c577] hover:bg-[#74a65d]",
+          }
+        : { label: "Đã bị khóa", variant: "destructive" as const };
+    }, []);
+    const columns = [
+      {
+        name: (
+          <Checkbox
+            checked={isAllSelected}
+            onCheckedChange={onSelectAll}
+            aria-label="Chọn tất cả"
+            className="data-[state=checked]:bg-[#74a65d] data-[state=checked]:border-[#74a65d]"
+          />
+        ),
+        width: "48px",
+        cell: (row: Category) => (
+          <Checkbox
+            checked={selectedCategories.includes(row.id)}
+            onCheckedChange={() => onSelectCategory(row.id)}
+            aria-label={`Chọn ${row.name}`}
+            className="data-[state=checked]:bg-[#74a65d] data-[state=checked]:border-[#74a65d]"
+          />
+        ),
+        allowOverflow: true,
+      },
+      {
+        name: "Hình ảnh",
+        selector: (row: Category) => row.image,
+        cell: (row: Category) => (
+          <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#accc8b]/10 flex items-center justify-center">
+            {row.image ? (
+              <img
+                src={row.image}
+                alt={row.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <ImageIcon className="h-6 w-6 text-[#90c577]" />
+            )}
+          </div>
+        ),
+      },
+      {
+        name: "Tên danh mục",
+        selector: (row: Category) => row.name,
+        sortable: true,
+        cell: (row: Category) => (
+          <div className="font-semibold text-[#44703d]">{row.name}</div>
+        ),
+        allowOverflow: true,
+      },
+      {
+        name: "Mô tả",
+        selector: (row: Category) => row.description,
+        cell: (row: Category) => (
+          <div className="text-[#74a65d] max-w-md">{row.description}</div>
+        ),
+      },
+      {
+        name: "Trạng thái",
+        selector: (row: Category) => row.isActive,
+        sortable: true,
+        cell: (row: Category) => {
+          const { label, variant, className } = getStatusBadge(row.isActive);
+          return (
+            <Badge variant={variant} className={className}>
+              {label}
+            </Badge>
+          );
+        },
+      },
+      {
+        name: "Kích hoạt",
+        selector: (row: Category) => row.isActive,
+        cell: (row: Category) => (
+          <Switch
+            checked={row.isActive}
+            onCheckedChange={() => onToggleStatus(row.id)}
+            className="data-[state=checked]:bg-[#74a65d]"
+          />
+        ),
+      },
+      {
+        width: "80px",
+        cell: (row: Category) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="h-8 w-8 p-0 hover:bg-[#90c577]/20"
+              >
+                <MoreHorizontal className="h-4 w-4 text-[#44703d]" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="bg-white border-[#accc8b]"
+            >
+              <DropdownMenuItem
+                onClick={() => onEditCategory(row.id)}
+                className="hover:bg-[#accc8b]/20 text-[#44703d]"
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Chỉnh sửa
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onToggleStatus(row.id)}
+                className="hover:bg-[#accc8b]/20 text-[#44703d]"
+              >
+                {row.isActive ? (
+                  <>
+                    <Lock className="mr-2 h-4 w-4" />
+                    Khóa danh mục
+                  </>
+                ) : (
+                  <>
+                    <Unlock className="mr-2 h-4 w-4" />
+                    Mở khóa danh mục
+                  </>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onDeleteCategory(row.id)}
+                className="hover:bg-red-50 text-red-600"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Xóa danh mục
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
+      },
+    ];
 
     if (loading) {
       return (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-16 bg-[#accc8b]/10 rounded-lg animate-pulse" />
+            <div
+              key={i}
+              className="h-16 bg-[#accc8b]/10 rounded-lg animate-pulse"
+            />
           ))}
         </div>
-      )
+      );
     }
 
     return (
       <div className="rounded-lg border border-[#accc8b]/30 bg-white overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-[#accc8b]/20 hover:bg-[#accc8b]/30">
-              <TableHead className="text-[#44703d] font-semibold">Hình ảnh</TableHead>
-              <TableHead className="text-[#44703d] font-semibold">Tên danh mục</TableHead>
-              <TableHead className="text-[#44703d] font-semibold">Mô tả</TableHead>
-              <TableHead className="text-[#44703d] font-semibold">Số sản phẩm</TableHead>
-              <TableHead className="text-[#44703d] font-semibold">Trạng thái</TableHead>
-              <TableHead className="text-[#44703d] font-semibold">Kích hoạt</TableHead>
-              <TableHead className="text-[#44703d] font-semibold w-20">Thao tác</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {categories.map((category) => (
-              <TableRow key={category.category_id} className="hover:bg-[#accc8b]/10 transition-colors">
-                <TableCell>
-                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-[#accc8b]/10 flex items-center justify-center">
-                    {category.category_img ? (
-                      <img
-                        src={category.category_img || "/placeholder.svg"}
-                        alt={category.category_name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <ImageIcon className="h-6 w-6 text-[#90c577]" />
-                    )}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="font-semibold text-[#44703d]">{category.category_name}</div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-[#74a65d] max-w-md">
-                    <p className="line-clamp-2">{category.description}</p>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Package className="h-4 w-4 text-[#74a65d]" />
-                    <span className="text-[#44703d] font-medium">{getProductCount(category.category_id)}</span>
-                    <span className="text-[#74a65d] text-sm">sản phẩm</span>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant={getStatusBadge(category.is_active).variant}
-                    className={getStatusBadge(category.is_active).className}
-                  >
-                    {getStatusBadge(category.is_active).label}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Switch
-                    checked={category.is_active}
-                    onCheckedChange={() => onToggleStatus(category.category_id)}
-                    className="data-[state=checked]:bg-[#74a65d]"
-                  />
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-[#90c577]/20">
-                        <MoreHorizontal className="h-4 w-4 text-[#44703d]" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="bg-white border-[#accc8b]">
-                      <DropdownMenuItem
-                        onClick={() => onEditCategory(category.category_id)}
-                        className="hover:bg-[#accc8b]/20 text-[#44703d]"
-                      >
-                        <Edit className="mr-2 h-4 w-4" />
-                        Chỉnh sửa
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => onDeleteCategory(category.category_id)}
-                        className="hover:bg-red-50 text-red-600"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Xóa danh mục
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <DataTable
+          columns={columns as TableColumn<Category>[]}
+          data={categories}
+          customStyles={customStyles}
+          onRowClicked={(row: Category) => toggleRowExpansion(row.id)}
+          noDataComponent={
+            <div className="text-[#44703d] py-4">
+              Không có dữ liệu để hiển thị
+            </div>
+          }
+        />
       </div>
-    )
-  },
-)
+    );
+  }
+);
 
-CategoryTable.displayName = "CategoryTable"
+CategoryTable.displayName = "CategoryTable";

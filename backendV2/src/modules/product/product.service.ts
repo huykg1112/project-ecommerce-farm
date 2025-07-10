@@ -40,7 +40,7 @@ export class ProductService {
     }
     // Lấy category
     const categories = await this.categoryRepo.find({
-      where: { category_id: In(createProductDto.category_ids) },
+      where: { id: In(createProductDto.category_ids) },
     });
     if (categories.length !== createProductDto.category_ids.length) {
       throw new NotFoundException('Có category không tồn tại');
@@ -116,7 +116,7 @@ export class ProductService {
     let categories = product.categories;
     if (updateProductDto.category_ids) {
       categories = await this.categoryRepo.find({
-        where: { category_id: In(updateProductDto.category_ids) },
+        where: { id: In(updateProductDto.category_ids) },
       });
       if (categories.length !== updateProductDto.category_ids.length) {
         throw new NotFoundException('Có category không tồn tại');
@@ -174,8 +174,8 @@ export class ProductService {
       created_at: product.created_at,
       updated_at: product.updated_at,
       categories: (product.categories || []).map((c) => ({
-        category_id: c.category_id,
-        category_name: c.category_name,
+        category_id: c.id,
+        category_name: c.name,
       })),
       distributor: product.distributor
         ? {

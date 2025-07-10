@@ -15,7 +15,9 @@ import { CartModule } from './modules/cart/cart.module';
 import { CategoryModule } from './modules/category/category.module';
 import { DiseaseModule } from './modules/disease/disease.module';
 
+import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { InvenstoryModule } from './modules/invenstory/invenstory.module';
+import { ManufacturersModule } from './modules/manufacturer/manufacturers.module';
 import { OrderDetailModule } from './modules/order-detail/order-detail.module';
 import { OrderStatusModule } from './modules/order-status/order-status.module';
 import { OrderModule } from './modules/order/order.module';
@@ -64,7 +66,9 @@ import { WishlistModule } from './modules/wishlist/wishlist.module';
     ProductTypeModule,
     DiseaseModule,
     ActiveIngredientModule,
-
+    ManufacturersModule,
+    CloudinaryModule,
+    ProductTypeModule,
     ProductModule,
     ProductIngredientModule,
     BatchProductModule,

@@ -32,6 +32,10 @@ interface StatisticsChartsProps {
   chartVisibility: ChartVisibility;
   onToggleVisibility: (role: keyof ChartVisibility) => void;
   timeRange: string;
+  selectedMonth?: number;
+  selectedYear?: number;
+  startDate?: Date;
+  endDate?: Date;
 }
 
 export const StatisticsCharts = memo<StatisticsChartsProps>(
@@ -41,19 +45,23 @@ export const StatisticsCharts = memo<StatisticsChartsProps>(
     chartVisibility,
     onToggleVisibility,
     timeRange,
+    selectedMonth,
+    selectedYear,
+    startDate,
+    endDate,
   }) => {
     const chartTitle = useMemo(() => {
-      switch (timeRange) {
-        case "month":
-          return "Đăng ký người dùng theo tháng";
-        case "year":
-          return "Đăng ký người dùng theo năm";
-        case "custom":
-          return "Đăng ký người dùng (tùy chỉnh)";
-        default:
-          return "Đăng ký người dùng";
+      if (timeRange === "month" && selectedMonth && selectedYear) {
+        return `Đăng ký người dùng tháng ${selectedMonth}/${selectedYear}`;
+      } else if (timeRange === "year" && selectedYear) {
+        return `Đăng ký người dùng năm ${selectedYear}`;
+      } else if (timeRange === "custom" && startDate && endDate) {
+        return `Đăng ký người dùng từ ${startDate.toLocaleDateString(
+          "vi-VN"
+        )} đến ${endDate.toLocaleDateString("vi-VN")}`;
       }
-    }, [timeRange]);
+      return "Đăng ký người dùng";
+    }, [timeRange, selectedMonth, selectedYear, startDate, endDate]);
 
     const filteredTrendsData = useMemo(() => {
       return registrationTrends.map((item) => ({
@@ -136,6 +144,8 @@ export const StatisticsCharts = memo<StatisticsChartsProps>(
                   className="text-[#74a65d]"
                   fontSize={12}
                   tick={{ fill: "#74a65d" }}
+                  angle={timeRange === "custom" ? -45 : 0}
+                  textAnchor={timeRange === "custom" ? "end" : "middle"}
                 />
                 <YAxis
                   className="text-[#74a65d]"
@@ -245,7 +255,7 @@ export const StatisticsCharts = memo<StatisticsChartsProps>(
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={registrationTrends}>
+              <LineChart data={filteredTrendsData}>
                 <CartesianGrid
                   strokeDasharray="3 3"
                   className="stroke-[#accc8b]/50"
@@ -255,6 +265,8 @@ export const StatisticsCharts = memo<StatisticsChartsProps>(
                   className="text-[#74a65d]"
                   fontSize={12}
                   tick={{ fill: "#74a65d" }}
+                  angle={timeRange === "custom" ? -45 : 0}
+                  textAnchor={timeRange === "custom" ? "end" : "middle"}
                 />
                 <YAxis
                   className="text-[#74a65d]"

@@ -1,3 +1,5 @@
+import { Category } from "@/lib_dashboard/types/category";
+
 export interface User {
   user_id: string;
   username: string;
@@ -73,16 +75,6 @@ export interface ProductDisease {
   disease: Disease;
   is_primary: boolean; // Điều trị chính hay hỗ trợ
   created_at: Date;
-}
-
-export interface Category {
-  category_id: string;
-  category_name: string;
-  description: string;
-  category_img?: string; // Category image URL
-  is_active: boolean;
-  created_at: Date;
-  updated_at: Date;
 }
 
 export interface BatchProduct {

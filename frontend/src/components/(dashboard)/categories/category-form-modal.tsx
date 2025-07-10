@@ -20,7 +20,7 @@ import { memo, useCallback, useRef, useState } from "react";
 interface CategoryFormModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: () => Promise<boolean>;
+  onSubmit: (imageFile?: File) => Promise<boolean>;
   formData: CategoryFormData;
   onUpdateFormData: (data: Partial<CategoryFormData>) => void;
   title: string;
@@ -41,8 +41,9 @@ export const CategoryFormModal = memo<CategoryFormModalProps>(
   }) => {
     const [loading, setLoading] = useState(false);
     const [imagePreview, setImagePreview] = useState<string | null>(
-      formData.category_img || null
+      formData.image || null
     );
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -51,15 +52,16 @@ export const CategoryFormModal = memo<CategoryFormModalProps>(
         e.preventDefault();
         setLoading(true);
 
-        const success = await onSubmit();
+        const success = await onSubmit(selectedFile || undefined);
         if (success) {
           onClose();
           setImagePreview(null);
+          setSelectedFile(null);
         }
 
         setLoading(false);
       },
-      [onSubmit, onClose]
+      [onSubmit, onClose, selectedFile]
     );
 
     const handleInputChange = useCallback(
@@ -73,23 +75,23 @@ export const CategoryFormModal = memo<CategoryFormModalProps>(
       (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
-          // In a real app, you would upload to a server or cloud storage
-          // For now, we'll create a local preview URL
+          setSelectedFile(file);
+          // Create preview
           const reader = new FileReader();
           reader.onload = (event) => {
             const imageUrl = event.target?.result as string;
             setImagePreview(imageUrl);
-            handleInputChange("category_img", imageUrl);
           };
           reader.readAsDataURL(file);
         }
       },
-      [handleInputChange]
+      []
     );
 
     const handleRemoveImage = useCallback(() => {
       setImagePreview(null);
-      handleInputChange("category_img", "");
+      setSelectedFile(null);
+      handleInputChange("image", "");
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
@@ -97,8 +99,8 @@ export const CategoryFormModal = memo<CategoryFormModalProps>(
 
     const handleClose = useCallback(() => {
       onClose();
-      setImagePreview(formData.category_img || null);
-    }, [onClose, formData.category_img]);
+      setImagePreview(formData.image || null);
+    }, [onClose, formData.image]);
 
     return (
       <Dialog open={open} onOpenChange={handleClose}>
@@ -114,10 +116,8 @@ export const CategoryFormModal = memo<CategoryFormModalProps>(
               </Label>
               <Input
                 id="category_name"
-                value={formData.category_name}
-                onChange={(e) =>
-                  handleInputChange("category_name", e.target.value)
-                }
+                value={formData.name}
+                onChange={(e) => handleInputChange("name", e.target.value)}
                 placeholder="Nhập tên danh mục"
                 required
                 disabled={loading}
@@ -195,9 +195,9 @@ export const CategoryFormModal = memo<CategoryFormModalProps>(
               <div className="flex items-center space-x-2">
                 <Switch
                   id="is_active"
-                  checked={formData.is_active}
+                  checked={formData.isActive}
                   onCheckedChange={(checked) =>
-                    handleInputChange("is_active", checked)
+                    handleInputChange("isActive", checked)
                   }
                   disabled={loading}
                   className="data-[state=checked]:bg-[#74a65d]"

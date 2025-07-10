@@ -3,14 +3,13 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinColumn,
-  ManyToMany,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
-@Entity('category')
-export class Category {
+@Entity('manufacturer')
+export class Manufacturer {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
@@ -19,17 +18,15 @@ export class Category {
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   description!: string;
+
   @Column({ type: 'varchar', length: 255, nullable: true })
-  imageURL!: string;
+  logo!: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  logoPublicId!: string;
 
   @Column({ type: 'boolean', default: true })
   isActive!: boolean;
-
-  @Column({ nullable: true })
-  image: string;
-
-  @Column({ nullable: true })
-  imagePublicId: string;
 
   @CreateDateColumn({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   createdAt!: Date;
@@ -37,7 +34,6 @@ export class Category {
   @UpdateDateColumn({ type: 'timestamp', nullable: true })
   updatedAt!: Date;
 
-  @ManyToMany(() => Product, (product) => product.categories)
-  @JoinColumn() // Required for ManyToMany
-  products!: Product[]; // Một Category có thể chứa nhiều Product
+  @OneToMany(() => Product, (product) => product.manufacturer)
+  products!: Product[]; // Một Manufacturer có thể có nhiều Product
 }

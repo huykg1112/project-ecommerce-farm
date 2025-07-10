@@ -1,6 +1,5 @@
 import type {
   ActiveIngredient,
-  Category,
   Disease,
   Invenstory,
   Product,
@@ -110,7 +109,6 @@ export interface CreateCategoryRequest {
 }
 
 export interface UpdateCategoryRequest {
-  category_id: string;
   category_name?: string;
   description?: string;
   category_img?: string;

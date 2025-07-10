@@ -12,6 +12,7 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { FavoriteProductsModule } from './modules/favorite_products/favorite_products.module';
 import { IngredientsModule } from './modules/ingredients/ingredients.module';
 import { InventorysModule } from './modules/inventorys/inventorys.module';
+import { ManufacturersModule } from './modules/manufacturers/manufacturers.module';
 import { OrderItemsModule } from './modules/order_items/order_items.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { PaymentsModule } from './modules/payments/payments.module';
@@ -65,6 +66,7 @@ import { VouchersModule } from './modules/vouchers/vouchers.module';
     PermissionsModule, // Already included
     RolePermissionsModule, // Already included
     CategoriesModule,
+    ManufacturersModule,
     ProductImagesModule,
     ProductBatchesModule,
     OrdersModule,

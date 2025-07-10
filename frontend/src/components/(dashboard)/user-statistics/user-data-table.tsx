@@ -2,27 +2,51 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { formatDate } from "@/lib_dashboard/utils/date";
 import type { User } from "@/types/entities";
-import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { memo, useMemo, useState } from "react";
+import DataTable, { TableColumn } from "react-data-table-component";
+
+// Minimal custom styles to avoid styled-components
+export const customStyles = {
+  table: {
+    style: {
+      border: "1px solid rgba(172, 204, 139, 0.3)", // #accc8b/30
+      borderRadius: "8px",
+      backgroundColor: "#ffffff",
+      overflow: "hidden",
+    },
+  },
+
+  headCells: {
+    style: {
+      color: "#44703d", // Consistent text color
+      fontWeight: "700", // Bold font
+      fontSize: "16px", // Larger text
+      padding: "12px", // Extra padding for better spacing
+    },
+  },
+  rows: {
+    style: {
+      "&:hover": {
+        backgroundColor: "rgba(172, 204, 139, 0.1)", // #accc8b/10
+        transition: "background-color 0.2s",
+      },
+      color: "#44703d",
+      fontSize: "14px",
+    },
+  },
+  pagination: {
+    style: {
+      backgroundColor: "rgba(172, 204, 139, 0.1)", // #accc8b/10
+      border: "1px solid rgba(172, 204, 139, 0.3)", // #accc8b/30
+      borderRadius: "8px",
+      color: "#44703d",
+    },
+  },
+};
 
 interface UserDataTableProps {
   users: User[];
@@ -32,64 +56,106 @@ interface UserDataTableProps {
 export const UserDataTable = memo<UserDataTableProps>(
   ({ users, loading = false }) => {
     const [searchTerm, setSearchTerm] = useState("");
-    const [sortBy, setSortBy] = useState<"name" | "date" | "role">("date");
-    const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-    const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
-    const filteredAndSortedUsers = useMemo(() => {
-      let filtered = users;
+    // Filter users based on search term
+    const filteredUsers = useMemo(() => {
+      if (!searchTerm) return users;
+      const searchLower = searchTerm.toLowerCase();
+      return users.filter(
+        (user) =>
+          user.full_name.toLowerCase().includes(searchLower) ||
+          user.email.toLowerCase().includes(searchLower) ||
+          user.phone_number.includes(searchTerm)
+      );
+    }, [users, searchTerm]);
 
-      // Apply search filter
-      if (searchTerm) {
-        const searchLower = searchTerm.toLowerCase();
-        filtered = filtered.filter(
-          (user) =>
-            user.full_name.toLowerCase().includes(searchLower) ||
-            user.email.toLowerCase().includes(searchLower) ||
-            user.phone_number.includes(searchTerm)
-        );
-      }
+    // Define columns
+    const columns = [
+      {
+        name: "Thông tin người dùng",
+        selector: (row: User) => row.full_name,
+        sortable: true,
+        cell: (row: User) => (
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10">
+              <AvatarImage
+                src={row.avatar || "/placeholder.svg"}
+                alt={row.full_name}
+              />
+              <AvatarFallback className="bg-[#accc8b] text-[#44703d]">
+                {row.full_name
+                  ?.split(" ")
+                  .map((n) => n[0])
+                  .join("")
+                  .slice(0, 2)}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="font-semibold text-[#44703d]">
+                {row.full_name}
+              </div>
+              <div className="text-sm text-[#74a65d]">@{row.username}</div>
+            </div>
+          </div>
+        ),
+      },
+      {
+        name: "Số điện thoại",
+        selector: (row: User) => row.phone_number,
+        sortable: true,
+        cell: (row: User) => (
+          <div className="text-[#44703d] ">{row.phone_number}</div>
+        ),
+      },
+      {
+        name: "Email",
+        selector: (row: User) => row.email,
+        sortable: true,
+        cell: (row: User) => <div className="text-[#44703d]">{row.email}</div>,
+      },
+      {
+        name: "Vai trò",
+        selector: (row: User) => row.role.role_name,
+        sortable: true,
+        cell: (row: User) => {
+          const { label, variant } = getRoleBadge(row.role.role_name);
+          return (
+            <Badge variant={variant} className="font-medium">
+              {label}
+            </Badge>
+          );
+        },
+      },
+      {
+        name: "Ngày đăng ký",
+        selector: (row: User) => row.created_at,
+        sortable: true,
+        cell: (row: User) => (
+          <div className="text-[#44703d]">{formatDate(row.created_at)}</div>
+        ),
+      },
+      {
+        name: "Trạng thái",
+        selector: (row: User) => row.is_active,
+        sortable: true,
+        cell: (row: User) => {
+          const { label, variant, className } = getStatusBadge(row.is_active);
+          return (
+            <Badge variant={variant} className={className}>
+              {label}
+            </Badge>
+          );
+        },
+      },
+    ];
 
-      // Apply sorting
-      filtered.sort((a, b) => {
-        let comparison = 0;
-
-        switch (sortBy) {
-          case "name":
-            comparison = a.full_name.localeCompare(b.full_name);
-            break;
-          case "date":
-            comparison =
-              new Date(a.created_at).getTime() -
-              new Date(b.created_at).getTime();
-            break;
-          case "role":
-            comparison = a.role.role_name.localeCompare(b.role.role_name);
-            break;
-        }
-
-        return sortOrder === "asc" ? comparison : -comparison;
-      });
-
-      return filtered;
-    }, [users, searchTerm, sortBy, sortOrder]);
-
-    const paginatedUsers = useMemo(() => {
-      const startIndex = (currentPage - 1) * itemsPerPage;
-      const endIndex = startIndex + itemsPerPage;
-      return filteredAndSortedUsers.slice(startIndex, endIndex);
-    }, [filteredAndSortedUsers, currentPage, itemsPerPage]);
-
-    const totalPages = useMemo(() => {
-      return Math.ceil(filteredAndSortedUsers.length / itemsPerPage);
-    }, [filteredAndSortedUsers.length, itemsPerPage]);
-
+    // Role badge logic
     const getRoleBadge = (role: string) => {
       const roleConfig = {
-        ADMIN: { label: "Quản trị viên", variant: "default" as const },
-        DISTRIBUTOR: { label: "Đại lý", variant: "secondary" as const },
-        CUSTOMER: { label: "Khách hàng", variant: "outline" as const },
+        Admin: { label: "Quản trị viên", variant: "default" as const },
+        Distributor: { label: "Đại lý", variant: "secondary" as const },
+        Client: { label: "Khách hàng", variant: "outline" as const },
       };
       return (
         roleConfig[role as keyof typeof roleConfig] || {
@@ -99,6 +165,7 @@ export const UserDataTable = memo<UserDataTableProps>(
       );
     };
 
+    // Status badge logic
     const getStatusBadge = (isActive: boolean) => {
       return isActive
         ? {
@@ -135,119 +202,33 @@ export const UserDataTable = memo<UserDataTableProps>(
               className="pl-10 border-[#90c577] focus:border-[#74a65d] bg-white"
             />
           </div>
-
-          <div className="flex items-center gap-2">
-            <Select
-              value={sortBy}
-              onValueChange={(value: any) => setSortBy(value)}
-            >
-              <SelectTrigger className="w-40 border-[#90c577] focus:border-[#74a65d] bg-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="bg-white border-[#accc8b]">
-                <SelectItem value="date">Ngày đăng ký</SelectItem>
-                <SelectItem value="name">Tên</SelectItem>
-                <SelectItem value="role">Vai trò</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-              className="border-[#90c577] text-[#44703d] hover:bg-[#accc8b]/20"
-            >
-              {sortOrder === "asc" ? "↑" : "↓"}
-            </Button>
-          </div>
         </div>
 
-        {/* Table */}
-        <div className="rounded-lg border border-[#accc8b]/30 bg-white overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-[#accc8b]/20 hover:bg-[#accc8b]/30">
-                <TableHead className="text-[#44703d] font-semibold">
-                  Thông tin người dùng
-                </TableHead>
-                <TableHead className="text-[#44703d] font-semibold">
-                  Số điện thoại
-                </TableHead>
-                <TableHead className="text-[#44703d] font-semibold">
-                  Email
-                </TableHead>
-                <TableHead className="text-[#44703d] font-semibold">
-                  Vai trò
-                </TableHead>
-                <TableHead className="text-[#44703d] font-semibold">
-                  Ngày đăng ký
-                </TableHead>
-                <TableHead className="text-[#44703d] font-semibold">
-                  Trạng thái
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedUsers.map((user) => (
-                <TableRow
-                  key={user.user_id}
-                  className="hover:bg-[#accc8b]/10 transition-colors"
-                >
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage
-                          src={user.avatar || "/placeholder.svg"}
-                          alt={user.full_name}
-                        />
-                        <AvatarFallback className="bg-[#accc8b] text-[#44703d]">
-                          {user.full_name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .slice(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-semibold text-[#44703d]">
-                          {user.full_name}
-                        </div>
-                        <div className="text-sm text-[#74a65d]">
-                          @{user.username}
-                        </div>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-[#44703d]">
-                    {user.phone_number}
-                  </TableCell>
-                  <TableCell className="text-[#44703d]">{user.email}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={getRoleBadge(user.role.role_name).variant}
-                      className="font-medium"
-                    >
-                      {getRoleBadge(user.role.role_name).label}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-[#44703d]">
-                    {formatDate(user.created_at)}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={getStatusBadge(user.is_active).variant}
-                      className={getStatusBadge(user.is_active).className}
-                    >
-                      {getStatusBadge(user.is_active).label}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        {/* DataTable */}
+        <div className="border border-[#accc8b]/30 rounded-lg bg-white overflow-hidden">
+          <DataTable
+            columns={columns as TableColumn<User>[]}
+            data={filteredUsers}
+            pagination
+            paginationPerPage={itemsPerPage}
+            paginationRowsPerPageOptions={[5, 10, 20, 50]}
+            onChangeRowsPerPage={(newPerPage) => setItemsPerPage(newPerPage)}
+            customStyles={customStyles}
+            className="text-[#44703d]"
+            noDataComponent={
+              <div className="text-[#44703d] py-4">
+                Không có dữ liệu để hiển thị
+              </div>
+            }
+            paginationComponentOptions={{
+              rowsPerPageText: "Hiển thị",
+              rangeSeparatorText: "trong tổng số",
+              noRowsPerPage: false,
+            }}
+          />
         </div>
 
-        {/* Pagination */}
+        {/* Pagination Controls
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-[#accc8b]/10 rounded-lg border border-[#accc8b]/30">
           <div className="flex items-center gap-2 text-sm text-[#44703d]">
             <span>Hiển thị</span>
@@ -265,37 +246,9 @@ export const UserDataTable = memo<UserDataTableProps>(
                 <SelectItem value="50">50</SelectItem>
               </SelectContent>
             </Select>
-            <span>trong tổng số {filteredAndSortedUsers.length} kết quả</span>
+            <span>trong tổng số {filteredUsers.length} kết quả</span>
           </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-[#44703d] mr-4">
-              Trang {currentPage} / {totalPages}
-            </span>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="h-8 w-8 p-0 border-[#90c577] hover:bg-[#accc8b]/20"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                setCurrentPage(Math.min(totalPages, currentPage + 1))
-              }
-              disabled={currentPage === totalPages}
-              className="h-8 w-8 p-0 border-[#90c577] hover:bg-[#accc8b]/20"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        </div> */}
       </div>
     );
   }

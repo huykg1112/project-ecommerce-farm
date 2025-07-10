@@ -1,26 +1,10 @@
 import { RegisterResponse } from "@/interfaces/auths";
 import { RegisterRequest } from "@/interfaces/users";
 import { showToast } from "@/lib/toast-provider";
-import { getCookie } from "@/lib/utils";
 import axios from "axios";
 import { UpdateUserRequest } from "../mock/server";
-const API_URL = "http://localhost:4200";
-
-export const axiosInstance = axios.create({
-  baseURL: API_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-});
-
-axiosInstance.interceptors.request.use((config) => {
-  const token = getCookie("access_token");
-  if (token) {
-    config.headers = config.headers || {};
-    config.headers["Authorization"] = `Bearer ${token}`;
-  }
-  return config;
-});
+import { axiosInstance } from "./axios-instance";
+export const API_URL = "http://localhost:4200";
 
 export const userServiceManagement = {
   async getUsers() {

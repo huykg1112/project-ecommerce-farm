@@ -1,12 +1,13 @@
 import {
   IsBoolean,
+  IsEmail,
   IsNotEmpty,
   IsOptional,
   IsString,
   MaxLength,
 } from 'class-validator';
 
-export class CreateCategoryDto {
+export class CreateManufacturerDto {
   @IsNotEmpty()
   @IsString()
   @MaxLength(100)
@@ -20,7 +21,22 @@ export class CreateCategoryDto {
   @IsOptional()
   @IsString()
   @MaxLength(255)
-  imageURL?: string;
+  address?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  phone?: string;
+
+  @IsOptional()
+  @IsEmail()
+  @MaxLength(100)
+  email?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  website?: string;
 
   @IsOptional()
   @IsBoolean()

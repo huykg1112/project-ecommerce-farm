@@ -1,14 +1,28 @@
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 
 export class CreateCategoryDto {
-  @IsString({ message: 'Tên danh mục phải là chuỗi' })
-  category_name: string;
+  @IsNotEmpty()
+  @IsString()
+  @MaxLength(100)
+  name: string;
 
-  @IsString({ message: 'Mô tả phải là chuỗi' })
   @IsOptional()
+  @IsString()
+  @MaxLength(255)
   description?: string;
 
-  @IsBoolean({ message: 'Trạng thái phải là boolean' })
   @IsOptional()
-  is_active?: boolean;
+  @IsString()
+  @MaxLength(255)
+  imageURL?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  isActive?: boolean;
 }
