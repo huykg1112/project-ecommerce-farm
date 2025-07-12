@@ -20,7 +20,10 @@ export class DiseaseService {
     // Check for duplicate name (optional, can be removed if not needed)
     if (createDiseaseDto.disease_name) {
       const exists = await this.diseaseRepository.findOne({
-        where: { disease_name: createDiseaseDto.disease_name },
+        where: {
+          disease_name: createDiseaseDto.disease_name,
+          is_deleted: false,
+        },
       });
       if (exists) throw new BadRequestException('Tên bệnh đã tồn tại');
     }
@@ -29,12 +32,12 @@ export class DiseaseService {
   }
 
   async findAll(): Promise<Disease[]> {
-    return this.diseaseRepository.find();
+    return this.diseaseRepository.find({ where: { is_deleted: false } });
   }
 
   async findOne(id: string): Promise<Disease> {
     const disease = await this.diseaseRepository.findOne({
-      where: { disease_id: id },
+      where: { disease_id: id, is_deleted: false },
     });
     if (!disease) throw new NotFoundException('Không tìm thấy bệnh');
     return disease;
@@ -45,7 +48,7 @@ export class DiseaseService {
     updateDiseaseDto: UpdateDiseaseDto,
   ): Promise<Disease> {
     const disease = await this.diseaseRepository.findOne({
-      where: { disease_id: id },
+      where: { disease_id: id, is_deleted: false },
     });
     if (!disease) throw new NotFoundException('Không tìm thấy bệnh');
     Object.assign(disease, updateDiseaseDto, { updated_at: new Date() });
@@ -54,10 +57,12 @@ export class DiseaseService {
 
   async remove(id: string): Promise<{ message: string }> {
     const disease = await this.diseaseRepository.findOne({
-      where: { disease_id: id },
+      where: { disease_id: id, is_deleted: false },
     });
     if (!disease) throw new NotFoundException('Không tìm thấy bệnh');
-    await this.diseaseRepository.remove(disease);
+    // Soft delete instead of hard delete
+    disease.is_deleted = true;
+    await this.diseaseRepository.save(disease);
     return { message: 'Xóa bệnh thành công' };
   }
 }

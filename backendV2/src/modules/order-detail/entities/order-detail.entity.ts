@@ -4,6 +4,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 import { BatchProduct } from '../../batch-product/entities/batch-product.entity';
 import { Order } from '../../order/entities/order.entity';
@@ -30,6 +31,15 @@ export class OrderDetail {
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   subtotal!: number;
 
+  @Column({ type: 'text', nullable: true })
+  notes?: string;
+
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at!: Date;
+
+  @UpdateDateColumn()
+  updated_at!: Date;
+
+  @Column({ type: 'boolean', default: false, nullable: true })
+  is_deleted!: boolean;
 }

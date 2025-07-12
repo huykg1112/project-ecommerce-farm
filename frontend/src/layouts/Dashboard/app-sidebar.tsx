@@ -98,7 +98,7 @@ export function AppSidebar() {
           },
           {
             title: "Hoạt chất",
-            url: "/active-ingredients-management",
+            url: "/ingredients-management",
             icon: FlaskConical,
           },
           {

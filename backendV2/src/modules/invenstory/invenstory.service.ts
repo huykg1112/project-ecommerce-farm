@@ -31,19 +31,22 @@ export class InvenstoryService {
   }
 
   async findAll() {
-    return this.invenstoryRepo.find({ relations: ['distributor'] });
+    return this.invenstoryRepo.find({
+      relations: ['distributor'],
+      where: { is_deleted: false },
+    });
   }
 
   async findOne(id: string) {
     return this.invenstoryRepo.findOne({
-      where: { invenstory_id: id },
+      where: { invenstory_id: id, is_deleted: false },
       relations: ['distributor'],
     });
   }
 
   async update(id: string, updateInvenstoryDto: UpdateInvenstoryDto) {
     const invenstory = await this.invenstoryRepo.findOne({
-      where: { invenstory_id: id },
+      where: { invenstory_id: id, is_deleted: false },
     });
     if (!invenstory) throw new Error('Invenstory not found');
     Object.assign(invenstory, updateInvenstoryDto);
@@ -52,10 +55,11 @@ export class InvenstoryService {
 
   async remove(id: string) {
     const invenstory = await this.invenstoryRepo.findOne({
-      where: { invenstory_id: id },
+      where: { invenstory_id: id, is_deleted: false },
     });
     if (!invenstory) throw new Error('Invenstory not found');
-    await this.invenstoryRepo.remove(invenstory);
+    invenstory.is_deleted = true;
+    await this.invenstoryRepo.save(invenstory);
     return { message: 'Invenstory deleted' };
   }
 

@@ -1,6 +1,8 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,20 +10,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import type { ActiveIngredient } from "@/types/entities";
 import { Edit, MoreHorizontal, Trash2 } from "lucide-react";
-import { memo, useCallback } from "react";
+import { memo, useCallback, useMemo } from "react";
+import DataTable, { TableColumn } from "react-data-table-component";
+import { customStyles } from "../user-statistics/user-data-table";
 
 interface IngredientsTableProps {
   ingredients: ActiveIngredient[];
+  selectedIngredients: string[];
+  onSelectIngredient: (ingredientId: string) => void;
+  onSelectAll: (checked: boolean) => void;
   onToggleStatus: (ingredientId: string) => void;
   onEditIngredient: (ingredientId: string) => void;
   onDeleteIngredient: (ingredientId: string) => void;
@@ -31,11 +30,21 @@ interface IngredientsTableProps {
 export const IngredientsTable = memo<IngredientsTableProps>(
   ({
     ingredients,
+    selectedIngredients,
+    onSelectIngredient,
+    onSelectAll,
     onToggleStatus,
     onEditIngredient,
     onDeleteIngredient,
     loading = false,
   }) => {
+    const isAllSelected = useMemo(() => {
+      return (
+        ingredients.length > 0 &&
+        selectedIngredients.length === ingredients.length
+      );
+    }, [ingredients.length, selectedIngredients.length]);
+
     const getStatusBadge = useCallback((isActive: boolean) => {
       return isActive
         ? {
@@ -43,26 +52,137 @@ export const IngredientsTable = memo<IngredientsTableProps>(
             variant: "default" as const,
             className: "bg-[#90c577] hover:bg-[#74a65d]",
           }
-        : { label: "Đã tắt", variant: "secondary" as const };
+        : { label: "Đã tắt", variant: "destructive" as const };
     }, []);
 
-    // Mock product count for demonstration
-    const getProductCount = useCallback((ingredientId: string) => {
-      // In a real app, this would come from the API
-      const mockCounts: Record<string, number> = {
-        ing_001: 15,
-        ing_002: 23,
-        ing_003: 18,
-        ing_004: 12,
-        ing_005: 8,
-        ing_006: 5,
-        ing_007: 0,
-        ing_008: 7,
-        ing_009: 0,
-        ing_010: 3,
+    const getHazardLevelBadge = useCallback((hazardLevel: string) => {
+      const config = {
+        LOW: { label: "Thấp", className: "bg-green-100 text-green-800" },
+        MEDIUM: {
+          label: "Trung bình",
+          className: "bg-yellow-100 text-yellow-800",
+        },
+        HIGH: { label: "Cao", className: "bg-orange-100 text-orange-800" },
+        VERY_HIGH: { label: "Rất cao", className: "bg-red-100 text-red-800" },
       };
-      return mockCounts[ingredientId] || 0;
+      return config[hazardLevel as keyof typeof config] || config.LOW;
     }, []);
+
+    const columns = [
+      {
+        name: (
+          <Checkbox
+            checked={isAllSelected}
+            onCheckedChange={onSelectAll}
+            aria-label="Chọn tất cả"
+            className="data-[state=checked]:bg-[#74a65d] data-[state=checked]:border-[#74a65d]"
+          />
+        ),
+        width: "48px",
+        cell: (row: ActiveIngredient) => (
+          <Checkbox
+            checked={selectedIngredients.includes(row.ingredient_id)}
+            onCheckedChange={() => onSelectIngredient(row.ingredient_id)}
+            aria-label={`Chọn ${row.ingredient_name}`}
+            className="data-[state=checked]:bg-[#74a65d] data-[state=checked]:border-[#74a65d]"
+          />
+        ),
+        allowOverflow: true,
+      },
+      {
+        name: "Tên hoạt chất",
+        selector: (row: ActiveIngredient) => row.ingredient_name,
+        sortable: true,
+        cell: (row: ActiveIngredient) => (
+          <div className="font-semibold text-[#44703d]">
+            {row.ingredient_name}
+          </div>
+        ),
+        allowOverflow: true,
+      },
+      {
+        name: "Mô tả",
+        selector: (row: ActiveIngredient) => row.description,
+        cell: (row: ActiveIngredient) => (
+          <div className="text-[#74a65d] max-w-md">
+            <p className="line-clamp-2">{row.description}</p>
+          </div>
+        ),
+      },
+      {
+        name: "Mức độ nguy hiểm",
+        selector: (row: ActiveIngredient) => row.hazard_level,
+        sortable: true,
+        cell: (row: ActiveIngredient) => {
+          const { label, className } = getHazardLevelBadge(row.hazard_level);
+          return (
+            <span
+              className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${className}`}
+            >
+              {label}
+            </span>
+          );
+        },
+      },
+      {
+        name: "Trạng thái",
+        selector: (row: ActiveIngredient) => row.is_active,
+        sortable: true,
+        cell: (row: ActiveIngredient) => {
+          const { label, variant, className } = getStatusBadge(row.is_active);
+          return (
+            <Badge variant={variant} className={className}>
+              {label}
+            </Badge>
+          );
+        },
+      },
+      {
+        name: "Kích hoạt",
+        selector: (row: ActiveIngredient) => row.is_active,
+        cell: (row: ActiveIngredient) => (
+          <Switch
+            checked={row.is_active}
+            onCheckedChange={() => onToggleStatus(row.ingredient_id)}
+            className="data-[state=checked]:bg-[#74a65d]"
+          />
+        ),
+      },
+      {
+        width: "80px",
+        cell: (row: ActiveIngredient) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="h-8 w-8 p-0 hover:bg-[#90c577]/20"
+              >
+                <MoreHorizontal className="h-4 w-4 text-[#44703d]" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="bg-white border-[#accc8b]"
+            >
+              <DropdownMenuItem
+                onClick={() => onEditIngredient(row.ingredient_id)}
+                className="hover:bg-[#accc8b]/20 text-[#44703d]"
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Chỉnh sửa
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onDeleteIngredient(row.ingredient_id)}
+                className="hover:bg-red-50 text-red-600"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Xóa hoạt chất
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
+      },
+    ];
 
     if (loading) {
       return (
@@ -79,108 +199,16 @@ export const IngredientsTable = memo<IngredientsTableProps>(
 
     return (
       <div className="rounded-lg border border-[#accc8b]/30 bg-white overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-[#accc8b]/20 hover:bg-[#accc8b]/30">
-              <TableHead className="text-[#44703d] font-semibold">
-                Tên hoạt chất
-              </TableHead>
-              <TableHead className="text-[#44703d] font-semibold">
-                Công thức hóa học
-              </TableHead>
-              <TableHead className="text-[#44703d] font-semibold">
-                Số CAS
-              </TableHead>
-              <TableHead className="text-[#44703d] font-semibold">
-                Mô tả
-              </TableHead>
-              <TableHead className="text-[#44703d] font-semibold">
-                Mức độ nguy hiểm
-              </TableHead>
-              <TableHead className="text-[#44703d] font-semibold">
-                Kích hoạt
-              </TableHead>
-              <TableHead className="text-[#44703d] font-semibold w-20">
-                Thao tác
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {ingredients.map((ingredient) => (
-              <TableRow
-                key={ingredient.ingredient_id}
-                className="hover:bg-[#accc8b]/10 transition-colors"
-              >
-                <TableCell>
-                  <div className="font-semibold text-[#44703d]">
-                    {ingredient.ingredient_name}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-[#74a65d] max-w-md">
-                    <p className="line-clamp-2">
-                      {ingredient.chemical_formula}
-                    </p>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-[#74a65d] max-w-md">
-                    <p className="line-clamp-2">{ingredient.cas_number}</p>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <div className="text-[#74a65d] max-w-md">
-                    <p className="line-clamp-2">{ingredient.description}</p>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <Switch
-                    checked={ingredient.is_active}
-                    onCheckedChange={() =>
-                      onToggleStatus(ingredient.ingredient_id)
-                    }
-                    className="data-[state=checked]:bg-[#74a65d]"
-                  />
-                </TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="h-8 w-8 p-0 hover:bg-[#90c577]/20"
-                      >
-                        <MoreHorizontal className="h-4 w-4 text-[#44703d]" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      className="bg-white border-[#accc8b]"
-                    >
-                      <DropdownMenuItem
-                        onClick={() =>
-                          onEditIngredient(ingredient.ingredient_id)
-                        }
-                        className="hover:bg-[#accc8b]/20 text-[#44703d]"
-                      >
-                        <Edit className="mr-2 h-4 w-4" />
-                        Chỉnh sửa
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() =>
-                          onDeleteIngredient(ingredient.ingredient_id)
-                        }
-                        className="hover:bg-red-50 text-red-600"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Xóa hoạt chất
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <DataTable
+          columns={columns as TableColumn<ActiveIngredient>[]}
+          data={ingredients}
+          customStyles={customStyles}
+          noDataComponent={
+            <div className="text-[#44703d] py-4">
+              Không có dữ liệu để hiển thị
+            </div>
+          }
+        />
       </div>
     );
   }

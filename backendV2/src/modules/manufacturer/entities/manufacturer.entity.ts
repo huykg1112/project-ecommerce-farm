@@ -34,6 +34,9 @@ export class Manufacturer {
   @UpdateDateColumn({ type: 'timestamp', nullable: true })
   updatedAt!: Date;
 
+  @Column({ type: 'boolean', default: false })
+  isDeleted!: boolean;
+
   @OneToMany(() => Product, (product) => product.manufacturer)
   products!: Product[]; // Một Manufacturer có thể có nhiều Product
 }

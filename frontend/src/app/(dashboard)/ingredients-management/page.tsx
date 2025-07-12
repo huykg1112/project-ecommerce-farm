@@ -1,83 +1,113 @@
 "use client";
 
-import { useMemo } from "react";
-
-import { DeleteIngredientsModal } from "@/components/(dashboard)/ingredients/delete-ingredients-modal";
-import { IngredientsFilters } from "@/components/(dashboard)/ingredients/ingredients-filters";
-import { IngredientFormModal } from "@/components/(dashboard)/ingredients/ingredients-form-modal";
-import { IngredientsPagination } from "@/components/(dashboard)/ingredients/ingredients-pagination";
-import { IngredientsTable } from "@/components/(dashboard)/ingredients/ingredients-table";
+import { BatchActions } from "@/components/common/batch-actions";
+import { DeleteModal } from "@/components/common/delete-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useIngredient } from "@/hooks/use-ingredient";
 import { useToast } from "@/hooks/use-toast";
-import {
-  activeIngredientsDataAtom,
-  activeIngredientsFormDataAtom,
-  activeIngredientsPaginationAtom,
-  addActiveIngredientModalAtom,
-  editActiveIngredientModalAtom,
-} from "@/lib_dashboard/store/active-ingredient-store";
-import { useAtomValue } from "jotai";
+import { ActiveIngredientFormData } from "@/lib_dashboard/store/active-ingredient-store";
+import { useAtom } from "jotai";
 import { Eye, EyeOff, Package, Plus } from "lucide-react";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo } from "react";
+
+import { IngredientsFilters } from "@/components/(dashboard)/ingredients/ingredients-filters";
+import { IngredientFormModal } from "@/components/(dashboard)/ingredients/ingredients-form-modal";
+import { IngredientsPagination } from "@/components/(dashboard)/ingredients/ingredients-pagination";
+import { IngredientsTable } from "@/components/(dashboard)/ingredients/ingredients-table";
+import { activeIngredientsFormDataAtom } from "@/lib_dashboard/store/active-ingredient-store";
+
 export default function IngredientsPage() {
   const { toast } = useToast();
+  const [formData, setFormData] = useAtom(activeIngredientsFormDataAtom);
 
   const {
+    // Data
+    ingredients,
+    allIngredients,
+    loading,
+    pagination,
+    filters,
+    selectedIngredients,
+
+    // Modals
+    addModalOpen,
+    editModalOpen,
+    deleteModalOpen,
+    selectedIngredientId,
+
+    // Actions
     fetchList,
     addIngredient,
     editIngredient,
+    deleteIngredient,
     toggleStatus,
+    batchToggleStatus,
+    batchDeleteIngredients,
+
+    // Filters
+    updateFilters,
+    resetFilters,
+
+    // Selection
+    toggleIngredientSelection,
+    toggleSelectAll,
+    clearSelection,
+
+    // Modals
     openAddModal,
     openEditModal,
     openDeleteModal,
-    closeAddModal,
+    closeModals,
   } = useIngredient();
 
-  const ingredients = useAtomValue(activeIngredientsDataAtom);
-  const pagination = useAtomValue(activeIngredientsPaginationAtom);
-  const formData = useAtomValue(activeIngredientsFormDataAtom);
-  const addOpen = useAtomValue(addActiveIngredientModalAtom);
-  const editOpen = useAtomValue(editActiveIngredientModalAtom);
-
-  /* initial load */
+  // Initial load
   useEffect(() => {
     fetchList();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fetchList]);
 
   // Filter handlers
-  const handleSearchChange = useCallback((search: string) => {
-    // Update filters logic here if needed
-  }, []);
+  const handleSearchChange = useCallback(
+    (search: string) => {
+      updateFilters({ search });
+    },
+    [updateFilters]
+  );
 
-  const handleStatusChange = useCallback((status: string) => {
-    // Update filters logic here if needed
-  }, []);
+  const handleStatusChange = useCallback(
+    (status: string) => {
+      updateFilters({ status });
+    },
+    [updateFilters]
+  );
+
+  const handleHazardLevelChange = useCallback(
+    (hazardLevel: string) => {
+      updateFilters({ hazard_level: hazardLevel });
+    },
+    [updateFilters]
+  );
 
   // Pagination handlers
   const handlePageChange = useCallback((page: number) => {
-    // Update pagination logic here if needed
+    // Pagination is handled by filter/search on frontend
+    console.log("Page changed to:", page);
   }, []);
 
   const handleItemsPerPageChange = useCallback((limit: number) => {
-    // Update pagination logic here if needed
+    // Items per page is handled by filter/search on frontend
+    console.log("Items per page changed to:", limit);
   }, []);
 
   // Action handlers
   const handleEditIngredient = useCallback(
     (ingredientId: string) => {
-      const ing = ingredients.find((c) => c.ingredient_id === ingredientId);
-      if (ing)
-        openEditModal(ingredientId, {
-          ingredient_name: ing.ingredient_name,
-          description: ing.description,
-          hazard_level: ing.hazard_level,
-          chemical_formula: ing.chemical_formula,
-          cas_number: ing.cas_number,
-          is_active: ing.is_active,
-        });
+      const ingredient = ingredients.find(
+        (c) => c.ingredient_id === ingredientId
+      );
+      if (ingredient) {
+        openEditModal(ingredientId);
+      }
     },
     [ingredients, openEditModal]
   );
@@ -98,20 +128,64 @@ export default function IngredientsPage() {
 
   // Form handlers
   const handleCreateIngredient = useCallback(async () => {
-    await addIngredient(formData);
-    return true;
-  }, [addIngredient, formData]);
+    try {
+      await addIngredient(formData);
+      toast({
+        title: "Thành công",
+        description: "Tạo hoạt chất mới thành công",
+      });
+      return true;
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: "Không thể tạo hoạt chất mới",
+        variant: "destructive",
+      });
+      return false;
+    }
+  }, [addIngredient, formData, toast]);
 
   const handleUpdateIngredient = useCallback(async () => {
     if (!formData.ingredient_id) return false;
-    await editIngredient(formData.ingredient_id, formData);
-    return true;
-  }, [editIngredient, formData]);
+    try {
+      await editIngredient(formData.ingredient_id, formData);
+      toast({
+        title: "Thành công",
+        description: "Cập nhật hoạt chất thành công",
+      });
+      return true;
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: "Không thể cập nhật hoạt chất",
+        variant: "destructive",
+      });
+      return false;
+    }
+  }, [editIngredient, formData, toast]);
 
   const handleDeleteIngredientConfirm = useCallback(async () => {
-    // Delete category logic here if needed
-    return true;
-  }, []);
+    const selectedIngredient = ingredients.find(
+      (ingredient) => ingredient.ingredient_id === selectedIngredients[0]
+    );
+    if (!selectedIngredient) return false;
+
+    try {
+      await deleteIngredient(selectedIngredient.ingredient_id);
+      toast({
+        title: "Thành công",
+        description: "Xóa hoạt chất thành công",
+      });
+      return true;
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: "Không thể xóa hoạt chất",
+        variant: "destructive",
+      });
+      return false;
+    }
+  }, [deleteIngredient, ingredients, selectedIngredients, toast]);
 
   const handleToggleStatus = useCallback(
     async (ingredientId: string) => {
@@ -119,6 +193,55 @@ export default function IngredientsPage() {
     },
     [toggleStatus]
   );
+
+  // Batch actions
+  const handleBatchActivate = useCallback(async () => {
+    try {
+      await batchToggleStatus(true);
+      toast({
+        title: "Thành công",
+        description: `Đã kích hoạt ${selectedIngredients.length} hoạt chất`,
+      });
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: "Không thể kích hoạt hoạt chất",
+        variant: "destructive",
+      });
+    }
+  }, [batchToggleStatus, selectedIngredients, toast]);
+
+  const handleBatchDeactivate = useCallback(async () => {
+    try {
+      await batchToggleStatus(false);
+      toast({
+        title: "Thành công",
+        description: `Đã tắt ${selectedIngredients.length} hoạt chất`,
+      });
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: "Không thể tắt hoạt chất",
+        variant: "destructive",
+      });
+    }
+  }, [batchToggleStatus, selectedIngredients, toast]);
+
+  const handleBatchDelete = useCallback(async () => {
+    try {
+      await batchDeleteIngredients();
+      toast({
+        title: "Thành công",
+        description: `Đã xóa ${selectedIngredients.length} hoạt chất`,
+      });
+    } catch (error) {
+      toast({
+        title: "Lỗi",
+        description: "Không thể xóa hoạt chất",
+        variant: "destructive",
+      });
+    }
+  }, [batchDeleteIngredients, selectedIngredients, toast]);
 
   // Statistics
   const stats = useMemo(() => {
@@ -135,13 +258,11 @@ export default function IngredientsPage() {
 
   // Get selected ingredient name for delete modal
   const selectedIngredientName = useMemo(() => {
-    // Logic to get selected ingredient name here if needed
-    return "";
-  }, []);
-
-  const handleCloseAddModal = useCallback(() => {
-    closeAddModal();
-  }, [closeAddModal]);
+    const selectedIngredient = ingredients.find(
+      (ingredient) => ingredient.ingredient_id === selectedIngredients[0]
+    );
+    return selectedIngredient?.ingredient_name || "";
+  }, [ingredients, selectedIngredients]);
 
   return (
     <section className="p-4 md:p-6">
@@ -157,7 +278,7 @@ export default function IngredientsPage() {
       </header>
 
       {/* Statistics Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-3 mb-6">
         <Card className="card-agricultural">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-semibold text-[#44703d]">
@@ -209,15 +330,43 @@ export default function IngredientsPage() {
       </div>
 
       {/* Filters */}
-      <IngredientsFilters />
+      <div className="mb-6">
+        <IngredientsFilters
+          search={filters.search}
+          status={filters.status}
+          hazardLevel={filters.hazard_level}
+          onSearchChange={handleSearchChange}
+          onStatusChange={handleStatusChange}
+          onHazardLevelChange={handleHazardLevelChange}
+          onReset={resetFilters}
+        />
+      </div>
+
+      {/* Batch Actions */}
+      {selectedIngredients.length > 0 && (
+        <div className="mb-4">
+          <BatchActions
+            selectedCount={selectedIngredients.length}
+            onBatchActivate={handleBatchActivate}
+            onBatchDeactivate={handleBatchDeactivate}
+            onBatchDelete={handleBatchDelete}
+            title="hoạt chất"
+          />
+        </div>
+      )}
 
       {/* Table */}
-      <IngredientsTable
-        ingredients={ingredients}
-        onToggleStatus={handleToggleStatus}
-        onEditIngredient={handleEditIngredient}
-        onDeleteIngredient={handleDeleteIngredient}
-      />
+      <div className="mb-6">
+        <IngredientsTable
+          ingredients={ingredients}
+          selectedIngredients={selectedIngredients}
+          onSelectIngredient={toggleIngredientSelection}
+          onSelectAll={toggleSelectAll}
+          onToggleStatus={handleToggleStatus}
+          onEditIngredient={handleEditIngredient}
+          onDeleteIngredient={handleDeleteIngredient}
+        />
+      </div>
 
       {/* Pagination */}
       {pagination.totalPages > 1 && (
@@ -232,29 +381,38 @@ export default function IngredientsPage() {
       )}
 
       {/* Modals */}
-      {/* Add */}
       <IngredientFormModal
-        open={addOpen}
+        open={addModalOpen}
         title="Thêm hoạt chất mới"
         submitText="Tạo mới"
-        onClose={handleCloseAddModal}
+        onClose={closeModals}
         formData={formData}
-        onUpdateFormData={() => {}}
+        onUpdateFormData={(data: Partial<ActiveIngredientFormData>) =>
+          setFormData((prev) => ({ ...prev, ...data }))
+        }
         onSubmit={handleCreateIngredient}
       />
-      {/* Edit */}
+
       <IngredientFormModal
-        open={editOpen}
+        open={editModalOpen}
         title="Chỉnh sửa hoạt chất"
         submitText="Lưu thay đổi"
         isEdit
-        onClose={() => openEditModal("", formData)}
+        onClose={closeModals}
         formData={formData}
-        onUpdateFormData={() => {}}
+        onUpdateFormData={(data: Partial<ActiveIngredientFormData>) =>
+          setFormData((prev) => ({ ...prev, ...data }))
+        }
         onSubmit={handleUpdateIngredient}
       />
-      {/* Delete confirmation */}
-      <DeleteIngredientsModal />
+
+      <DeleteModal
+        open={deleteModalOpen}
+        setOpen={() => closeModals()}
+        handleConfirm={handleDeleteIngredientConfirm}
+        title="Xóa hoạt chất"
+        nameDelete={selectedIngredientName}
+      />
     </section>
   );
 }

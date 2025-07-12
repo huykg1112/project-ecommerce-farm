@@ -131,42 +131,9 @@ export const IngredientFormModal = memo<IngredientFormModalProps>(
                   <SelectItem value="LOW">Thấp</SelectItem>
                   <SelectItem value="MEDIUM">Trung bình</SelectItem>
                   <SelectItem value="HIGH">Cao</SelectItem>
+                  <SelectItem value="VERY_HIGH">Rất cao</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="chemical_formula" className="text-[#44703d]">
-                Công thức hóa học *
-              </Label>
-              <Input
-                id="chemical_formula"
-                value={formData.chemical_formula}
-                onChange={(e) =>
-                  handleInputChange("chemical_formula", e.target.value)
-                }
-                placeholder="Ví dụ: C3H8NO5P"
-                required
-                disabled={loading}
-                className="border-[#90c577] focus:border-[#74a65d]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="cas_number" className="text-[#44703d]">
-                Số CAS *
-              </Label>
-              <Input
-                id="cas_number"
-                value={formData.cas_number}
-                onChange={(e) =>
-                  handleInputChange("cas_number", e.target.value)
-                }
-                placeholder="Ví dụ: 1071-83-6"
-                required
-                disabled={loading}
-                className="border-[#90c577] focus:border-[#74a65d]"
-              />
             </div>
 
             {isEdit && (

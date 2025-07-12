@@ -21,6 +21,9 @@ export class Disease {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at!: Date;
 
+  @Column({ type: 'boolean', default: true, nullable: false })
+  is_deleted!: boolean;
+
   @OneToMany(() => ProductDisease, (pd) => pd.disease, { nullable: true })
   productDiseases: ProductDisease[];
 }

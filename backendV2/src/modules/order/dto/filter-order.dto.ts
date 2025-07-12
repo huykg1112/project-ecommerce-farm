@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsDateString,
   IsNumber,
   IsOptional,
@@ -22,6 +23,14 @@ export class FilterOrderDto {
   @IsUUID()
   @IsOptional()
   payment_method_id?: string;
+
+  @IsString()
+  @IsOptional()
+  order_code?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  is_deleted?: boolean;
 
   @IsNumber()
   @IsOptional()

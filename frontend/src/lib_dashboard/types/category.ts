@@ -23,3 +23,13 @@ export interface UpdateCategoryRequest {
   isActive: boolean; // Vẫn giữ để mapping
   image?: string; // Vẫn giữ để mapping
 }
+
+export interface Ingredient {
+  id: string;
+  name: string;
+  description?: string;
+  hazardLevel?: "LOW" | "MEDIUM" | "HIGH" | "VERY_HIGH";
+  isActive?: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+}

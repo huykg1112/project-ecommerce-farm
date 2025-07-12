@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm'; // or SequelizeModule
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { BatchProductController } from './batch-product.controller';
 import { BatchProductService } from './batch-product.service';
 import { BatchProduct } from './entities/batch-product.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([BatchProduct])], // <-- This is critical!
+  imports: [TypeOrmModule.forFeature([BatchProduct])],
   providers: [BatchProductService],
   controllers: [BatchProductController],
-  exports: [TypeOrmModule], // Optional, if you want to use the repository elsewhere
+  exports: [BatchProductService], // Export service instead of TypeOrmModule
 })
 export class BatchProductModule {}

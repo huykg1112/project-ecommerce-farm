@@ -31,6 +31,9 @@ export class Address {
   @Column({ type: 'boolean', default: true, nullable: true })
   is_active!: boolean;
 
+  @Column({ type: 'boolean', default: true, nullable: false })
+  is_deleted!: boolean;
+
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at!: Date;
 

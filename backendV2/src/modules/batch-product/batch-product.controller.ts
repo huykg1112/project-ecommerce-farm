@@ -27,6 +27,11 @@ export class BatchProductController {
     return this.batchService.findAll(filter);
   }
 
+  @Patch()
+  updateMany(@Body() updateBatchDtos: UpdateBatchProductDto[]) {
+    return this.batchService.updateBatchs(updateBatchDtos);
+  }
+
   @Get('expiring-soon')
   findExpiringSoon(@Query('days') days: number) {
     return this.batchService.findExpiringSoon(Number(days) || 7);

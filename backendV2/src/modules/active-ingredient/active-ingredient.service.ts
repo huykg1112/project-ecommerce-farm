@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { ProductIngredient } from '../product-ingredient/entities/product-ingredient.entity';
 import { Product } from '../product/entities/product.entity';
 import { CreateActiveIngredientDto } from './dto/create-active-ingredient.dto';
@@ -23,22 +23,31 @@ export class ActiveIngredientService {
     return await this.ingredientRepo.save(entity);
   }
 
+  // ko lấy ingredient có is_deleted
   async findAll() {
-    return await this.ingredientRepo.find();
+    return await this.ingredientRepo.find({
+      where: { is_deleted: false },
+    });
   }
 
   async findOne(id: string) {
     const ingredient = await this.ingredientRepo.findOne({
-      where: { ingredient_id: id },
+      where: { ingredient_id: id, is_deleted: false },
     });
     if (!ingredient) throw new NotFoundException('Không tìm thấy hoạt chất');
-    // TODO: Return diseases via new join table when available
     return ingredient;
+  }
+
+  async findByName(name: string) {
+    const ingredient = await this.ingredientRepo.findOne({
+      where: { ingredient_name: name, is_deleted: false },
+    });
+    return ingredient || null;
   }
 
   async update(id: string, dto: UpdateActiveIngredientDto) {
     const ingredient = await this.ingredientRepo.findOne({
-      where: { ingredient_id: id },
+      where: { ingredient_id: id, is_deleted: false },
     });
     if (!ingredient) throw new NotFoundException('Không tìm thấy hoạt chất');
     Object.assign(ingredient, dto);
@@ -47,10 +56,11 @@ export class ActiveIngredientService {
 
   async remove(id: string) {
     const ingredient = await this.ingredientRepo.findOne({
-      where: { ingredient_id: id },
+      where: { ingredient_id: id, is_deleted: false },
     });
     if (!ingredient) throw new NotFoundException('Không tìm thấy hoạt chất');
-    await this.ingredientRepo.remove(ingredient);
+    ingredient.is_deleted = true;
+    await this.ingredientRepo.save(ingredient);
     return { message: 'Xóa hoạt chất thành công' };
   }
 
@@ -61,5 +71,22 @@ export class ActiveIngredientService {
       relations: ['product'],
     });
     return rels.map((rel) => rel.product);
+  }
+  async batchToggleStatus(ingredientIds: string[], isActive: boolean) {
+    await this.ingredientRepo.update(
+      { ingredient_id: In(ingredientIds) },
+      { is_active: isActive },
+    );
+    return {
+      message: `Cập nhật trạng thái thành công cho ${ingredientIds.length} hoạt chất`,
+    };
+  }
+  async toggleStatus(id: string) {
+    const ingredient = await this.ingredientRepo.findOne({
+      where: { ingredient_id: id },
+    });
+    if (!ingredient) throw new NotFoundException('Không tìm thấy hoạt chất');
+    ingredient.is_active = !ingredient.is_active;
+    return await this.ingredientRepo.save(ingredient);
   }
 }

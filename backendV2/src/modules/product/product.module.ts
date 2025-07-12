@@ -8,6 +8,8 @@ import { User } from '../user/entities/user.entity';
 import { Product } from './entities/product.entity';
 import { ProductController } from './product.controller';
 import { ProductService } from './product.service';
+import { Manufacturer } from '../manufacturer/entities/manufacturer.entity';
+import { Review } from '../review/entities/review.entity';
 
 @Module({
   imports: [
@@ -17,6 +19,8 @@ import { ProductService } from './product.service';
       ProductDisease,
       Category,
       User,
+      Manufacturer,
+      Review,
     ]),
     CategoryModule,
   ],

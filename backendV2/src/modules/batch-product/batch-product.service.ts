@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { LessThanOrEqual, Repository } from 'typeorm';
+import { In, LessThanOrEqual, Repository } from 'typeorm';
 import { CreateBatchProductDto } from './dto/create-batch-product.dto';
 import { FilterBatchProductDto } from './dto/filter-batch-product.dto';
 import { UpdateBatchProductDto } from './dto/update-batch-product.dto';
@@ -61,7 +61,7 @@ export class BatchProductService {
 
   async findOne(id: string) {
     const batch = await this.batchRepo.findOne({
-      where: { batch_id: id },
+      where: { batch_id: id, is_deleted: false },
       relations: ['product', 'invenstory'],
     });
     if (!batch) throw new NotFoundException('Batch not found');
@@ -69,16 +69,36 @@ export class BatchProductService {
   }
 
   async update(id: string, dto: UpdateBatchProductDto) {
-    const batch = await this.batchRepo.findOne({ where: { batch_id: id } });
+    const batch = await this.batchRepo.findOne({
+      where: { batch_id: id, is_deleted: false },
+    });
     if (!batch) throw new NotFoundException('Batch not found');
     Object.assign(batch, dto);
     return this.batchRepo.save(batch);
   }
 
+  async updateBatchs(updateDatas: Partial<UpdateBatchProductDto[]>) {
+    if (!updateDatas || updateDatas.length === 0) {
+      throw new NotFoundException('No batches to update');
+    }
+    const batchIds = updateDatas.map((data) => data?.batch_id);
+    const batches = await this.batchRepo.findBy({
+      batch_id: In(batchIds),
+      is_deleted: false,
+    });
+    if (batches.length === 0) throw new NotFoundException('Batches not found');
+
+    batches.forEach((batch, index) => Object.assign(batch, updateDatas[index]));
+    return this.batchRepo.save(batches);
+  }
+
   async remove(id: string) {
-    const batch = await this.batchRepo.findOne({ where: { batch_id: id } });
+    const batch = await this.batchRepo.findOne({
+      where: { batch_id: id, is_deleted: false },
+    });
     if (!batch) throw new NotFoundException('Batch not found');
-    await this.batchRepo.remove(batch);
+    batch.is_deleted = true;
+    await this.batchRepo.save(batch);
     return { deleted: true };
   }
 
@@ -90,6 +110,7 @@ export class BatchProductService {
       where: {
         expiry_date: LessThanOrEqual(soon),
         is_active: true,
+        is_deleted: false,
       },
       relations: ['product', 'invenstory'],
     });
@@ -100,6 +121,7 @@ export class BatchProductService {
       .createQueryBuilder('batch')
       .where('batch.quantity <= batch.low_stock_threshold')
       .andWhere('batch.is_active = :active', { active: true })
+      .andWhere('batch.is_deleted = :deleted', { deleted: false })
       .leftJoinAndSelect('batch.product', 'product')
       .leftJoinAndSelect('batch.invenstory', 'invenstory')
       .getMany();
@@ -107,7 +129,7 @@ export class BatchProductService {
 
   async decreaseQuantity(batchId: string, amount: number) {
     const batch = await this.batchRepo.findOne({
-      where: { batch_id: batchId },
+      where: { batch_id: batchId, is_deleted: false },
     });
     if (!batch) throw new NotFoundException('Batch not found');
     if (batch.quantity < amount)

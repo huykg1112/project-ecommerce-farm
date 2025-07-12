@@ -19,12 +19,13 @@ export class CreateBatchProductDto {
   invenstory_id?: string;
 
   @IsString()
+  @IsOptional()
   @MaxLength(50)
   batch_number: string;
 
   @IsInt()
   @Min(0)
-  quantity: number;
+  quantity?: number;
 
   @IsDateString()
   @IsOptional()

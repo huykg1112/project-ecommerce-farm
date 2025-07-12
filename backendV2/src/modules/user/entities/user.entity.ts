@@ -66,6 +66,9 @@ export class User {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at!: Date;
 
+  @Column({ type: 'boolean', default: false })
+  is_deleted!: boolean;
+
   @ManyToOne(() => Role, (role) => role.users, { nullable: false })
   @JoinColumn({ name: 'role_id' })
   role: Role;

@@ -17,7 +17,10 @@ export class AddressService {
 
   async create(user_id: string, createAddressDto: CreateAddressDto) {
     // Kiểm tra user có tồn tại không
-    const user = await this.userRepository.findOneBy({ user_id: user_id });
+    const user = await this.userRepository.findOneBy({
+      user_id: user_id,
+      is_deleted: false,
+    });
     if (!user) {
       throw new NotFoundException(`User with ID ${user_id} not found`);
     }
@@ -61,7 +64,10 @@ export class AddressService {
 
   async findOne(user_id: string, id: string) {
     // Kiểm tra user có tồn tại không
-    const user = await this.userRepository.findOneBy({ user_id: user_id });
+    const user = await this.userRepository.findOneBy({
+      user_id: user_id,
+      is_deleted: false,
+    });
     if (!user) {
       throw new NotFoundException(`User with ID ${user_id} not found`);
     }

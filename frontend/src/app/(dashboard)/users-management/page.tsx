@@ -326,7 +326,7 @@ export default function UsersPage() {
         handleConfirm={handleDeleteUserConfirm}
         setOpen={closeModals}
         title="Xoá người dùng"
-        userName={selectedUserName}
+        nameDelete={selectedUserName}
       />
     </div>
   );

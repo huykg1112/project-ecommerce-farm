@@ -18,7 +18,13 @@ export class ActiveIngredientController {
   ) {}
 
   @Post()
-  create(@Body() createActiveIngredientDto: CreateActiveIngredientDto) {
+  async create(@Body() createActiveIngredientDto: CreateActiveIngredientDto) {
+    const existingIngredient = await this.activeIngredientService.findByName(
+      createActiveIngredientDto.ingredient_name,
+    );
+    if (existingIngredient) {
+      throw new Error('Active ingredient with this name already exists');
+    }
     return this.activeIngredientService.create(createActiveIngredientDto);
   }
 
@@ -49,5 +55,14 @@ export class ActiveIngredientController {
   @Get(':id/products')
   getProducts(@Param('id') id: string) {
     return this.activeIngredientService.getProductsForIngredient(id);
+  }
+  @Patch(':id/update-status')
+  async updateStatus(@Param('id') id: string) {
+    console.log(`Updating status for ingredient with ID: ${id}`);
+    return this.activeIngredientService.toggleStatus(id);
+  }
+  @Patch('batch-toggle-status')
+  async batchToggleStatus(@Body('ingredientIds') ingredientIds: string[]) {
+    return this.activeIngredientService.batchToggleStatus(ingredientIds, true);
   }
 }

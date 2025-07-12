@@ -37,6 +37,9 @@ export class Category {
   @UpdateDateColumn({ type: 'timestamp', nullable: true })
   updatedAt!: Date;
 
+  @Column({ type: 'boolean', default: false })
+  isDeleted!: boolean;
+
   @ManyToMany(() => Product, (product) => product.categories)
   @JoinColumn() // Required for ManyToMany
   products!: Product[]; // Một Category có thể chứa nhiều Product

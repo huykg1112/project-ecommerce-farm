@@ -25,6 +25,7 @@ export class ManufacturersService {
 
   async findAll(): Promise<Manufacturer[]> {
     return await this.manufacturerRepository.find({
+      where: { isDeleted: false },
       relations: ['products'],
       order: { createdAt: 'DESC' },
     });
@@ -32,7 +33,7 @@ export class ManufacturersService {
 
   async findOne(id: string): Promise<Manufacturer> {
     const manufacturer = await this.manufacturerRepository.findOne({
-      where: { id },
+      where: { id, isDeleted: false },
       relations: ['products'],
     });
 
@@ -54,18 +55,25 @@ export class ManufacturersService {
 
   async remove(id: string): Promise<void> {
     const manufacturer = await this.findOne(id);
-    await this.manufacturerRepository.remove(manufacturer);
+    if (!manufacturer) {
+      throw new NotFoundException(`Manufacturer with id ${id} not found`);
+    }
+    manufacturer.isDeleted = true; // Soft delete
+    await this.manufacturerRepository.save(manufacturer);
   }
 
   async softDelete(id: string): Promise<Manufacturer> {
     const manufacturer = await this.findOne(id);
-    manufacturer.isActive = false;
+    if (!manufacturer) {
+      throw new NotFoundException(`Manufacturer with id ${id} not found`);
+    }
+    manufacturer.isDeleted = true; // Soft delete
     return await this.manufacturerRepository.save(manufacturer);
   }
 
   async restore(id: string): Promise<Manufacturer> {
     const manufacturer = await this.findOne(id);
-    manufacturer.isActive = true;
+    manufacturer.isDeleted = false; // Restore soft delete
     return await this.manufacturerRepository.save(manufacturer);
   }
 
@@ -75,7 +83,7 @@ export class ManufacturersService {
     publicId: string,
   ): Promise<Manufacturer> {
     const manufacturer = await this.manufacturerRepository.findOne({
-      where: { id },
+      where: { id, isDeleted: false },
     });
 
     if (!manufacturer) {

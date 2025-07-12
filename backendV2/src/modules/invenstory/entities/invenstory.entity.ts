@@ -43,6 +43,13 @@ export class Invenstory {
   @Column({ type: 'varchar', length: 255, nullable: true })
   invenstory_img: string;
 
+  // Trạng thái hoạt động
+  @Column({ type: 'boolean', default: true, nullable: true })
+  is_active: boolean;
+
+  @Column({ type: 'boolean', default: true, nullable: true })
+  is_deleted!: boolean;
+
   // Một kho hàng có 0 hoăc nhiều lô hàng sản phẩm và 1 lô hàng sản phẩm chỉ thuộc 1 kho hàng
   @OneToMany(() => BatchProduct, (batch_product) => batch_product.invenstory)
   batch_products: BatchProduct[];

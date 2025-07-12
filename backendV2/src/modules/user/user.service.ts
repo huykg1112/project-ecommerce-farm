@@ -51,23 +51,28 @@ export class UserService {
         { email: ILike(`%${keyword}%`) },
         { phone_number: ILike(`%${keyword}%`) },
         { username: ILike(`%${keyword}%`) },
+        { is_deleted: false },
       ],
     });
   }
   // kiểm tra username đã tồn tại chưa nếu tồn tại trả về true
   async checkUsernameExists(username: string): Promise<boolean> {
-    const user = await this.userRepository.findOne({ where: { username } });
+    const user = await this.userRepository.findOne({
+      where: { username, is_deleted: false },
+    });
     return !!user;
   }
   // kiểm tra email đã tồn tại chưa nếu tồn tại trả về true
   async checkEmailExists(email: string): Promise<boolean> {
-    const user = await this.userRepository.findOne({ where: { email } });
+    const user = await this.userRepository.findOne({
+      where: { email, is_deleted: false },
+    });
     return !!user;
   }
   // tìm user bằng id
   async findUserById(id: string): Promise<User | null> {
     return this.userRepository.findOne({
-      where: { user_id: id },
+      where: { user_id: id, is_deleted: false },
       relations: ['role', 'addresses', 'inventory'],
       order: { addresses: { is_default: 'DESC', created_at: 'DESC' } },
     });
@@ -331,7 +336,8 @@ export class UserService {
     if (!user) {
       throw new NotFoundException('Người dùng không tồn tại');
     }
-    await this.userRepository.remove(user);
+    user.is_deleted = true; // Đánh dấu là đã xóa
+    await this.saveUser(user);
     return { message: 'Xóa người dùng thành công' };
   }
 }

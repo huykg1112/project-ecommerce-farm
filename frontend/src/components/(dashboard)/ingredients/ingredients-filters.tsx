@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -8,55 +9,76 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useIngredient } from "@/hooks/use-ingredient";
+import { RotateCcw, Search } from "lucide-react";
+import { memo } from "react";
 
-export function IngredientsFilters() {
-  const { filters, setFilters, fetchList } = useIngredient();
-
-  return (
-    <div className="flex flex-col md:flex-row gap-3 mb-4">
-      <Input
-        placeholder="Tìm theo tên danh mục..."
-        className="max-w-sm"
-        value={filters.search}
-        onChange={(e) => setFilters((f) => ({ ...f, search: e.target.value }))}
-        onBlur={fetchList}
-      />
-
-      <Select
-        value={filters.status}
-        onValueChange={(value) => {
-          setFilters((f) => ({ ...f, status: value }));
-          fetchList();
-        }}
-      >
-        <SelectTrigger className="w-44">
-          <SelectValue placeholder="Trạng thái" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Tất cả</SelectItem>
-          <SelectItem value="active">Đang hoạt động</SelectItem>
-          <SelectItem value="inactive">Đã tắt</SelectItem>
-        </SelectContent>
-      </Select>
-      <Select
-        value={filters.hazard_level}
-        onValueChange={(value) => {
-          setFilters((f) => ({ ...f, hazard_level: value }));
-          fetchList();
-        }}
-      >
-        <SelectTrigger className="w-44">
-          <SelectValue placeholder="Mức độ nguy hiểm" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Tất cả</SelectItem>
-          <SelectItem value="LOW">Thấp</SelectItem>
-          <SelectItem value="MEDIUM">Trung bình</SelectItem>
-          <SelectItem value="HIGH">Cao</SelectItem>
-          <SelectItem value="VERY_HIGH">Rất cao</SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
-  );
+interface IngredientsFiltersProps {
+  search: string | undefined;
+  status: string | undefined;
+  hazardLevel: string | undefined;
+  onSearchChange: (value: string) => void;
+  onStatusChange: (value: string) => void;
+  onHazardLevelChange: (value: string) => void;
+  onReset: () => void;
 }
+
+export const IngredientsFilters = memo<IngredientsFiltersProps>(
+  ({
+    search,
+    status,
+    hazardLevel,
+    onSearchChange,
+    onStatusChange,
+    onHazardLevelChange,
+    onReset,
+  }) => {
+    return (
+      <div className="flex flex-col sm:flex-row gap-4 p-4 bg-[#accc8b]/10 rounded-lg border border-[#accc8b]/30">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#74a65d]" />
+          <Input
+            placeholder="Tìm kiếm theo tên hoặc mô tả hoạt chất..."
+            value={search}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="pl-10 border-[#90c577] focus:border-[#74a65d] bg-white"
+          />
+        </div>
+
+        <Select value={status} onValueChange={onStatusChange}>
+          <SelectTrigger className="w-44 border-[#90c577] focus:border-[#74a65d] bg-white">
+            <SelectValue placeholder="Trạng thái" />
+          </SelectTrigger>
+          <SelectContent className="bg-white border-[#accc8b]">
+            <SelectItem value="all">Tất cả trạng thái</SelectItem>
+            <SelectItem value="active">Đang hoạt động</SelectItem>
+            <SelectItem value="inactive">Đã tắt</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={hazardLevel} onValueChange={onHazardLevelChange}>
+          <SelectTrigger className="w-44 border-[#90c577] focus:border-[#74a65d] bg-white">
+            <SelectValue placeholder="Mức độ nguy hiểm" />
+          </SelectTrigger>
+          <SelectContent className="bg-white border-[#accc8b]">
+            <SelectItem value="all">Tất cả mức độ</SelectItem>
+            <SelectItem value="LOW">Thấp</SelectItem>
+            <SelectItem value="MEDIUM">Trung bình</SelectItem>
+            <SelectItem value="HIGH">Cao</SelectItem>
+            <SelectItem value="VERY_HIGH">Rất cao</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Button
+          variant="outline"
+          onClick={onReset}
+          className="border-[#90c577] text-[#44703d] hover:bg-[#accc8b]/20 bg-transparent"
+        >
+          <RotateCcw className="h-4 w-4 mr-2" />
+          Đặt lại
+        </Button>
+      </div>
+    );
+  }
+);
+
+IngredientsFilters.displayName = "IngredientsFilters";

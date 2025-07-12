@@ -37,18 +37,23 @@ export class CategoryService {
   async findAll(): Promise<Category[]> {
     return await this.categoryRepository.find({
       order: { createdAt: 'DESC' },
+      where: { isDeleted: false },
     });
   }
 
   async findOne(id: string): Promise<Category> {
-    const category = await this.categoryRepository.findOne({ where: { id } });
+    const category = await this.categoryRepository.findOne({
+      where: { id, isDeleted: false },
+    });
     if (!category) {
       throw new NotFoundException(`Category with id ${id} not found`);
     }
     return category;
   }
   async findByName(name: string): Promise<Category | null> {
-    const category = await this.categoryRepository.findOne({ where: { name } });
+    const category = await this.categoryRepository.findOne({
+      where: { name, isDeleted: false },
+    });
     if (!category) {
       return null;
     }
@@ -66,18 +71,30 @@ export class CategoryService {
 
   async remove(id: string): Promise<void> {
     const category = await this.findOne(id);
-    await this.categoryRepository.remove(category);
+    if (!category) {
+      throw new NotFoundException(`Category with id ${id} not found`);
+    }
+    // Soft delete instead of hard delete
+    category.isDeleted = true;
+    await this.categoryRepository.save(category);
   }
 
   async softDelete(id: string): Promise<Category> {
     const category = await this.findOne(id);
-    category.isActive = false;
+    if (!category) {
+      throw new NotFoundException(`Category with id ${id} not found`);
+    }
+    category.isDeleted = true;
+    // Optionally delete image from cloudinary if it exists
+    if (category.imagePublicId) {
+      await this.cloudinaryService.deleteImage(category.imagePublicId);
+    }
     return await this.categoryRepository.save(category);
   }
 
   async restore(id: string): Promise<Category> {
     const category = await this.findOne(id);
-    category.isActive = true;
+    category.isDeleted = false;
     return await this.categoryRepository.save(category);
   }
 
@@ -86,7 +103,9 @@ export class CategoryService {
     imageUrl: string,
     publicId: string,
   ): Promise<Category> {
-    const category = await this.categoryRepository.findOne({ where: { id } });
+    const category = await this.categoryRepository.findOne({
+      where: { id, isDeleted: false },
+    });
     if (!category) {
       throw new NotFoundException('Category not found');
     }
@@ -104,7 +123,7 @@ export class CategoryService {
 
   async findActiveCategories(): Promise<Category[]> {
     return await this.categoryRepository.find({
-      where: { isActive: true },
+      where: { isActive: true, isDeleted: false },
       order: { name: 'ASC' },
     });
   }
