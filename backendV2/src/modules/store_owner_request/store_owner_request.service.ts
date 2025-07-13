@@ -56,7 +56,7 @@ export class StoreOwnerRequestService {
 
   async findOne(id: string): Promise<StoreOwnerRequest> {
     const req = await this.requestRepo.findOne({
-      where: { store_owner_request_id: id },
+      where: { store_owner_request_id: id, is_deleted: false },
       relations: ['user'],
     });
     if (!req) throw new NotFoundException('Request not found');
@@ -65,7 +65,7 @@ export class StoreOwnerRequestService {
 
   async getMyRequest(userId: string): Promise<StoreOwnerRequest> {
     const req = await this.requestRepo.findOne({
-      where: { user: { user_id: userId } },
+      where: { user: { user_id: userId }, is_deleted: false },
       relations: ['user'],
     });
     if (!req) throw new NotFoundException('Không tìm thấy yêu cầu');
@@ -77,7 +77,7 @@ export class StoreOwnerRequestService {
     approve: boolean,
   ): Promise<{ message: string }> {
     const req = await this.requestRepo.findOne({
-      where: { store_owner_request_id: request_id },
+      where: { store_owner_request_id: request_id, is_deleted: false },
       relations: ['user'],
     });
     if (!req) throw new NotFoundException('Không tìm thấy yêu cầu');
@@ -117,10 +117,11 @@ export class StoreOwnerRequestService {
 
   async remove(id: string): Promise<{ message: string }> {
     const req = await this.requestRepo.findOne({
-      where: { store_owner_request_id: id },
+      where: { store_owner_request_id: id, is_deleted: false },
     });
     if (!req) throw new NotFoundException('Không tìm thấy yêu cầu');
-    await this.requestRepo.remove(req);
+    req.is_deleted = true; // Đánh dấu là đã xóa
+    await this.requestRepo.save(req);
     return { message: 'Yêu cầu đã bị xóa' };
   }
 }

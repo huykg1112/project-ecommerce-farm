@@ -10,42 +10,37 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
-import type { ActiveIngredient } from "@/types/entities";
-import { Edit, MoreHorizontal, Trash2 } from "lucide-react";
-import { memo, useCallback, useMemo, useState } from "react";
+import type { Voucher } from "@/types/entities";
+import { Edit, Gift, MoreHorizontal, Trash2 } from "lucide-react";
+import { memo, useCallback, useMemo } from "react";
 import DataTable, { TableColumn } from "react-data-table-component";
 import { customStyles } from "../user-statistics/user-data-table";
 
-interface IngredientsTableProps {
-  ingredients: ActiveIngredient[];
-  selectedIngredients: string[];
-  onSelectIngredient: (ingredientId: string) => void;
+interface VoucherTableProps {
+  vouchers: Voucher[];
+  selectedVouchers: string[];
+  onSelectVoucher: (voucherId: string) => void;
   onSelectAll: (checked: boolean) => void;
-  onToggleStatus: (ingredientId: string) => void;
-  onEditIngredient: (ingredientId: string) => void;
-  onDeleteIngredient: (ingredientId: string) => void;
+  onToggleStatus: (voucherId: string) => void;
+  onEditVoucher: (voucherId: string) => void;
+  onDeleteVoucher: (voucherId: string) => void;
   loading?: boolean;
 }
 
-export const IngredientsTable = memo<IngredientsTableProps>(
+export const VoucherTable = memo<VoucherTableProps>(
   ({
-    ingredients,
-    selectedIngredients,
-    onSelectIngredient,
+    vouchers,
+    selectedVouchers,
+    onSelectVoucher,
     onSelectAll,
     onToggleStatus,
-    onEditIngredient,
-    onDeleteIngredient,
+    onEditVoucher,
+    onDeleteVoucher,
     loading = false,
   }) => {
-    const [itemsPerPage, setItemsPerPage] = useState(10);
-
     const isAllSelected = useMemo(() => {
-      return (
-        ingredients.length > 0 &&
-        selectedIngredients.length === ingredients.length
-      );
-    }, [ingredients.length, selectedIngredients.length]);
+      return vouchers.length > 0 && selectedVouchers.length === vouchers.length;
+    }, [vouchers.length, selectedVouchers.length]);
 
     const getStatusBadge = useCallback((isActive: boolean) => {
       return isActive
@@ -57,17 +52,16 @@ export const IngredientsTable = memo<IngredientsTableProps>(
         : { label: "Đã tắt", variant: "destructive" as const };
     }, []);
 
-    const getHazardLevelBadge = useCallback((hazardLevel: string) => {
-      const config = {
-        LOW: { label: "Thấp", className: "bg-green-100 text-green-800" },
-        MEDIUM: {
-          label: "Trung bình",
-          className: "bg-yellow-100 text-yellow-800",
-        },
-        HIGH: { label: "Cao", className: "bg-orange-100 text-orange-800" },
-        VERY_HIGH: { label: "Rất cao", className: "bg-red-100 text-red-800" },
-      };
-      return config[hazardLevel as keyof typeof config] || config.LOW;
+    const formatDate = useCallback((date: Date | string) => {
+      if (!date) return "N/A";
+      return new Date(date).toLocaleDateString("vi-VN");
+    }, []);
+
+    const formatCurrency = useCallback((amount: number) => {
+      return new Intl.NumberFormat("vi-VN", {
+        style: "currency",
+        currency: "VND",
+      }).format(amount);
     }, []);
 
     const columns = [
@@ -81,56 +75,86 @@ export const IngredientsTable = memo<IngredientsTableProps>(
           />
         ),
         width: "48px",
-        cell: (row: ActiveIngredient) => (
+        cell: (row: Voucher) => (
           <Checkbox
-            checked={selectedIngredients.includes(row.ingredient_id)}
-            onCheckedChange={() => onSelectIngredient(row.ingredient_id)}
-            aria-label={`Chọn ${row.ingredient_name}`}
+            checked={selectedVouchers.includes(row.voucher_id)}
+            onCheckedChange={() => onSelectVoucher(row.voucher_id)}
+            aria-label={`Chọn ${row.voucher_code}`}
             className="data-[state=checked]:bg-[#74a65d] data-[state=checked]:border-[#74a65d]"
           />
         ),
         allowOverflow: true,
       },
       {
-        name: "Tên hoạt chất",
-        selector: (row: ActiveIngredient) => row.ingredient_name,
+        name: "Mã voucher",
+        selector: (row: Voucher) => row.voucher_code,
         sortable: true,
-        cell: (row: ActiveIngredient) => (
-          <div className="font-semibold text-[#44703d]">
-            {row.ingredient_name}
+        cell: (row: Voucher) => (
+          <div className="flex items-center gap-2">
+            <Gift className="h-4 w-4 text-[#74a65d]" />
+            <span className="font-semibold text-[#44703d]">
+              {row.voucher_code}
+            </span>
           </div>
         ),
         allowOverflow: true,
       },
       {
-        name: "Mô tả",
-        selector: (row: ActiveIngredient) => row.description,
-        cell: (row: ActiveIngredient) => (
-          <div className="text-[#74a65d] max-w-md">
-            <p className="line-clamp-2">{row.description}</p>
+        name: "Khuyến mãi",
+        selector: (row: Voucher) => row.promotion?.promotion_name || "N/A",
+        cell: (row: Voucher) => (
+          <div className="text-[#74a65d]">
+            {row.promotion?.promotion_name || "N/A"}
           </div>
         ),
       },
       {
-        name: "Mức độ nguy hiểm",
-        selector: (row: ActiveIngredient) => row.hazard_level,
+        name: "Giá trị tối thiểu",
+        selector: (row: Voucher) => row.min_order_value || 0,
         sortable: true,
-        cell: (row: ActiveIngredient) => {
-          const { label, className } = getHazardLevelBadge(row.hazard_level);
-          return (
-            <span
-              className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${className}`}
-            >
-              {label}
-            </span>
-          );
-        },
+        cell: (row: Voucher) => (
+          <div className="text-[#44703d]">
+            {row.min_order_value ? formatCurrency(row.min_order_value) : "N/A"}
+          </div>
+        ),
+      },
+      {
+        name: "Giảm tối đa",
+        selector: (row: Voucher) => row.max_discount_value || 0,
+        sortable: true,
+        cell: (row: Voucher) => (
+          <div className="text-[#44703d]">
+            {row.max_discount_value
+              ? formatCurrency(row.max_discount_value)
+              : "N/A"}
+          </div>
+        ),
+      },
+      {
+        name: "Sử dụng",
+        selector: (row: Voucher) => row.used_count,
+        sortable: true,
+        cell: (row: Voucher) => (
+          <div className="text-[#44703d]">
+            {row.used_count}/{row.usage_limit || "∞"}
+          </div>
+        ),
+      },
+      {
+        name: "Hạn sử dụng",
+        selector: (row: Voucher) => row.end_date || "",
+        sortable: true,
+        cell: (row: Voucher) => (
+          <div className="text-[#44703d]">
+            {formatDate(row?.end_date || new Date())}
+          </div>
+        ),
       },
       {
         name: "Trạng thái",
-        selector: (row: ActiveIngredient) => row.is_active,
+        selector: (row: Voucher) => row.is_active,
         sortable: true,
-        cell: (row: ActiveIngredient) => {
+        cell: (row: Voucher) => {
           const { label, variant, className } = getStatusBadge(row.is_active);
           return (
             <Badge variant={variant} className={className}>
@@ -141,18 +165,18 @@ export const IngredientsTable = memo<IngredientsTableProps>(
       },
       {
         name: "Kích hoạt",
-        selector: (row: ActiveIngredient) => row.is_active,
-        cell: (row: ActiveIngredient) => (
+        selector: (row: Voucher) => row.is_active,
+        cell: (row: Voucher) => (
           <Switch
             checked={row.is_active}
-            onCheckedChange={() => onToggleStatus(row.ingredient_id)}
+            onCheckedChange={() => onToggleStatus(row.voucher_id)}
             className="data-[state=checked]:bg-[#74a65d]"
           />
         ),
       },
       {
         width: "80px",
-        cell: (row: ActiveIngredient) => (
+        cell: (row: Voucher) => (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -167,18 +191,18 @@ export const IngredientsTable = memo<IngredientsTableProps>(
               className="bg-white border-[#accc8b]"
             >
               <DropdownMenuItem
-                onClick={() => onEditIngredient(row.ingredient_id)}
+                onClick={() => onEditVoucher(row.voucher_id)}
                 className="hover:bg-[#accc8b]/20 text-[#44703d]"
               >
                 <Edit className="mr-2 h-4 w-4" />
                 Chỉnh sửa
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => onDeleteIngredient(row.ingredient_id)}
+                onClick={() => onDeleteVoucher(row.voucher_id)}
                 className="hover:bg-red-50 text-red-600"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                Xóa hoạt chất
+                Xóa voucher
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -202,27 +226,18 @@ export const IngredientsTable = memo<IngredientsTableProps>(
     return (
       <div className="rounded-lg border border-[#accc8b]/30 bg-white overflow-hidden">
         <DataTable
-          columns={columns as TableColumn<ActiveIngredient>[]}
-          data={ingredients}
+          columns={columns as TableColumn<Voucher>[]}
+          data={vouchers}
           customStyles={customStyles}
-          pagination
-          paginationPerPage={itemsPerPage}
-          paginationRowsPerPageOptions={[5, 10, 20, 50]}
-          onChangeRowsPerPage={(newPerPage) => setItemsPerPage(newPerPage)}
           noDataComponent={
             <div className="text-[#44703d] py-4">
               Không có dữ liệu để hiển thị
             </div>
           }
-          paginationComponentOptions={{
-            rowsPerPageText: "Hiển thị",
-            rangeSeparatorText: "trong tổng số",
-            noRowsPerPage: false,
-          }}
         />
       </div>
     );
   }
 );
 
-IngredientsTable.displayName = "IngredientsTable";
+VoucherTable.displayName = "VoucherTable";

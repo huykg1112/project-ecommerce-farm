@@ -7,8 +7,8 @@ import { CategoryTable } from "@/components/(dashboard)/categories/category-tabl
 import { BatchActions } from "@/components/common/batch-actions";
 
 import { DeleteModal } from "@/components/common/delete-modal";
+import { StatisticsCards } from "@/components/common/statistics-cards";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useCategories } from "@/hooks/use-categories";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -18,7 +18,7 @@ import {
   type CategoryFormData,
 } from "@/lib_dashboard/store/category-store";
 import { useAtom, useSetAtom } from "jotai";
-import { Download, Eye, EyeOff, Package, Plus } from "lucide-react";
+import { Download, Plus } from "lucide-react";
 import { useCallback, useEffect, useMemo } from "react";
 
 export default function CategoriesPage() {
@@ -195,56 +195,14 @@ export default function CategoriesPage() {
       </header>
 
       {/* Statistics Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="card-agricultural">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-[#44703d]">
-              Tổng số danh mục
-            </CardTitle>
-            <Package className="h-5 w-5 text-[#74a65d]" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-[#44703d]">
-              {stats.totalCategories}
-            </div>
-            <p className="text-xs text-[#74a65d]">
-              Tất cả danh mục trong hệ thống
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="card-agricultural">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-[#44703d]">
-              Đang hoạt động
-            </CardTitle>
-            <Eye className="h-5 w-5 text-[#90c577]" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-[#44703d]">
-              {stats.activeCategories}
-            </div>
-            <p className="text-xs text-[#74a65d]">
-              Danh mục hiển thị công khai
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="card-agricultural">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-[#44703d]">
-              Đã tắt
-            </CardTitle>
-            <EyeOff className="h-5 w-5 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-[#44703d]">
-              {stats.inactiveCategories}
-            </div>
-            <p className="text-xs text-[#74a65d]">Danh mục tạm thời ẩn</p>
-          </CardContent>
-        </Card>
-      </div>
+      <StatisticsCards
+        stats={{
+          total: stats.totalCategories,
+          active: stats.activeCategories,
+          inactive: stats.inactiveCategories,
+        }}
+        title="danh mục"
+      />
 
       <div className="mt-6 space-y-4">
         {/* Filters */}

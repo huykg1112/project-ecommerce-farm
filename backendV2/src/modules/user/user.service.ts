@@ -224,7 +224,8 @@ export class UserService {
   // lấy tất cả người dùng
   async findAllUsers(): Promise<User[]> {
     return this.userRepository.find({
-      relations: ['role'],
+      where: { is_deleted: false },
+      relations: ['role', 'addresses'],
     });
   }
 

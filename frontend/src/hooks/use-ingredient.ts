@@ -170,7 +170,6 @@ export function useIngredient() {
     async (data: ActiveIngredientFormData) => {
       try {
         await activeIngredientService.create(data);
-        showToast.success("Thêm hoạt chất thành công");
         await fetchList();
         closeModals();
         return true;
@@ -221,7 +220,6 @@ export function useIngredient() {
     async (id: string) => {
       try {
         await activeIngredientService.toggle(id);
-        showToast.success("Cập nhật trạng thái hoạt chất thành công");
         await fetchList();
         return true;
       } catch (error) {

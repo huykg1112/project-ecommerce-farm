@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { CreateDiseaseDto } from './dto/create-disease.dto';
 import { UpdateDiseaseDto } from './dto/update-disease.dto';
 import { Disease } from './entities/disease.entity';
@@ -64,5 +64,38 @@ export class DiseaseService {
     disease.is_deleted = true;
     await this.diseaseRepository.save(disease);
     return { message: 'Xóa bệnh thành công' };
+  }
+
+  async removes(id: string[]): Promise<{ message: string }> {
+    const diseases = await this.diseaseRepository.find({
+      where: { disease_id: In(id), is_deleted: false },
+    });
+    if (!diseases) throw new NotFoundException('Không tìm thấy bệnh');
+    // Soft delete instead of hard delete
+    diseases.forEach((disease) => (disease.is_deleted = true));
+    await this.diseaseRepository.save(diseases);
+    return { message: 'Xóa bệnh thành công' };
+  }
+
+  async updateStatus(id: string): Promise<Disease> {
+    const disease = await this.diseaseRepository.findOne({
+      where: { disease_id: id, is_deleted: false },
+    });
+    if (!disease) throw new NotFoundException('Không tìm thấy bệnh');
+    disease.is_active = !disease.is_active;
+    disease.updated_at = new Date();
+    return this.diseaseRepository.save(disease);
+  }
+
+  async updateStatuss(id: string[], is_active: boolean): Promise<Disease[]> {
+    const diseases = await this.diseaseRepository.find({
+      where: { disease_id: In(id), is_deleted: false },
+    });
+    if (!diseases) throw new NotFoundException('Không tìm thấy bệnh');
+    diseases.forEach((disease) => {
+      disease.is_active = is_active;
+      disease.updated_at = new Date();
+    });
+    return this.diseaseRepository.save(diseases);
   }
 }

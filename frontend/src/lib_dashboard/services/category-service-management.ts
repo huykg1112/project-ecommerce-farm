@@ -130,7 +130,7 @@ export const categoryServiceManagement = {
   async deleteCategory(id: string) {
     console.log("Deleting category with ID:", id);
     try {
-      const response = await axiosInstance.delete(`/categories/${id}`);
+      const response = await axiosInstance.delete(`/category/${id}`);
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi xóa danh mục";

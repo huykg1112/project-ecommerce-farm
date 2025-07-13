@@ -42,6 +42,9 @@ export class Promotion {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at!: Date;
 
+  @Column({ type: 'boolean', default: false, nullable: false })
+  is_deleted!: boolean;
+
   @ManyToMany(() => BatchProduct, (batch_product) => batch_product.promotions, {
     nullable: true,
   })

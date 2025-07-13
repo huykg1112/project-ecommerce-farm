@@ -25,6 +25,24 @@ export class DiseaseController {
     return await this.diseaseService.findAll();
   }
 
+  @Patch('soft-delete')
+  async deletes(@Body('ids') ids: string[]) {
+    return await this.diseaseService.removes(ids);
+  }
+
+  @Patch(':id/status')
+  async updateStatus(@Param('id') id: string) {
+    return await this.diseaseService.updateStatus(id);
+  }
+
+  @Patch('batch-toggle-status')
+  async updateStatuss(
+    @Body('ids') ids: string[],
+    @Body('is_active') is_active: boolean,
+  ) {
+    return await this.diseaseService.updateStatuss(ids, is_active);
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return await this.diseaseService.findOne(id);

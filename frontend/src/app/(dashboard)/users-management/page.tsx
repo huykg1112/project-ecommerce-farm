@@ -6,13 +6,13 @@ import { UserPagination } from "@/components/(dashboard)/users/user-pagination";
 import { UserTable } from "@/components/(dashboard)/users/user-table";
 import { BatchActions } from "@/components/common/batch-actions";
 import { DeleteModal } from "@/components/common/delete-modal";
+import { StatisticsCards } from "@/components/common/statistics-cards";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUserForm, useUsers } from "@/hooks/use-users";
 import { showToast } from "@/lib/toast-provider";
 import { selectedUserIdAtom } from "@/lib_dashboard/store/user-store";
 import { useAtom } from "jotai";
-import { Download, Plus, UserCheck, Users, UserX } from "lucide-react";
+import { Download, Plus } from "lucide-react";
 import { useCallback, useMemo } from "react";
 
 export default function UsersPage() {
@@ -206,54 +206,14 @@ export default function UsersPage() {
       </div>
 
       {/* Statistics Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="card-agricultural">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-[#44703d]">
-              Tổng số người dùng
-            </CardTitle>
-            <Users className="h-5 w-5 text-[#74a65d]" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-[#44703d]">
-              {stats.totalUsers}
-            </div>
-            <p className="text-xs text-[#74a65d]">
-              Tất cả người dùng trong hệ thống
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="card-agricultural">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-[#44703d]">
-              Đang hoạt động
-            </CardTitle>
-            <UserCheck className="h-5 w-5 text-[#90c577]" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-[#44703d]">
-              {stats.activeUsers}
-            </div>
-            <p className="text-xs text-[#74a65d]">Tài khoản có thể đăng nhập</p>
-          </CardContent>
-        </Card>
-
-        <Card className="card-agricultural">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-[#44703d]">
-              Đã bị khóa
-            </CardTitle>
-            <UserX className="h-5 w-5 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-[#44703d]">
-              {stats.inactiveUsers}
-            </div>
-            <p className="text-xs text-[#74a65d]">Tài khoản bị tạm khóa</p>
-          </CardContent>
-        </Card>
-      </div>
+      <StatisticsCards
+        stats={{
+          total: stats.totalUsers,
+          active: stats.activeUsers,
+          inactive: stats.inactiveUsers,
+        }}
+        title="người dùng"
+      />
 
       {/* Filters */}
       <UserFilters

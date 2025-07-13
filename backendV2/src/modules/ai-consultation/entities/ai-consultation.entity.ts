@@ -32,7 +32,7 @@ export class AiConsultation {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at!: Date;
 
-  @Column({ type: 'boolean', default: true, nullable: true })
+  @Column({ type: 'boolean', default: false, nullable: true })
   is_deleted!: boolean;
 
   @ManyToOne(() => User, (user) => user.ai_consultations, { nullable: true })

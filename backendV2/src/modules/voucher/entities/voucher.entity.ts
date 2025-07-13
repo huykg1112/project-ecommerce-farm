@@ -14,10 +14,6 @@ export class Voucher {
   @PrimaryGeneratedColumn('uuid')
   voucher_id: string;
 
-  @ManyToOne(() => Promotion)
-  @JoinColumn({ name: 'promotion_id' })
-  promotion!: Promotion;
-
   @Column({ length: 50, unique: true })
   voucher_code!: string;
 
@@ -47,6 +43,9 @@ export class Voucher {
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at: Date;
+
+  @Column({ type: 'boolean', default: false, nullable: false })
+  is_deleted!: boolean;
 
   @ManyToMany(() => User, (user) => user.vouchers)
   users: User[];

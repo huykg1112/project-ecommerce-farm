@@ -1,34 +1,87 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { VoucherService } from './voucher.service';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Request,
+} from '@nestjs/common';
 import { CreateVoucherDto } from './dto/create-voucher.dto';
 import { UpdateVoucherDto } from './dto/update-voucher.dto';
+import { VoucherService } from './voucher.service';
 
 @Controller('voucher')
 export class VoucherController {
   constructor(private readonly voucherService: VoucherService) {}
 
   @Post()
-  create(@Body() createVoucherDto: CreateVoucherDto) {
-    return this.voucherService.create(createVoucherDto);
+  create(@Body() createVoucherDto: CreateVoucherDto, @Request() req: any) {
+    // Get distributor ID from JWT token or request
+    const distributorId = req.user?.user_id || createVoucherDto.distributor_id;
+    return this.voucherService.create(createVoucherDto, distributorId);
   }
 
   @Get()
-  findAll() {
-    return this.voucherService.findAll();
+  findAll(@Query('distributor_id') distributorId?: string) {
+    return this.voucherService.findAll(distributorId);
+  }
+
+  @Get('my-vouchers')
+  findMyVouchers(@Request() req: any) {
+    const distributorId = req.user?.user_id;
+    return this.voucherService.findAll(distributorId);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.voucherService.findOne(+id);
+    return this.voucherService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateVoucherDto: UpdateVoucherDto) {
-    return this.voucherService.update(+id, updateVoucherDto);
+  update(
+    @Param('id') id: string,
+    @Body() updateVoucherDto: UpdateVoucherDto,
+    @Request() req: any,
+  ) {
+    const distributorId = req.user?.user_id;
+    return this.voucherService.update(id, updateVoucherDto, distributorId);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.voucherService.remove(+id);
+  remove(@Param('id') id: string, @Request() req: any) {
+    const distributorId = req.user?.user_id;
+    return this.voucherService.remove(id, distributorId);
+  }
+
+  @Patch(':id/toggle-active')
+  toggleActive(@Param('id') id: string, @Request() req: any) {
+    const distributorId = req.user?.user_id;
+    return this.voucherService.toggleActive(id, distributorId);
+  }
+
+  @Get('code/:code')
+  findByCode(@Param('code') code: string) {
+    return this.voucherService.findByCode(code);
+  }
+
+  @Post(':id/collect')
+  collectVoucher(@Param('id') id: string, @Request() req: any) {
+    const userId = req.user?.user_id;
+    return this.voucherService.collectVoucher(id, userId);
+  }
+
+  @Patch('batch-toggle-status')
+  batchToggleStatus(@Body('ids') ids: string[], @Request() req: any) {
+    const distributorId = req.user?.user_id;
+    return this.voucherService.batchToggleStatus(ids, distributorId);
+  }
+
+  @Delete('batch-delete')
+  batchDelete(@Body('ids') ids: string[], @Request() req: any) {
+    const distributorId = req.user?.user_id;
+    return this.voucherService.batchDelete(ids, distributorId);
   }
 }

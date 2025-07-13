@@ -64,7 +64,11 @@ export class PromotionService {
 
   async findAllByDistributor(distributor_id: string) {
     const promotions = await this.promotionRepository.find({
-      where: { created_by: { user_id: distributor_id } },
+      where: {
+        created_by: { user_id: distributor_id },
+        is_active: true,
+        is_deleted: false,
+      },
       relations: ['created_by', 'batch_products'],
       order: { created_at: 'DESC' },
     });
@@ -73,6 +77,7 @@ export class PromotionService {
 
   async findAll() {
     const promotions = await this.promotionRepository.find({
+      where: { is_deleted: false },
       relations: ['created_by', 'batch_products'],
       order: { created_at: 'DESC' },
     });
@@ -82,10 +87,23 @@ export class PromotionService {
       total: promotions.length,
     };
   }
+  async findActivePromotions() {
+    const promotions = await this.promotionRepository.find({
+      where: { is_active: true, is_deleted: false },
+      relations: ['created_by', 'batch_products'],
+      order: { created_at: 'DESC' },
+    });
+    return {
+      message:
+        'Lấy danh sách chương trình khuyến mãi đang hoạt động thành công',
+      data: promotions,
+      total: promotions.length,
+    };
+  }
 
   async findOne(id: string) {
     const promotion = await this.promotionRepository.findOne({
-      where: { promotion_id: id },
+      where: { promotion_id: id, is_deleted: false },
       relations: ['created_by', 'batch_products'],
     });
     if (!promotion) {
@@ -103,7 +121,7 @@ export class PromotionService {
     distributor_id: string,
   ) {
     const promotion = await this.promotionRepository.findOne({
-      where: { promotion_id: id },
+      where: { promotion_id: id, is_deleted: false },
       relations: ['created_by', 'batch_products'],
     });
     if (!promotion) {
@@ -148,7 +166,7 @@ export class PromotionService {
 
   async remove(id: string, distributor_id: string) {
     const promotion = await this.promotionRepository.findOne({
-      where: { promotion_id: id },
+      where: { promotion_id: id, is_deleted: false },
       relations: ['created_by'],
     });
     if (!promotion) {
@@ -158,6 +176,7 @@ export class PromotionService {
       throw new ForbiddenException('Bạn không có quyền xóa chương trình này');
     }
     promotion.is_active = false;
+    promotion.is_deleted = true; // Đánh dấu là đã xóa
     await this.promotionRepository.save(promotion);
     return {
       message: 'Đã ẩn chương trình khuyến mãi thành công',

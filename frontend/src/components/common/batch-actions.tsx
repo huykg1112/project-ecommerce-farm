@@ -22,9 +22,9 @@ import { memo, useCallback, useState } from "react";
 
 interface BatchActionsProps {
   selectedCount: number;
-  onBatchActivate: () => Promise<void>;
-  onBatchDeactivate: () => Promise<void>;
-  onBatchDelete: () => Promise<void>;
+  onBatchActivate: () => Promise<void | boolean>;
+  onBatchDeactivate: () => Promise<void | boolean>;
+  onBatchDelete: () => Promise<void | boolean>;
   loading?: boolean;
   title?: string;
 }

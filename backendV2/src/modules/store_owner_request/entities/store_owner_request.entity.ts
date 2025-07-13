@@ -43,4 +43,10 @@ export class StoreOwnerRequest {
 
   @Column({ type: 'varchar', length: 255, nullable: true })
   invenstory_img: string;
+
+  @Column({ type: 'boolean', default: false, nullable: false })
+  is_deleted!: boolean;
+
+  @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  created_at!: Date;
 }

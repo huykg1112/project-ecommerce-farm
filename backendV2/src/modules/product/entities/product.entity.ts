@@ -46,6 +46,9 @@ export class Product {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at!: Date;
 
+  @Column({ type: 'boolean', default: false, nullable: false })
+  is_deleted!: boolean;
+
   @Column({ type: 'float', nullable: false, default: 0 })
   unit_product_price: number;
 

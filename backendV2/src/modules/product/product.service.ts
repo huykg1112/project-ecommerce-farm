@@ -57,11 +57,26 @@ export class ProductService {
 
   async findAll() {
     return await this.productRepo.find({
+      where: { is_deleted: false },
       relations: [
         'categories',
         'distributor',
         'product_ingredients',
         'product_ingredients.ingredient',
+      ],
+      order: { created_at: 'DESC' },
+    });
+  }
+  async findAllForUser() {
+    return await this.productRepo.find({
+      where: { is_active: true, is_deleted: false },
+      relations: [
+        'categories',
+        'distributor',
+        'product_ingredients',
+        'product_ingredients.ingredient',
+        'productDiseases',
+        'productDiseases.disease',
       ],
       order: { created_at: 'DESC' },
     });
@@ -81,7 +96,22 @@ export class ProductService {
 
   async findOne(product_id: string) {
     const product = await this.productRepo.findOne({
-      where: { product_id },
+      where: { product_id, is_deleted: false },
+      relations: [
+        'categories',
+        'distributor',
+        'product_ingredients',
+        'product_ingredients.ingredient',
+        'productDiseases',
+        'productDiseases.disease',
+      ],
+    });
+    if (!product) throw new NotFoundException('Không tìm thấy sản phẩm');
+    return product;
+  }
+  async findOneForUser(product_id: string) {
+    const product = await this.productRepo.findOne({
+      where: { product_id, is_active: true, is_deleted: false },
       relations: [
         'categories',
         'distributor',
@@ -128,7 +158,7 @@ export class ProductService {
 
   async remove(product_id: string, user: User) {
     const product = await this.productRepo.findOne({
-      where: { product_id },
+      where: { product_id, is_deleted: false },
       relations: ['distributor'],
     });
     if (!product) throw new NotFoundException('Không tìm thấy sản phẩm');

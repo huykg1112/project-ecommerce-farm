@@ -44,4 +44,7 @@ export class Review {
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at!: Date;
+
+  @Column({ type: 'boolean', default: false, nullable: false })
+  is_deleted!: boolean;
 }

@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 
 import { Checkbox } from "@/components/ui/checkbox";
-import { memo, useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useMemo } from "react";
 import DataTable, { TableColumn } from "react-data-table-component";
 import { customStyles } from "../user-statistics/user-data-table";
 
@@ -46,25 +46,11 @@ export const CategoryTable = memo<CategoryTableProps>(
     onDeleteCategory,
     loading = false,
   }) => {
-    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-
     const isAllSelected = useMemo(() => {
       return (
         categories.length > 0 && selectedCategories.length === categories.length
       );
     }, [categories.length, selectedCategories.length]);
-
-    const toggleRowExpansion = useCallback((categoryId: string) => {
-      setExpandedRows((prev) => {
-        const newSet = new Set(prev);
-        if (newSet.has(categoryId)) {
-          newSet.delete(categoryId);
-        } else {
-          newSet.add(categoryId);
-        }
-        return newSet;
-      });
-    }, []);
 
     const getStatusBadge = useCallback((isActive: boolean) => {
       return isActive
@@ -224,7 +210,6 @@ export const CategoryTable = memo<CategoryTableProps>(
           columns={columns as TableColumn<Category>[]}
           data={categories}
           customStyles={customStyles}
-          onRowClicked={(row: Category) => toggleRowExpansion(row.id)}
           noDataComponent={
             <div className="text-[#44703d] py-4">
               Không có dữ liệu để hiển thị

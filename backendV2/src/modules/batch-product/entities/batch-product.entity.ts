@@ -52,7 +52,7 @@ export class BatchProduct {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at!: Date;
 
-  @Column({ type: 'boolean', default: true, nullable: false })
+  @Column({ type: 'boolean', default: false, nullable: false })
   is_deleted!: boolean;
 
   @ManyToMany(() => ProductType, (productType) => productType.batch_products, {

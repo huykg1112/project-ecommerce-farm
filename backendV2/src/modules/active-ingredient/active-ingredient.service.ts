@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { ProductIngredient } from '../product-ingredient/entities/product-ingredient.entity';
@@ -19,6 +23,15 @@ export class ActiveIngredientService {
   ) {}
 
   async create(dto: CreateActiveIngredientDto) {
+    // Kiểm tra xem hoạt chất đã tồn tại chưa
+    const existingIngredient = await this.ingredientRepo.findOne({
+      where: { ingredient_name: dto.ingredient_name, is_deleted: false },
+    });
+    if (existingIngredient) {
+      throw new ConflictException('Hoạt chất đã tồn tại');
+    }
+    console.log('Creating active ingredient with data:', dto);
+
     const entity = this.ingredientRepo.create(dto);
     return await this.ingredientRepo.save(entity);
   }

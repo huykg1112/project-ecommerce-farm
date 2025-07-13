@@ -152,15 +152,34 @@ export interface Invenstory {
   batch_products?: BatchProduct[]; // Optional list of batch products in the inventory
 }
 
+export interface Voucher {
+  voucher_id: string;
+  voucher_code: string;
+  promotion_id: string;
+  promotion?: Promotion;
+  distributor_id: string;
+  distributor?: User;
+  min_order_value?: number;
+  max_discount_value?: number;
+  usage_limit?: number;
+  used_count: number;
+  start_date?: Date;
+  end_date?: Date;
+  is_active: boolean;
+  created_at: Date;
+  updated_at: Date;
+  is_deleted: boolean;
+}
+
 export interface Promotion {
   promotion_id: string;
-  created_by: User;
   promotion_name: string;
-  description: string;
+  description?: string;
+  discount_type: "PERCENTAGE" | "FIXED_AMOUNT";
   discount_value: number;
-  start_date: Date;
-  end_date: Date;
   is_active: boolean;
+  created_at: Date;
+  updated_at: Date;
 }
 
 export interface Pagination {

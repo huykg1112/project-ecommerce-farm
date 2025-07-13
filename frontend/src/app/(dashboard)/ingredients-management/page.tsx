@@ -3,18 +3,17 @@
 import { BatchActions } from "@/components/common/batch-actions";
 import { DeleteModal } from "@/components/common/delete-modal";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useIngredient } from "@/hooks/use-ingredient";
 import { useToast } from "@/hooks/use-toast";
 import { ActiveIngredientFormData } from "@/lib_dashboard/store/active-ingredient-store";
 import { useAtom } from "jotai";
-import { Eye, EyeOff, Package, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useCallback, useEffect, useMemo } from "react";
 
 import { IngredientsFilters } from "@/components/(dashboard)/ingredients/ingredients-filters";
 import { IngredientFormModal } from "@/components/(dashboard)/ingredients/ingredients-form-modal";
-import { IngredientsPagination } from "@/components/(dashboard)/ingredients/ingredients-pagination";
 import { IngredientsTable } from "@/components/(dashboard)/ingredients/ingredients-table";
+import { StatisticsCards } from "@/components/common/statistics-cards";
 import { activeIngredientsFormDataAtom } from "@/lib_dashboard/store/active-ingredient-store";
 
 export default function IngredientsPage() {
@@ -278,56 +277,14 @@ export default function IngredientsPage() {
       </header>
 
       {/* Statistics Cards */}
-      <div className="grid gap-4 md:grid-cols-3 mb-6">
-        <Card className="card-agricultural">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-[#44703d]">
-              Tổng số hoạt chất
-            </CardTitle>
-            <Package className="h-5 w-5 text-[#74a65d]" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-[#44703d]">
-              {stats.totalIngredients}
-            </div>
-            <p className="text-xs text-[#74a65d]">
-              Tất cả hoạt chất trong hệ thống
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="card-agricultural">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-[#44703d]">
-              Đang hoạt động
-            </CardTitle>
-            <Eye className="h-5 w-5 text-[#90c577]" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-[#44703d]">
-              {stats.activeIngredients}
-            </div>
-            <p className="text-xs text-[#74a65d]">
-              Hoạt chất hiển thị công khai
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="card-agricultural">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-[#44703d]">
-              Đã tắt
-            </CardTitle>
-            <EyeOff className="h-5 w-5 text-red-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-[#44703d]">
-              {stats.inactiveIngredients}
-            </div>
-            <p className="text-xs text-[#74a65d]">Hoạt chất tạm thời ẩn</p>
-          </CardContent>
-        </Card>
-      </div>
+      <StatisticsCards
+        stats={{
+          total: stats.totalIngredients,
+          active: stats.activeIngredients,
+          inactive: stats.inactiveIngredients,
+        }}
+        title="hoạt chất"
+      />
 
       {/* Filters */}
       <div className="mb-6">
@@ -367,18 +324,6 @@ export default function IngredientsPage() {
           onDeleteIngredient={handleDeleteIngredient}
         />
       </div>
-
-      {/* Pagination */}
-      {pagination.totalPages > 1 && (
-        <IngredientsPagination
-          currentPage={pagination.currentPage}
-          totalPages={pagination.totalPages}
-          totalItems={pagination.total}
-          itemsPerPage={pagination.itemsPerPage}
-          onPageChange={handlePageChange}
-          onItemsPerPageChange={handleItemsPerPageChange}
-        />
-      )}
 
       {/* Modals */}
       <IngredientFormModal

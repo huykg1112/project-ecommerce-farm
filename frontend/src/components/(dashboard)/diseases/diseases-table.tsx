@@ -2,7 +2,6 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,42 +9,40 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
-import type { ActiveIngredient } from "@/types/entities";
-import { Edit, MoreHorizontal, Trash2 } from "lucide-react";
+import { Edit, Lock, MoreHorizontal, Trash2, Unlock } from "lucide-react";
+
+import { Checkbox } from "@/components/ui/checkbox";
+import { DiseaseTableData } from "@/lib_dashboard/types/disease";
 import { memo, useCallback, useMemo, useState } from "react";
 import DataTable, { TableColumn } from "react-data-table-component";
 import { customStyles } from "../user-statistics/user-data-table";
 
-interface IngredientsTableProps {
-  ingredients: ActiveIngredient[];
-  selectedIngredients: string[];
-  onSelectIngredient: (ingredientId: string) => void;
+interface DiseaseTableProps {
+  diseases: DiseaseTableData[];
+  selectedDiseases: string[];
+  onSelectDisease: (diseaseId: string) => void;
   onSelectAll: (checked: boolean) => void;
-  onToggleStatus: (ingredientId: string) => void;
-  onEditIngredient: (ingredientId: string) => void;
-  onDeleteIngredient: (ingredientId: string) => void;
+  onToggleStatus: (diseaseId: string) => void;
+  onEditDisease: (diseaseId: string) => void;
+  onDeleteDisease: (diseaseId: string) => void;
   loading?: boolean;
 }
 
-export const IngredientsTable = memo<IngredientsTableProps>(
+export const DiseaseTable = memo<DiseaseTableProps>(
   ({
-    ingredients,
-    selectedIngredients,
-    onSelectIngredient,
+    diseases,
+    selectedDiseases,
+    onSelectDisease,
     onSelectAll,
     onToggleStatus,
-    onEditIngredient,
-    onDeleteIngredient,
+    onEditDisease,
+    onDeleteDisease,
     loading = false,
   }) => {
     const [itemsPerPage, setItemsPerPage] = useState(10);
-
     const isAllSelected = useMemo(() => {
-      return (
-        ingredients.length > 0 &&
-        selectedIngredients.length === ingredients.length
-      );
-    }, [ingredients.length, selectedIngredients.length]);
+      return diseases.length > 0 && selectedDiseases.length === diseases.length;
+    }, [diseases.length, selectedDiseases.length]);
 
     const getStatusBadge = useCallback((isActive: boolean) => {
       return isActive
@@ -54,22 +51,8 @@ export const IngredientsTable = memo<IngredientsTableProps>(
             variant: "default" as const,
             className: "bg-[#90c577] hover:bg-[#74a65d]",
           }
-        : { label: "Đã tắt", variant: "destructive" as const };
+        : { label: "Đã bị khóa", variant: "destructive" as const };
     }, []);
-
-    const getHazardLevelBadge = useCallback((hazardLevel: string) => {
-      const config = {
-        LOW: { label: "Thấp", className: "bg-green-100 text-green-800" },
-        MEDIUM: {
-          label: "Trung bình",
-          className: "bg-yellow-100 text-yellow-800",
-        },
-        HIGH: { label: "Cao", className: "bg-orange-100 text-orange-800" },
-        VERY_HIGH: { label: "Rất cao", className: "bg-red-100 text-red-800" },
-      };
-      return config[hazardLevel as keyof typeof config] || config.LOW;
-    }, []);
-
     const columns = [
       {
         name: (
@@ -81,56 +64,37 @@ export const IngredientsTable = memo<IngredientsTableProps>(
           />
         ),
         width: "48px",
-        cell: (row: ActiveIngredient) => (
+        cell: (row: DiseaseTableData) => (
           <Checkbox
-            checked={selectedIngredients.includes(row.ingredient_id)}
-            onCheckedChange={() => onSelectIngredient(row.ingredient_id)}
-            aria-label={`Chọn ${row.ingredient_name}`}
+            checked={selectedDiseases.includes(row.disease_id)}
+            onCheckedChange={() => onSelectDisease(row.disease_id)}
+            aria-label={`Chọn ${row.disease_name}`}
             className="data-[state=checked]:bg-[#74a65d] data-[state=checked]:border-[#74a65d]"
           />
         ),
         allowOverflow: true,
       },
       {
-        name: "Tên hoạt chất",
-        selector: (row: ActiveIngredient) => row.ingredient_name,
+        name: "Tên bệnh",
+        selector: (row: DiseaseTableData) => row.disease_name,
         sortable: true,
-        cell: (row: ActiveIngredient) => (
-          <div className="font-semibold text-[#44703d]">
-            {row.ingredient_name}
-          </div>
+        cell: (row: DiseaseTableData) => (
+          <div className="font-semibold text-[#44703d]">{row.disease_name}</div>
         ),
         allowOverflow: true,
       },
       {
         name: "Mô tả",
-        selector: (row: ActiveIngredient) => row.description,
-        cell: (row: ActiveIngredient) => (
-          <div className="text-[#74a65d] max-w-md">
-            <p className="line-clamp-2">{row.description}</p>
-          </div>
+        selector: (row: DiseaseTableData) => row.description,
+        cell: (row: DiseaseTableData) => (
+          <div className="text-[#74a65d] max-w-md">{row.description}</div>
         ),
       },
       {
-        name: "Mức độ nguy hiểm",
-        selector: (row: ActiveIngredient) => row.hazard_level,
-        sortable: true,
-        cell: (row: ActiveIngredient) => {
-          const { label, className } = getHazardLevelBadge(row.hazard_level);
-          return (
-            <span
-              className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${className}`}
-            >
-              {label}
-            </span>
-          );
-        },
-      },
-      {
         name: "Trạng thái",
-        selector: (row: ActiveIngredient) => row.is_active,
+        selector: (row: DiseaseTableData) => row.is_active,
         sortable: true,
-        cell: (row: ActiveIngredient) => {
+        cell: (row: DiseaseTableData) => {
           const { label, variant, className } = getStatusBadge(row.is_active);
           return (
             <Badge variant={variant} className={className}>
@@ -141,18 +105,18 @@ export const IngredientsTable = memo<IngredientsTableProps>(
       },
       {
         name: "Kích hoạt",
-        selector: (row: ActiveIngredient) => row.is_active,
-        cell: (row: ActiveIngredient) => (
+        selector: (row: DiseaseTableData) => row.is_active,
+        cell: (row: DiseaseTableData) => (
           <Switch
             checked={row.is_active}
-            onCheckedChange={() => onToggleStatus(row.ingredient_id)}
+            onCheckedChange={() => onToggleStatus(row.disease_id)}
             className="data-[state=checked]:bg-[#74a65d]"
           />
         ),
       },
       {
         width: "80px",
-        cell: (row: ActiveIngredient) => (
+        cell: (row: DiseaseTableData) => (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -167,18 +131,34 @@ export const IngredientsTable = memo<IngredientsTableProps>(
               className="bg-white border-[#accc8b]"
             >
               <DropdownMenuItem
-                onClick={() => onEditIngredient(row.ingredient_id)}
+                onClick={() => onEditDisease(row.disease_id)}
                 className="hover:bg-[#accc8b]/20 text-[#44703d]"
               >
                 <Edit className="mr-2 h-4 w-4" />
                 Chỉnh sửa
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => onDeleteIngredient(row.ingredient_id)}
+                onClick={() => onToggleStatus(row.disease_id)}
+                className="hover:bg-[#accc8b]/20 text-[#44703d]"
+              >
+                {row.is_active ? (
+                  <>
+                    <Lock className="mr-2 h-4 w-4" />
+                    Khóa bệnh
+                  </>
+                ) : (
+                  <>
+                    <Unlock className="mr-2 h-4 w-4" />
+                    Mở khóa bệnh
+                  </>
+                )}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => onDeleteDisease(row.disease_id)}
                 className="hover:bg-red-50 text-red-600"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                Xóa hoạt chất
+                Xóa bệnh
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -202,8 +182,8 @@ export const IngredientsTable = memo<IngredientsTableProps>(
     return (
       <div className="rounded-lg border border-[#accc8b]/30 bg-white overflow-hidden">
         <DataTable
-          columns={columns as TableColumn<ActiveIngredient>[]}
-          data={ingredients}
+          columns={columns as TableColumn<DiseaseTableData>[]}
+          data={diseases}
           customStyles={customStyles}
           pagination
           paginationPerPage={itemsPerPage}
@@ -225,4 +205,4 @@ export const IngredientsTable = memo<IngredientsTableProps>(
   }
 );
 
-IngredientsTable.displayName = "IngredientsTable";
+DiseaseTable.displayName = "DiseaseTable";
