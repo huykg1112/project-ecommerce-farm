@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
+import { Public } from '@root/src/public.decorator';
 import { ActiveIngredientService } from './active-ingredient.service';
 import { CreateActiveIngredientDto } from './dto/create-active-ingredient.dto';
 import { UpdateActiveIngredientDto } from './dto/update-active-ingredient.dto';
@@ -28,11 +29,13 @@ export class ActiveIngredientController {
     return this.activeIngredientService.create(createActiveIngredientDto);
   }
 
+  @Public()
   @Get()
   findAll() {
     return this.activeIngredientService.findAll();
   }
 
+  @Public()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.activeIngredientService.findOne(id);

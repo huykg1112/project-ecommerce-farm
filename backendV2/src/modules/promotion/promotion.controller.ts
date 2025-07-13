@@ -8,6 +8,7 @@ import {
   Post,
   Req,
 } from '@nestjs/common';
+import { Public } from '@root/src/public.decorator';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
 import { PromotionService } from './promotion.service';
@@ -26,6 +27,7 @@ export class PromotionController {
     return this.promotionService.findAllByDistributor(req.user.user_id);
   }
 
+  @Public()
   @Get()
   findAll() {
     return this.promotionService.findAll();

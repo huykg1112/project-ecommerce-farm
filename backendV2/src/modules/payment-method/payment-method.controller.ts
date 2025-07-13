@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
+import { Public } from '@root/src/public.decorator';
 import { CreatePaymentMethodDto } from './dto/create-payment-method.dto';
 import { UpdatePaymentMethodDto } from './dto/update-payment-method.dto';
 import { PaymentMethodService } from './payment-method.service';
@@ -16,15 +17,22 @@ export class PaymentMethodController {
   constructor(private readonly paymentMethodService: PaymentMethodService) {}
 
   @Post()
-  create(@Body() createPaymentMethodDto: CreatePaymentMethodDto) {
-    return this.paymentMethodService.create(createPaymentMethodDto);
+  createDefaultMethods() {
+    return this.paymentMethodService.createDefaultMethods();
   }
 
+  @Public()
   @Get()
   findAll() {
     return this.paymentMethodService.findAll();
   }
 
+  @Post('create')
+  create(@Body() createPaymentMethodDto: CreatePaymentMethodDto) {
+    return this.paymentMethodService.create(createPaymentMethodDto);
+  }
+
+  @Public()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.paymentMethodService.findOne(id);

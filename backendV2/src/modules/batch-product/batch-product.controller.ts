@@ -8,6 +8,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { Public } from '@root/src/public.decorator';
 import { BatchProductService } from './batch-product.service';
 import { CreateBatchProductDto } from './dto/create-batch-product.dto';
 import { FilterBatchProductDto } from './dto/filter-batch-product.dto';
@@ -22,6 +23,7 @@ export class BatchProductController {
     return this.batchService.create(createBatchDto);
   }
 
+  @Public()
   @Get()
   findAll(@Query() filter: FilterBatchProductDto) {
     return this.batchService.findAll(filter);
@@ -32,6 +34,7 @@ export class BatchProductController {
     return this.batchService.updateBatchs(updateBatchDtos);
   }
 
+  @Public()
   @Get('expiring-soon')
   findExpiringSoon(@Query('days') days: number) {
     return this.batchService.findExpiringSoon(Number(days) || 7);

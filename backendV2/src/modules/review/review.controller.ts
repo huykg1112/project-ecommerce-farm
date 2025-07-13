@@ -1,7 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { ReviewService } from './review.service';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
+import { Public } from '@root/src/public.decorator';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { UpdateReviewDto } from './dto/update-review.dto';
+import { ReviewService } from './review.service';
 
 @Controller('review')
 export class ReviewController {
@@ -12,6 +21,7 @@ export class ReviewController {
     return this.reviewService.create(createReviewDto);
   }
 
+  @Public()
   @Get()
   findAll() {
     return this.reviewService.findAll();

@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
+import { Public } from '@root/src/public.decorator';
 import { DiseaseService } from './disease.service';
 import { CreateDiseaseDto } from './dto/create-disease.dto';
 import { UpdateDiseaseDto } from './dto/update-disease.dto';
@@ -20,6 +21,7 @@ export class DiseaseController {
     return await this.diseaseService.create(createDiseaseDto);
   }
 
+  @Public()
   @Get()
   async findAll() {
     return await this.diseaseService.findAll();
@@ -43,6 +45,7 @@ export class DiseaseController {
     return await this.diseaseService.updateStatuss(ids, is_active);
   }
 
+  @Public()
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return await this.diseaseService.findOne(id);

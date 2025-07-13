@@ -7,6 +7,7 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
+import { Public } from '@root/src/public.decorator';
 import { CreateProductTypeDto } from './dto/create-product-type.dto';
 import { UpdateProductTypeDto } from './dto/update-product-type.dto';
 import { ProductTypeService } from './product-type.service';
@@ -20,11 +21,13 @@ export class ProductTypeController {
     return this.productTypeService.create(createProductTypeDto);
   }
 
+  @Public()
   @Get()
   findAll() {
     return this.productTypeService.findAll();
   }
 
+  @Public()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.productTypeService.findOne(id);

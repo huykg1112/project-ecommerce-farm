@@ -45,6 +45,37 @@ export class PaymentMethodService {
     };
   }
 
+  async createDefaultMethods() {
+    const defaultMethods = [
+      {
+        method_name: PaymentMethodEnum.COD,
+        description: 'Thanh toán khi nhận hàng',
+        is_active: true,
+      },
+      {
+        method_name: PaymentMethodEnum.VNPAY,
+        description: 'Thanh toán trực tuyến qua VNPay',
+        is_active: true,
+      },
+    ];
+
+    const existingMethods = await this.paymentMethodRepository.find();
+    const existingMethodNames = existingMethods.map((m) => m.method_name);
+
+    const newMethods = defaultMethods.filter(
+      (method) => !existingMethodNames.includes(method.method_name),
+    );
+
+    if (newMethods.length > 0) {
+      await this.paymentMethodRepository.save(newMethods);
+    }
+
+    return {
+      message: 'Tạo phương thức thanh toán mặc định thành công',
+      data: newMethods,
+    };
+  }
+
   async findAll() {
     const methods = await this.paymentMethodRepository.find({
       order: { created_at: 'ASC' },

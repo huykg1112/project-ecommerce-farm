@@ -9,6 +9,7 @@ import {
   Query,
   Request,
 } from '@nestjs/common';
+import { Public } from '@root/src/public.decorator';
 import { CreateVoucherDto } from './dto/create-voucher.dto';
 import { UpdateVoucherDto } from './dto/update-voucher.dto';
 import { VoucherService } from './voucher.service';
@@ -24,6 +25,7 @@ export class VoucherController {
     return this.voucherService.create(createVoucherDto, distributorId);
   }
 
+  @Public()
   @Get()
   findAll(@Query('distributor_id') distributorId?: string) {
     return this.voucherService.findAll(distributorId);
@@ -35,6 +37,7 @@ export class VoucherController {
     return this.voucherService.findAll(distributorId);
   }
 
+  @Public()
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.voucherService.findOne(id);
