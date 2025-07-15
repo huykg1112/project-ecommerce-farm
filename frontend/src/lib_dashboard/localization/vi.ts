@@ -79,7 +79,7 @@ export const VI_AGRICULTURAL = {
   },
 
   // Inventory Management
-  inventory: {
+  invenstory: {
     management: "Quản lý kho hàng",
     batchManagement: "Quản lý lô hàng",
     stockLevels: "Mức tồn kho",
@@ -137,6 +137,6 @@ export const VI_AGRICULTURAL = {
     salesTrend: "Xu hướng bán hàng",
     categoryDistribution: "Phân bố theo danh mục",
     monthlyPerformance: "Hiệu suất hàng tháng",
-    inventoryLevels: "Mức tồn kho",
+    invenstoryLevels: "Mức tồn kho",
   },
-}
+};

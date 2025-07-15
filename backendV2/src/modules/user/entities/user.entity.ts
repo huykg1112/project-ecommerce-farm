@@ -53,6 +53,9 @@ export class User {
   @Column({ type: 'varchar', length: 255, nullable: true })
   avatar!: string;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  avatarPublicId?: string; // public_id của ảnh trên Cloudinary
+
   //cccd
   @Column({ type: 'varchar', length: 12, nullable: true })
   cccd!: string;
@@ -132,10 +135,10 @@ export class User {
   vouchers_distributor: Voucher[];
 
   //1 user nếu là distributor thi có thể có 1 invenstory ( cũng là cửa hàng của người đó ) và 1 invenstory chỉ thuộc 1 user là distributor
-  @OneToOne(() => Invenstory, (inventory) => inventory.distributor, {
+  @OneToOne(() => Invenstory, (invenstory) => invenstory.distributor, {
     nullable: true,
   })
-  inventory: Invenstory;
+  invenstory: Invenstory;
 
   // 1 user có 0 hoặc nhiều đơn hàng  order
   @OneToMany(() => Order, (order) => order.user, {

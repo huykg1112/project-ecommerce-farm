@@ -76,4 +76,12 @@ export class InvenstoryService {
     });
     return this.invenstoryRepo.save(invenstory);
   }
+  async updateStatus(id: string, status: boolean) {
+    const invenstory = await this.invenstoryRepo.findOne({
+      where: { invenstory_id: id, is_deleted: false },
+    });
+    if (!invenstory) throw new NotFoundException('Invenstory not found');
+    invenstory.is_active = status;
+    return this.invenstoryRepo.save(invenstory);
+  }
 }

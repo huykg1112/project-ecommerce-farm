@@ -15,25 +15,27 @@ export class Invenstory {
   invenstory_id: string;
 
   // Chủ invenstory (user là distributor)
-  @OneToOne(() => User, (user) => user.inventory)
+  @OneToOne(() => User, (user) => user.invenstory || null, {
+    nullable: true,
+  })
   @JoinColumn({ name: 'distributor_id' })
   distributor: User;
 
   // Tên cửa hàng
-  @Column({ type: 'varchar', length: 255 })
+  @Column({ type: 'varchar', length: 255, nullable: true })
   name: string;
 
   // Giấy phép kinh doanh
-  @Column({ type: 'varchar', length: 255 })
-  business_license: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  business_license?: string;
 
   // Địa chỉ chi tiết
-  @Column({ type: 'varchar', length: 255 })
-  invenstory_address: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  invenstory_address?: string;
 
   // Vĩ độ
   @Column({ type: 'decimal', precision: 9, scale: 6, nullable: true })
-  invenstory_lat: number;
+  invenstory_lat?: number;
 
   // Kinh độ
   @Column({ type: 'decimal', precision: 9, scale: 6, nullable: true })

@@ -14,12 +14,37 @@ export class ManufacturersService {
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
+  async findByName(name: string): Promise<boolean> {
+    const manufacturer = await this.manufacturerRepository.findOne({
+      where: { name, isDeleted: false },
+    });
+    if (!manufacturer) {
+      return false;
+    }
+    return true;
+  }
+
   async create(
     createManufacturerDto: CreateManufacturerDto,
   ): Promise<Manufacturer> {
     const manufacturer = this.manufacturerRepository.create(
       createManufacturerDto,
     );
+    return await this.manufacturerRepository.save(manufacturer);
+  }
+
+  async createWithLogo(
+    createManufacturerDto: CreateManufacturerDto,
+    logoUrl: string | null,
+    publicId: string | null,
+  ): Promise<Manufacturer> {
+    const manufacturerData = {
+      ...createManufacturerDto,
+      logo: logoUrl || undefined,
+      logoPublicId: publicId || undefined,
+    };
+
+    const manufacturer = this.manufacturerRepository.create(manufacturerData);
     return await this.manufacturerRepository.save(manufacturer);
   }
 
@@ -106,6 +131,66 @@ export class ManufacturersService {
       where: { isActive: true },
       order: { name: 'ASC' },
     });
+  }
+
+  async updateManufacturerWithLogo(
+    id: string,
+    updateManufacturerDto: UpdateManufacturerDto,
+    logoUrl: string | null,
+    publicId: string | null,
+  ): Promise<Manufacturer> {
+    const manufacturer = await this.findOne(id);
+
+    Object.assign(manufacturer, updateManufacturerDto);
+    if (logoUrl && publicId) {
+      manufacturer.logo = logoUrl;
+      manufacturer.logoPublicId = publicId;
+    }
+
+    return await this.manufacturerRepository.save(manufacturer);
+  }
+
+  async batchToggleStatus(
+    ids: string[],
+    isActive: boolean,
+  ): Promise<Manufacturer[]> {
+    const manufacturers = await this.manufacturerRepository.findByIds(ids);
+    const manufacturersNoDelete = manufacturers.filter(
+      (manufacturer) => !manufacturer.isDeleted,
+    );
+
+    if (manufacturersNoDelete.length === 0) {
+      throw new NotFoundException('No manufacturers found for the given IDs');
+    }
+
+    manufacturersNoDelete.forEach((manufacturer) => {
+      manufacturer.isActive = isActive;
+    });
+
+    return await this.manufacturerRepository.save(manufacturersNoDelete);
+  }
+
+  async batchDelete(ids: string[]): Promise<void> {
+    const manufacturers = await this.manufacturerRepository.findByIds(ids);
+    const manufacturersNoDelete = manufacturers.filter(
+      (manufacturer) => !manufacturer.isDeleted,
+    );
+    if (manufacturersNoDelete.length === 0) {
+      throw new NotFoundException('No manufacturers found for deletion');
+    }
+    manufacturersNoDelete.forEach((manufacturer) => {
+      manufacturer.isDeleted = true; // Soft delete
+    });
+    await this.manufacturerRepository.save(manufacturersNoDelete);
+  }
+
+  async toggleStatus(id: string): Promise<Manufacturer> {
+    const manufacturer = await this.findOne(id);
+    if (!manufacturer) {
+      throw new NotFoundException(`Manufacturer with id ${id} not found`);
+    }
+    manufacturer.isActive = !manufacturer.isActive; // Toggle status
+    return await this.manufacturerRepository.save(manufacturer);
   }
 
   async getManufacturerWithProductCount(id: string): Promise<any> {

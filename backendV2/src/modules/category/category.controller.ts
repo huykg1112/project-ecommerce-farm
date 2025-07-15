@@ -47,7 +47,6 @@ export class CategoryController {
   ) {
     let imageUrl: string | null = null;
     let publicId: string | null = null;
-    console.log('File received:', file);
 
     const existingCategory = await this.categoriesService.findByName(
       createCategoryDto.name,
@@ -60,7 +59,6 @@ export class CategoryController {
       imageUrl = result.url;
       publicId = result.public_id;
     }
-    console.log('result:', { imageUrl, publicId });
 
     return this.categoriesService.createWithImage(
       createCategoryDto,

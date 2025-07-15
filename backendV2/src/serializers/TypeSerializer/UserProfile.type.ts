@@ -11,11 +11,11 @@ export type AddressType = {
 export type InvenstoryType = {
   invenstory_id: string;
   name: string;
-  business_license: string;
-  invenstory_address: string;
-  invenstory_lat: number;
-  invenstory_lng: number;
-  invenstory_img: string;
+  business_license?: string;
+  invenstory_address?: string;
+  invenstory_lat?: number;
+  invenstory_lng?: number;
+  invenstory_img?: string;
 };
 
 export type UserProfileType = {
@@ -49,5 +49,5 @@ export type DistributorProfileType = {
   role_id: string | undefined;
   role_name: string | undefined;
   addresses: AddressType[];
-  inventory: InvenstoryType;
+  invenstory: InvenstoryType;
 };

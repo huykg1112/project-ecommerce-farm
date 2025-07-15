@@ -139,7 +139,7 @@ export interface Disease {
 
 export interface Invenstory {
   invenstory_id: string;
-  distributor: User; // The distributor (user) who owns the inventory
+  distributor: User; // The distributor (user) who owns the invenstory
   name: string; // Store name
   business_license: string; // Business license number
   invenstory_address: string; // Full address

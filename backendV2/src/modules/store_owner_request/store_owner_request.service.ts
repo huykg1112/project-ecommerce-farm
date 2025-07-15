@@ -104,7 +104,7 @@ export class StoreOwnerRequestService {
         invenstory_img: req.invenstory_img,
       });
       await this.invenstoryRepo.save(invenstory);
-      req.user.inventory = invenstory;
+      req.user.invenstory = invenstory;
       await this.userRepo.save(req.user);
       return {
         message:

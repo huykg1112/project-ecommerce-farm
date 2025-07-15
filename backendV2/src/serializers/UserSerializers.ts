@@ -58,14 +58,14 @@ export class DistributorProfileSerializer {
       role_id: user.role?.role_id,
       role_name: user.role?.role_name,
       addresses: addressList,
-      inventory: {
-        invenstory_id: user.inventory.invenstory_id,
-        name: user.inventory.name,
-        business_license: user.inventory.business_license,
-        invenstory_address: user.inventory.invenstory_address,
-        invenstory_lat: user.inventory.invenstory_lat,
-        invenstory_lng: user.inventory.invenstory_lng,
-        invenstory_img: user.inventory.invenstory_img,
+      invenstory: {
+        invenstory_id: user.invenstory.invenstory_id,
+        name: user.invenstory.name,
+        business_license: user.invenstory?.business_license,
+        invenstory_address: user.invenstory?.invenstory_address,
+        invenstory_lat: user.invenstory?.invenstory_lat,
+        invenstory_lng: user.invenstory.invenstory_lng,
+        invenstory_img: user.invenstory.invenstory_img,
       },
     };
   }

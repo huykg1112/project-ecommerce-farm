@@ -1,7 +1,7 @@
 "use client";
 
 import { LockProductModal } from "@/components/(dashboard)/products/lock-product-modal";
-import { ProductFilters } from "@/components/(dashboard)/products/product-filters";
+import { ProductFilters } from "@/components/(dashboard)/products/product-filterss";
 import { ProductFormModal } from "@/components/(dashboard)/products/product-form-modal";
 import { ProductPagination } from "@/components/(dashboard)/products/product-pagination";
 import { ProductTable } from "@/components/(dashboard)/products/product-table";

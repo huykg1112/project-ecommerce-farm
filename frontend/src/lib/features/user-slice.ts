@@ -145,6 +145,7 @@ export const updateAvatar = createAsyncThunk(
       const response = await userService.updateAvatar(file);
       // Sau khi cập nhật avatar thành công, lấy lại thông tin profile mới
       const updatedProfile = await userService.getProfile();
+      console.log("Updated profile after avatar change:", updatedProfile);
       return updatedProfile;
     } catch (error: any) {
       return rejectWithValue(error.message || "Cập nhật avatar thất bại");

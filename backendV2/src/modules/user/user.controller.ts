@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -10,7 +11,11 @@ import {
   Query,
   Req,
   UnauthorizedException,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { CloudinaryService } from '@root/src/cloudinary/cloudinary.service';
 import { Public } from '@root/src/public.decorator';
 import {
   DistributorProfileType,
@@ -25,22 +30,27 @@ import { UserService } from './user.service';
 // @UseGuards(JwtAuthGuard)
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly cloudinaryService: CloudinaryService,
+  ) {}
 
   @Get()
-  getUsers(@Query() filters: UserFiltersDto) {
-    return this.userService.getUsers(filters);
+  async getUsers(@Query() filters: UserFiltersDto) {
+    return await this.userService.getUsers(filters);
   }
 
   @Public()
   @Post('register')
-  register(@Body() registerUserDto: RegisterUserDto) {
-    console.log(registerUserDto);
-    return this.userService.registerUser(registerUserDto);
+  async register(@Body() registerUserDto: RegisterUserDto) {
+    // console.log(registerUserDto);
+    return await this.userService.registerUser(registerUserDto);
   }
 
   @Get('profile')
-  getProfile(@Req() req): Promise<UserProfileType | DistributorProfileType> {
+  async getProfile(
+    @Req() req,
+  ): Promise<UserProfileType | DistributorProfileType> {
     if (!req.user) {
       throw new UnauthorizedException('Vui lòng đăng nhập');
     }
@@ -48,7 +58,9 @@ export class UserController {
     if (!req.user.user_id) {
       throw new UnauthorizedException('Vui lòng đăng nhập');
     }
-    return this.userService.getProfile(req.user.user_id);
+    const profile = await this.userService.getProfile(req.user.user_id);
+    // console.log('Profile:', profile);
+    return profile;
   }
 
   @Get('findOne')
@@ -57,46 +69,98 @@ export class UserController {
   }
 
   @Put('updateProfile')
-  update(@Body() updateProfileDto: UpdateProfileDto, @Req() req) {
+  async update(@Body() updateProfileDto: UpdateProfileDto, @Req() req) {
     // console.log(updateProfileDto);
-    return this.userService.updateProfile(req.user.user_id, updateProfileDto);
+    return await this.userService.updateProfile(
+      req.user.user_id,
+      updateProfileDto,
+    );
   }
 
   @Patch('changePassword')
-  changePassword(@Body() changePasswordDto: ChangePasswordDto, @Req() req) {
-    console.log(changePasswordDto);
-    return this.userService.changePassword(req.user.user_id, changePasswordDto);
+  async changePassword(
+    @Body() changePasswordDto: ChangePasswordDto,
+    @Req() req,
+  ) {
+    // console.log(changePasswordDto);
+    return await this.userService.changePassword(
+      req.user.user_id,
+      changePasswordDto,
+    );
+  }
+
+  @Post('avatar')
+  @UseInterceptors(
+    FileInterceptor('image', {
+      fileFilter: (req, file, cb) => {
+        if (!file.mimetype.match(/image\/(jpg|jpeg|png|gif)$/)) {
+          return cb(
+            new BadRequestException('Only image files are allowed'),
+            false,
+          );
+        }
+        cb(null, true);
+      },
+      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    }),
+  )
+  async uploadAvatar(@Req() req, @UploadedFile() file: Express.Multer.File) {
+    // console.log('File received:', file);
+    const userId = req.user.id;
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+
+    try {
+      const result = await this.cloudinaryService.uploadImage(file);
+      if (!result || !result.url || !result.public_id) {
+        throw new BadRequestException(
+          'Failed to upload image to cloud storage',
+        );
+      }
+
+      const updatedUser = await this.userService.updateAvatar(
+        userId,
+        result.url,
+        result.public_id,
+      );
+      return {
+        message: 'Avatar updated successfully',
+        avatar: updatedUser.avatar,
+      };
+    } catch (error) {
+      throw new BadRequestException(error.message || 'Failed to upload avatar');
+    }
   }
 
   //management user
 
   @Get('findAll')
-  findAll() {
-    return this.userService.findAllUsers();
+  async findAll() {
+    return await this.userService.findAllUsers();
   }
 
   @Put('changeRole')
-  changeRole(@Body() body: { user_id: string; roleId: string }) {
-    return this.userService.changeRole(body.user_id, body.roleId);
+  async changeRole(@Body() body: { user_id: string; roleId: string }) {
+    return await this.userService.changeRole(body.user_id, body.roleId);
   }
 
   @Put('updateUser/:id')
-  updateUser(
+  async updateUser(
     @Body() updateProfileDto: UpdateProfileDto,
     @Param('id') id: string,
   ) {
-    console.log('updateProfileDto', updateProfileDto);
-    return this.userService.updateProfile(id, updateProfileDto);
+    return await this.userService.updateProfile(id, updateProfileDto);
   }
 
   @Put('updateUserStatus/:id')
-  updateUserStatus(@Param('id') id: string) {
-    return this.userService.updateUserStatus(id);
+  async updateUserStatus(@Param('id') id: string) {
+    return await this.userService.updateUserStatus(id);
   }
 
   @Delete('deleteUser/:id')
-  deleteUser(@Param('id') id: string) {
-    return this.userService.deleteUser(id);
+  async deleteUser(@Param('id') id: string) {
+    return await this.userService.deleteUser(id);
   }
 
   /*

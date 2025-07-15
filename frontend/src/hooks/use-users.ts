@@ -270,6 +270,7 @@ export const useUserForm = () => {
 
   const updateUser = useCallback(async () => {
     if (!formData.user_id) return false;
+    console.log("Updating user with data:", formData);
 
     try {
       await userServiceManagement.updateUser(formData.user_id, {

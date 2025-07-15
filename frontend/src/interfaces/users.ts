@@ -1,6 +1,6 @@
+import { Invenstory } from "@/types/entities";
 import { CartItem } from "./cart_items";
 import { FavoriteProduct } from "./favorite_products";
-import { Inventory } from "./inventorys";
 import { Product } from "./products";
 import { Role } from "./roles";
 import { Token } from "./tokens";
@@ -24,7 +24,7 @@ export interface User {
   favorites?: FavoriteProduct[];
   token?: Token;
   products?: Product[];
-  inventory?: Inventory;
+  inventory?: Invenstory;
 }
 
 export interface UserAddress {

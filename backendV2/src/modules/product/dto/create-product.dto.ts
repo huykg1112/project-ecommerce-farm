@@ -35,4 +35,8 @@ export class CreateProductDto {
   @IsOptional()
   @IsBoolean()
   is_active?: boolean;
+
+  @IsOptional()
+  @IsString()
+  manufacturer_id?: string;
 }

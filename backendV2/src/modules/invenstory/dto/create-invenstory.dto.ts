@@ -5,16 +5,20 @@ export class CreateInvenstoryDto {
   name: string;
 
   @IsString()
-  business_license: string;
+  @IsOptional()
+  business_license?: string;
 
   @IsString()
-  invenstory_address: string;
+  @IsOptional()
+  invenstory_address?: string;
 
   @IsNumber()
-  invenstory_lat: number;
+  @IsOptional()
+  invenstory_lat?: number;
 
   @IsNumber()
-  invenstory_lng: number;
+  @IsOptional()
+  invenstory_lng?: number;
 
   @IsOptional()
   @IsString()

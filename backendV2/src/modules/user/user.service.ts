@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import * as bcrypt from 'bcrypt';
 import { ILike, Repository } from 'typeorm';
 
+import { CloudinaryService } from '@root/src/cloudinary/cloudinary.service';
 import {
   DistributorProfileType,
   UserProfileType,
@@ -18,6 +19,8 @@ import {
 } from '@root/src/serializers/UserSerializers';
 import { PaginatedResponse } from '@root/src/types/paginatedResponse';
 import { AddressService } from '../address/address.service';
+import { CreateInvenstoryDto } from '../invenstory/dto/create-invenstory.dto';
+import { InvenstoryService } from '../invenstory/invenstory.service';
 import { RoleService } from '../role/role.service';
 import { TokenService } from '../token/token.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
@@ -36,6 +39,8 @@ export class UserService {
     public readonly tokenService: TokenService,
     public readonly rolesService: RoleService,
     private readonly addressService: AddressService,
+    public readonly invenstoryService: InvenstoryService,
+    private readonly cloudinaryService: CloudinaryService,
   ) {
     this.saltRounds = Number(
       this.configService.get<number>('BCRYPT_SALT_ROUNDS') ?? 10,
@@ -73,7 +78,7 @@ export class UserService {
   async findUserById(id: string): Promise<User | null> {
     return this.userRepository.findOne({
       where: { user_id: id, is_deleted: false },
-      relations: ['role', 'addresses', 'inventory'],
+      relations: ['role', 'addresses', 'invenstory'],
       order: { addresses: { is_default: 'DESC', created_at: 'DESC' } },
     });
   }
@@ -191,17 +196,21 @@ export class UserService {
       }
     }
 
-    if (updateProfileDto.role_name) {
+    const updatedUser = await this.saveUser(user);
+    if (
+      updateProfileDto.role_name &&
+      updateProfileDto.role_name !== user.role.role_name
+    ) {
+      // Nếu có thay đổi vai trò thì gọi hàm changeRole
       const role = await this.rolesService.findRoleByName(
         updateProfileDto.role_name,
       );
       if (!role) {
         throw new NotFoundException('Vai trò không tồn tại');
       }
-      user.role = role;
+      await this.changeRole(updatedUser.user_id, role.role_id);
     }
-    const updatedUser = await this.saveUser(user);
-    console.log('updatedUser', updatedUser);
+
     // Lấy lại user với relations để trả về đúng dữ liệu
     const userWithRelations = await this.findUserById(updatedUser.user_id);
     if (!userWithRelations) {
@@ -289,7 +298,43 @@ export class UserService {
     if (!role) {
       throw new NotFoundException('Vai trò không tồn tại');
     }
+    // Kiểm tra nếu người dùng đang là Distributor và vai trò mới không phải Distributor
+    if (role.role_name !== 'Client') {
+      if (!user.invenstory) {
+        const userAddress = user.addresses.find(
+          (address) => address.is_default,
+        );
+        const newInvenstory: CreateInvenstoryDto = {
+          distributor_id: user.user_id,
+          name: user.full_name + "'s Store",
+          invenstory_address: userAddress?.address_detail,
+          invenstory_lat: userAddress?.latitude,
+          invenstory_lng: userAddress?.longitude,
+        };
+        const createdInvenstory =
+          await this.invenstoryService.create(newInvenstory);
+        user.invenstory = createdInvenstory;
+      } else {
+        // Nếu đã có invenstory thì không cần tạo mới mà chuyển is_active sang true
+        user.invenstory.is_active = true;
+        user.invenstory.distributor = user;
+        await this.invenstoryService.updateStatus(
+          user.invenstory.invenstory_id,
+          true,
+        );
+      }
+    } else {
+      // Nếu đổi về Client thì cần tắt invenstory
+      if (user.invenstory) {
+        user.invenstory.is_active = false;
+        await this.invenstoryService.updateStatus(
+          user.invenstory.invenstory_id,
+          false,
+        );
+      }
+    }
     user.role = role;
+    // console.log('Changing role for user:', user);
     await this.saveUser(user);
     return { message: 'Đổi vai trò thành công' };
   }
@@ -340,5 +385,36 @@ export class UserService {
     user.is_deleted = true; // Đánh dấu là đã xóa
     await this.saveUser(user);
     return { message: 'Xóa người dùng thành công' };
+  }
+
+  async updateAvatar(
+    id: string,
+    avatarUrl: string,
+    publicId: string,
+  ): Promise<User> {
+    if (!avatarUrl || !publicId) {
+      throw new BadRequestException('Avatar URL and Public ID are required');
+    }
+
+    const user = await this.userRepository.findOne({ where: { user_id: id } });
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    try {
+      // Xóa avatar cũ nếu có
+      if (user.avatarPublicId) {
+        await this.cloudinaryService.deleteImage(user.avatarPublicId);
+      }
+
+      // Cập nhật thông tin avatar mới
+      user.avatar = avatarUrl;
+      user.avatarPublicId = publicId;
+      return await this.userRepository.save(user);
+    } catch (error) {
+      throw new BadRequestException(
+        'Failed to update avatar: ' + error.message,
+      );
+    }
   }
 }
