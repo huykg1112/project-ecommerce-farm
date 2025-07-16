@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import { IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class CreateStoreOwnerRequestDto {
@@ -15,9 +16,11 @@ export class CreateStoreOwnerRequestDto {
   @IsString()
   invenstory_address: string;
 
+  @Type(() => Number)
   @IsNumber()
   invenstory_lat: number;
 
+  @Type(() => Number)
   @IsNumber()
   invenstory_lng: number;
 

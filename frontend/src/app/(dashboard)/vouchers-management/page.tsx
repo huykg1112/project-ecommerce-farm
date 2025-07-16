@@ -1,21 +1,27 @@
 "use client";
 
+import { VoucherFilters } from "@/components/(dashboard)/vouchers/voucher-filters";
+import { VoucherFormModal } from "@/components/(dashboard)/vouchers/voucher-form-modal";
 import { VoucherTable } from "@/components/(dashboard)/vouchers/voucher-table";
 import { BatchActions } from "@/components/common/batch-actions";
 import { DeleteModal } from "@/components/common/delete-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { voucherService } from "@/lib_dashboard/services/voucher-service";
 import {
+  UpdateVoucherRequest,
+  voucherService,
+} from "@/lib_dashboard/services/voucher-service";
+import {
+  resetVoucherFormAtom,
   selectedVouchersAtom,
+  VoucherFormData,
   voucherFormDataAtom,
   vouchersDataAtom,
   vouchersLoadingAtom,
 } from "@/lib_dashboard/store/voucher-store";
-import { useAtom } from "jotai";
-import { Gift, Plus, Search, Ticket } from "lucide-react";
+import { useAtom, useSetAtom } from "jotai";
+import { Gift, Plus, Ticket } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 export default function VouchersManagementPage() {
@@ -24,11 +30,14 @@ export default function VouchersManagementPage() {
   const [loading, setLoading] = useAtom(vouchersLoadingAtom);
   const [selectedVouchers, setSelectedVouchers] = useAtom(selectedVouchersAtom);
   const [formData, setFormData] = useAtom(voucherFormDataAtom);
+  const resetFormData = useSetAtom(resetVoucherFormAtom);
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [opentModal, setOpenModal] = useState(false);
   const [selectedVoucherId, setSelectedVoucherId] = useState("");
+  const [typeSubmit, setTypeSubmit] = useState<"create" | "update">("create");
 
   // Fetch vouchers
   const fetchVouchers = useCallback(async () => {
@@ -37,11 +46,6 @@ export default function VouchersManagementPage() {
       const data = await voucherService.getMyVouchers();
       setVouchers(data);
     } catch (error) {
-      toast({
-        title: "Lỗi",
-        description: "Không thể tải danh sách voucher",
-        variant: "destructive",
-      });
     } finally {
       setLoading(false);
     }
@@ -53,16 +57,18 @@ export default function VouchersManagementPage() {
 
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
-      filtered = filtered.filter(
-        (voucher) =>
-          voucher.voucher_code.toLowerCase().includes(search) ||
-          voucher.promotion?.promotion_name.toLowerCase().includes(search)
+      filtered = filtered.filter((voucher) =>
+        voucher.voucher_code.toLowerCase().includes(search)
       );
     }
 
     if (statusFilter) {
       filtered = filtered.filter((voucher) =>
-        statusFilter === "active" ? voucher.is_active : !voucher.is_active
+        statusFilter === "all"
+          ? true
+          : statusFilter === "active"
+          ? voucher.is_active
+          : !voucher.is_active
       );
     }
 
@@ -96,21 +102,10 @@ export default function VouchersManagementPage() {
       try {
         await voucherService.toggleVoucherStatus(voucherId);
         await fetchVouchers();
-      } catch (error) {
-        toast({
-          title: "Lỗi",
-          description: "Không thể cập nhật trạng thái voucher",
-          variant: "destructive",
-        });
-      }
+      } catch (error) {}
     },
     [fetchVouchers, toast]
   );
-
-  const handleEditVoucher = useCallback((voucherId: string) => {
-    // Open edit modal
-    console.log("Edit voucher:", voucherId);
-  }, []);
 
   const handleDeleteVoucher = useCallback((voucherId: string) => {
     setSelectedVoucherId(voucherId);
@@ -121,17 +116,7 @@ export default function VouchersManagementPage() {
     try {
       await voucherService.deleteVoucher(selectedVoucherId);
       await fetchVouchers();
-      toast({
-        title: "Thành công",
-        description: "Xóa voucher thành công",
-      });
-    } catch (error) {
-      toast({
-        title: "Lỗi",
-        description: "Không thể xóa voucher",
-        variant: "destructive",
-      });
-    }
+    } catch (error) {}
     setDeleteModalOpen(false);
     setSelectedVoucherId("");
   }, [selectedVoucherId, fetchVouchers, toast]);
@@ -142,13 +127,7 @@ export default function VouchersManagementPage() {
       await voucherService.batchToggleStatus(selectedVouchers);
       await fetchVouchers();
       setSelectedVouchers([]);
-    } catch (error) {
-      toast({
-        title: "Lỗi",
-        description: "Không thể kích hoạt voucher",
-        variant: "destructive",
-      });
-    }
+    } catch (error) {}
   }, [selectedVouchers, fetchVouchers, setSelectedVouchers, toast]);
 
   const handleBatchDeactivate = useCallback(async () => {
@@ -156,13 +135,7 @@ export default function VouchersManagementPage() {
       await voucherService.batchToggleStatus(selectedVouchers);
       await fetchVouchers();
       setSelectedVouchers([]);
-    } catch (error) {
-      toast({
-        title: "Lỗi",
-        description: "Không thể tắt voucher",
-        variant: "destructive",
-      });
-    }
+    } catch (error) {}
   }, [selectedVouchers, fetchVouchers, setSelectedVouchers, toast]);
 
   const handleBatchDelete = useCallback(async () => {
@@ -170,13 +143,7 @@ export default function VouchersManagementPage() {
       await voucherService.batchDelete(selectedVouchers);
       await fetchVouchers();
       setSelectedVouchers([]);
-    } catch (error) {
-      toast({
-        title: "Lỗi",
-        description: "Không thể xóa voucher",
-        variant: "destructive",
-      });
-    }
+    } catch (error) {}
   }, [selectedVouchers, fetchVouchers, setSelectedVouchers, toast]);
 
   // Statistics
@@ -195,17 +162,92 @@ export default function VouchersManagementPage() {
     return voucher?.voucher_code || "";
   }, [vouchers, selectedVoucherId]);
 
+  const handleFormChange = useCallback(
+    (
+      field: keyof VoucherFormData,
+      value: string | number | boolean | Date | null
+    ) => {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+    },
+    [setFormData]
+  );
+
+  const handleSubmitForm = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      try {
+        if (typeSubmit === "update") {
+          const dataUpdate: UpdateVoucherRequest = {
+            voucher_code: formData.voucher_code,
+            min_order_value: formData.min_order_value,
+            max_discount_value: formData.max_discount_value,
+            usage_limit: formData.usage_limit,
+            start_date: formData.start_date,
+            end_date: formData.end_date,
+            is_active: formData.is_active,
+          };
+          await voucherService.updateVoucher(selectedVoucherId, dataUpdate);
+        } else {
+          await voucherService.createVoucher(formData);
+        }
+        await fetchVouchers();
+      } catch (error) {}
+      setTypeSubmit("create");
+      resetFormData();
+      setOpenModal(false);
+      setSelectedVoucherId("");
+      setDeleteModalOpen(false);
+    },
+    [formData, fetchVouchers, setFormData]
+  );
+
+  const handleOpenModalCreate = useCallback(() => {
+    setOpenModal(true);
+    setTypeSubmit("create");
+  }, []);
+
+  const handleOpenModalUpdate = useCallback(
+    (voucherId: string) => {
+      setSelectedVoucherId(voucherId);
+      setTypeSubmit("update");
+      const voucher = vouchers.find((v) => v.voucher_id === voucherId);
+      if (voucher) {
+        setFormData({
+          voucher_code: voucher.voucher_code,
+          min_order_value: voucher.min_order_value,
+          max_discount_value: voucher.max_discount_value,
+          usage_limit: voucher.usage_limit,
+          start_date: voucher.start_date,
+          end_date: voucher.end_date,
+          is_active: voucher.is_active,
+          distributor_id: voucher.distributor_id || "",
+        });
+      }
+      setOpenModal(true);
+    },
+    [vouchers, setFormData]
+  );
+
+  const handleCloseModal = useCallback(() => {
+    setOpenModal(false);
+    resetFormData();
+  }, [resetFormData]);
+
   useEffect(() => {
     fetchVouchers();
-  }, [fetchVouchers]);
+    resetFormData();
+    setOpenModal(false);
+    setSelectedVoucherId("");
+    setDeleteModalOpen(false);
+  }, [fetchVouchers, resetFormData]);
 
   return (
-    <section className="p-4 md:p-6">
+    <section className="p-4 md:p-6 gap-4 flex flex-col">
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
         <h1 className="text-2xl font-bold text-[#44703d]">Quản lý Voucher</h1>
         <Button
           className="bg-[#90c577] hover:bg-[#74a65d] text-white"
-          onClick={() => console.log("Add voucher")}
+          onClick={handleOpenModalCreate}
         >
           <Plus className="h-4 w-4 mr-2" />
           Thêm voucher
@@ -275,7 +317,7 @@ export default function VouchersManagementPage() {
         </Card>
       </div>
 
-      {/* Filters */}
+      {/* Filters
       <div className="mb-6 flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#74a65d]" />
@@ -291,11 +333,22 @@ export default function VouchersManagementPage() {
           onChange={(e) => setStatusFilter(e.target.value)}
           className="px-3 py-2 border border-[#90c577] rounded-md focus:outline-none focus:ring-2 focus:ring-[#74a65d] bg-white"
         >
-          <option value="">Tất cả trạng thái</option>
+          <option value="all">Tất cả trạng thái</option>
           <option value="active">Đang hoạt động</option>
           <option value="inactive">Đã tắt</option>
         </select>
-      </div>
+      </div> */}
+
+      <VoucherFilters
+        search={searchTerm}
+        status={statusFilter}
+        onSearchChange={setSearchTerm}
+        onStatusChange={setStatusFilter}
+        onReset={() => {
+          setSearchTerm("");
+          setStatusFilter("all");
+        }}
+      />
 
       {/* Batch Actions */}
       {selectedVouchers.length > 0 && (
@@ -317,9 +370,21 @@ export default function VouchersManagementPage() {
         onSelectVoucher={toggleVoucherSelection}
         onSelectAll={toggleSelectAll}
         onToggleStatus={handleToggleStatus}
-        onEditVoucher={handleEditVoucher}
+        onEditVoucher={handleOpenModalUpdate}
         onDeleteVoucher={handleDeleteVoucher}
         loading={loading}
+      />
+
+      {/* Add/Edit Voucher Modal */}
+      <VoucherFormModal
+        open={opentModal}
+        onClose={handleCloseModal}
+        onSubmit={handleSubmitForm}
+        formData={formData}
+        onUpdateFormData={handleFormChange}
+        title="Chỉnh sửa voucher"
+        submitText="Lưu"
+        isEdit
       />
 
       {/* Delete Modal */}

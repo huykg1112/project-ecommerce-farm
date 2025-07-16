@@ -39,8 +39,10 @@ export const authService = {
     if (isClient) {
       deleteCookie("access_token");
       deleteCookie("refresh_token");
+      deleteCookie("user_id");
       setCookie("access_token", result.access_token);
       setCookie("refresh_token", result.refresh_token);
+      setCookie("user_id", result.user_id);
     }
 
     return result;
@@ -86,6 +88,7 @@ export const authService = {
       if (isClient) {
         deleteCookie("access_token");
         deleteCookie("refresh_token");
+        deleteCookie("user_id");
         localStorage.removeItem("Authorization");
         localStorage.removeItem("wishlist");
       }
@@ -96,6 +99,7 @@ export const authService = {
       if (isClient) {
         deleteCookie("access_token");
         deleteCookie("refresh_token");
+        deleteCookie("user_id");
         localStorage.removeItem("Authorization");
         localStorage.removeItem("wishlist");
       }
@@ -182,6 +186,7 @@ export const authService = {
     if (isClient) {
       setCookie("access_token", accessToken);
       setCookie("refresh_token", refreshToken);
+      setCookie("user_id", ""); // Cần lấy user_id từ response nếu có
     }
   },
 

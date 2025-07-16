@@ -230,7 +230,8 @@ export const filteredProductsAtom = atom((get) => {
   // Distributor filter
   if (filters.distributor_id) {
     filtered = filtered.filter(
-      (product) => product.distributor?.user_id === filters.distributor_id
+      (product) =>
+        product.distributor?.distributor_id === filters.distributor_id
     );
   }
 

@@ -12,12 +12,11 @@ export interface VoucherFilters {
 export interface VoucherFormData {
   voucher_id?: string;
   voucher_code: string;
-  promotion_id: string;
   min_order_value?: number;
   max_discount_value?: number;
   usage_limit?: number;
-  start_date?: string;
-  end_date?: string;
+  start_date?: Date | null;
+  end_date?: Date | null;
   is_active: boolean;
   distributor_id: string;
 }
@@ -51,12 +50,11 @@ export const selectedVouchersAtom = atom<string[]>([]);
 // Form state for add/edit voucher
 export const voucherFormDataAtom = atom<VoucherFormData>({
   voucher_code: "",
-  promotion_id: "",
   min_order_value: 0,
   max_discount_value: 0,
   usage_limit: 1,
-  start_date: "",
-  end_date: "",
+  start_date: null,
+  end_date: null,
   is_active: true,
   distributor_id: "",
 });
@@ -71,12 +69,11 @@ export const selectedVoucherIdAtom = atom<string>("");
 export const resetVoucherFormAtom = atom(null, (get, set) => {
   set(voucherFormDataAtom, {
     voucher_code: "",
-    promotion_id: "",
     min_order_value: 0,
     max_discount_value: 0,
     usage_limit: 1,
-    start_date: "",
-    end_date: "",
+    start_date: null,
+    end_date: null,
     is_active: true,
     distributor_id: "",
   });

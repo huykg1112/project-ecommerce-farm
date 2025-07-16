@@ -13,7 +13,7 @@ export class Permission {
   id!: string;
 
   @Index() // Lý do: Tăng tốc độ tìm kiếm theo name
-  @Column({ type: 'varchar', length: 100, unique: true })
+  @Column({ type: 'varchar', length: 100 })
   name!: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })

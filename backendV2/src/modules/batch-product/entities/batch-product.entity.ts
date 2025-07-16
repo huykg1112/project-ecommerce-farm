@@ -28,7 +28,7 @@ export class BatchProduct {
   @JoinColumn({ name: 'invenstory_id' })
   invenstory: Invenstory;
 
-  @Column({ length: 50, unique: true })
+  @Column({ length: 50 })
   batch_number!: string;
 
   @Column({ type: 'int', nullable: true })

@@ -23,7 +23,7 @@ export class Voucher {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ type: 'varchar', length: 50, unique: true })
+  @Column({ type: 'varchar', length: 50 })
   code!: string;
 
   @Column({ type: 'varchar', length: 255 })

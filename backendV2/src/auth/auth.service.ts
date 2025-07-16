@@ -47,7 +47,7 @@ export class AuthService {
 
   async login(
     loginDto: LoginDto,
-  ): Promise<{ access_token: string; refresh_token: string }> {
+  ): Promise<{ access_token: string; refresh_token: string; user_id: string }> {
     const { username, password } = loginDto;
     const user = await this.validateUser(username, password);
     const payload = { username: user.username, sub: user.user_id };
@@ -67,7 +67,11 @@ export class AuthService {
       hashedRefreshToken,
     );
 
-    return { access_token: accessToken, refresh_token: refreshToken };
+    return {
+      access_token: accessToken,
+      refresh_token: refreshToken,
+      user_id: user.user_id,
+    };
   }
 
   async refreshToken(

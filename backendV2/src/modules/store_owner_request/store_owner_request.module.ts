@@ -1,5 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CloudinaryModule } from '@root/src/cloudinary/cloudinary.module';
 import { Invenstory } from '../invenstory/entities/invenstory.entity';
 import { InvenstoryModule } from '../invenstory/invenstory.module';
 import { User } from '../user/entities/user.entity';
@@ -13,6 +14,7 @@ import { StoreOwnerRequestService } from './store_owner_request.service';
     TypeOrmModule.forFeature([StoreOwnerRequest, User, Invenstory]),
     forwardRef(() => UserModule),
     forwardRef(() => InvenstoryModule),
+    forwardRef(() => CloudinaryModule), // Assuming CloudinaryModule is defined elsewhere
   ],
   controllers: [StoreOwnerRequestController],
   providers: [StoreOwnerRequestService],

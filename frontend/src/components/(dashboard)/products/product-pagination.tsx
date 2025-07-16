@@ -16,32 +16,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useProducts } from "@/hooks/use-products";
-import { useProductStore } from "@/lib_dashboard/store/product-store";
 
-export function ProductPagination() {
-  const {
-    currentPage,
-    totalPages,
-    totalItems,
-    itemsPerPage,
-    setFilters,
-    fetchProducts,
-  } = useProducts();
+interface ProductPaginationProps {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
+  onPageChange: (page: number) => void;
+  onLimitChange: (limit: number) => void;
+}
 
+export function ProductPagination({
+  currentPage,
+  totalPages,
+  totalItems,
+  itemsPerPage,
+  onPageChange,
+  onLimitChange,
+}: ProductPaginationProps) {
   const handlePageChange = (page: number) => {
-    // Update the current page in the store and trigger refetch
-    useProductStore.setState({ currentPage: page });
-    fetchProducts();
+    onPageChange(page);
   };
 
   const handleItemsPerPageChange = (value: string) => {
     const newLimit = Number.parseInt(value);
-    useProductStore.setState({
-      itemsPerPage: newLimit,
-      currentPage: 1,
-    });
-    fetchProducts();
+    onLimitChange(newLimit);
+    handlePageChange(1);
   };
 
   const generatePageNumbers = () => {

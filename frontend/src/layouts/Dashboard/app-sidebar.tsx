@@ -35,6 +35,7 @@ import {
   Settings,
   ShoppingBag,
   ShoppingCart,
+  TicketSlash,
   Users,
   UsersRound,
   Warehouse,
@@ -130,8 +131,13 @@ export function AppSidebar() {
             icon: Warehouse,
           },
           {
-            title: "Khuyến mãi & Voucher",
-            url: "/promotions-vouchers-management",
+            title: "Voucher",
+            url: "vouchers-management",
+            icon: TicketSlash,
+          },
+          {
+            title: "Khuyến mãi",
+            url: "promotions-management",
             icon: Percent,
           },
         ],

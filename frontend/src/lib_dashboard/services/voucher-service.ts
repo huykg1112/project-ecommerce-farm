@@ -1,28 +1,27 @@
 import { showToast } from "@/lib/toast-provider";
+import { getCookie } from "@/lib/utils";
 import { Voucher } from "@/types/entities";
 import axios from "axios";
 import { axiosInstance } from "./axios-instance";
 
 export interface CreateVoucherRequest {
-  promotion_id: string;
   voucher_code: string;
   min_order_value?: number;
   max_discount_value?: number;
   usage_limit?: number;
-  start_date?: string;
-  end_date?: string;
+  start_date?: Date | null;
+  end_date?: Date | null;
   is_active?: boolean;
   distributor_id: string;
 }
 
 export interface UpdateVoucherRequest {
-  promotion_id?: string;
   voucher_code?: string;
   min_order_value?: number;
   max_discount_value?: number;
   usage_limit?: number;
-  start_date?: string;
-  end_date?: string;
+  start_date?: Date | null;
+  end_date?: Date | null;
   is_active?: boolean;
 }
 
@@ -44,7 +43,7 @@ export const voucherService = {
 
   async getMyVouchers(): Promise<Voucher[]> {
     try {
-      const response = await axiosInstance.get("/voucher/my-vouchers");
+      const response = await axiosInstance.get(`/voucher/my-vouchers`);
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi lấy danh sách voucher của tôi";
@@ -72,6 +71,9 @@ export const voucherService = {
 
   async createVoucher(data: CreateVoucherRequest): Promise<Voucher> {
     try {
+      if (!data.distributor_id) {
+        data.distributor_id = getCookie("user_id") || "";
+      }
       const response = await axiosInstance.post("/voucher", data);
       showToast.success("Tạo voucher thành công");
       return response.data;
@@ -90,7 +92,13 @@ export const voucherService = {
     data: UpdateVoucherRequest
   ): Promise<Voucher> {
     try {
-      const response = await axiosInstance.patch(`/voucher/${id}`, data);
+      const updatedData: UpdateVoucherRequest = {
+        ...data,
+        max_discount_value: Number(data.max_discount_value) || 0,
+        min_order_value: Number(data.min_order_value) || 0,
+        usage_limit: Number(data.usage_limit) || 0,
+      };
+      const response = await axiosInstance.patch(`/voucher/${id}`, updatedData);
       showToast.success("Cập nhật voucher thành công");
       return response.data;
     } catch (error) {

@@ -176,7 +176,7 @@ export const useProductQueryManagement = () => {
   const getProductsByDistributorAdmin = useCallback(
     (distributorId: string) => {
       return allProductsAdmin.filter(
-        (product) => product.distributor?.user_id === distributorId
+        (product) => product.distributor?.distributor_id === distributorId
       );
     },
     [allProductsAdmin]
@@ -210,7 +210,7 @@ export const useProductQueryManagement = () => {
 
       allProductsAdmin.forEach((product) => {
         if (product.distributor) {
-          const key = product.distributor.user_id;
+          const key = product.distributor.distributor_id;
           const current = distributorMap.get(key) || {
             distributor: product.distributor,
             productCount: 0,

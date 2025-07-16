@@ -44,7 +44,7 @@ export class VoucherService {
 
     // Check if voucher code is unique
     const existingVoucher = await this.voucherRepository.findOne({
-      where: { voucher_code: createVoucherDto.voucher_code },
+      where: { voucher_code: createVoucherDto.voucher_code, is_deleted: false },
     });
 
     if (existingVoucher) {
@@ -67,7 +67,6 @@ export class VoucherService {
   async findAll(distributorId?: string): Promise<Voucher[]> {
     const query = this.voucherRepository
       .createQueryBuilder('voucher')
-      .leftJoinAndSelect('voucher.promotion', 'promotion')
       .leftJoinAndSelect('voucher.distributor', 'distributor')
       .where('voucher.is_deleted = :isDeleted', { isDeleted: false });
 
@@ -87,7 +86,7 @@ export class VoucherService {
 
     const voucher = await this.voucherRepository.findOne({
       where: { voucher_id: id, is_deleted: false },
-      relations: ['promotion', 'distributor', 'users'],
+      relations: ['distributor', 'users'],
     });
 
     if (!voucher) {
@@ -184,7 +183,7 @@ export class VoucherService {
   async findByCode(code: string): Promise<Voucher | null> {
     return this.voucherRepository.findOne({
       where: { voucher_code: code, is_deleted: false },
-      relations: ['promotion', 'distributor'],
+      relations: ['distributor'],
     });
   }
 

@@ -22,25 +22,26 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { StoreOwnerRequest } from "@/lib_dashboard/types/store_owner_request";
 import { formatDate } from "@/lib_dashboard/utils/date";
-import type { StoreOwnerRequest } from "@/types/entities";
 import { Calendar, FileText, Loader2, MapPin, User } from "lucide-react";
-import { memo, useCallback, useState } from "react";
+import { memo, useCallback, useEffect, useState } from "react";
 
 interface RequestModalsProps {
   // View modal
   viewModalOpen: boolean;
-  selectedRequest: StoreOwnerRequest | null;
+  selectedRequestId: string | null;
+  requests: StoreOwnerRequest[];
 
   // Approve modal
   approveModalOpen: boolean;
-  onApprove: () => Promise<boolean>;
+  onApprove: () => Promise<void>;
 
   // Reject modal
   rejectModalOpen: boolean;
   rejectionReason: string;
   onRejectReasonChange: (reason: string) => void;
-  onReject: () => Promise<boolean>;
+  onReject: () => Promise<void>;
 
   // Common
   onCloseModals: () => void;
@@ -49,7 +50,7 @@ interface RequestModalsProps {
 export const RequestModals = memo<RequestModalsProps>(
   ({
     viewModalOpen,
-    selectedRequest,
+    selectedRequestId,
     approveModalOpen,
     onApprove,
     rejectModalOpen,
@@ -57,25 +58,33 @@ export const RequestModals = memo<RequestModalsProps>(
     onRejectReasonChange,
     onReject,
     onCloseModals,
+    requests,
   }) => {
     const [approveLoading, setApproveLoading] = useState(false);
     const [rejectLoading, setRejectLoading] = useState(false);
+    const [selectedRequest, setSelectedRequest] =
+      useState<StoreOwnerRequest | null>(null);
+
+    useEffect(() => {
+      if (selectedRequestId) {
+        const request = requests.find(
+          (req) => req.store_owner_request_id === selectedRequestId
+        );
+        setSelectedRequest(request || null);
+      }
+    }, [selectedRequestId, requests]);
 
     const handleApprove = useCallback(async () => {
       setApproveLoading(true);
-      const success = await onApprove();
-      if (success) {
-        onCloseModals();
-      }
+      await onApprove();
+      onCloseModals();
       setApproveLoading(false);
     }, [onApprove, onCloseModals]);
 
     const handleReject = useCallback(async () => {
       setRejectLoading(true);
-      const success = await onReject();
-      if (success) {
-        onCloseModals();
-      }
+      await onReject();
+      onCloseModals();
       setRejectLoading(false);
     }, [onReject, onCloseModals]);
 
@@ -120,7 +129,7 @@ export const RequestModals = memo<RequestModalsProps>(
                   </Badge>
                   <div className="text-sm text-[#74a65d]">
                     Ngày đăng ký:{" "}
-                    {formatDate(new Date(selectedRequest.request_date))}
+                    {formatDate(new Date(selectedRequest?.request_date || ""))}
                   </div>
                 </div>
 
@@ -137,7 +146,7 @@ export const RequestModals = memo<RequestModalsProps>(
                         alt={selectedRequest.user.full_name}
                       />
                       <AvatarFallback className="bg-[#accc8b] text-[#44703d]">
-                        {selectedRequest.user.full_name
+                        {(selectedRequest.user?.full_name || "FramE")
                           .split(" ")
                           .map((n) => n[0])
                           .join("")

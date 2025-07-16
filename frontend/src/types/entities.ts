@@ -158,7 +158,6 @@ export interface Voucher {
   promotion_id: string;
   promotion?: Promotion;
   distributor_id: string;
-  distributor?: User;
   min_order_value?: number;
   max_discount_value?: number;
   usage_limit?: number;

@@ -17,7 +17,7 @@ export class Order {
   @PrimaryGeneratedColumn('uuid')
   order_id: string;
 
-  @Column({ type: 'varchar', length: 20, unique: true })
+  @Column({ type: 'varchar', length: 20 })
   order_code: string;
 
   @ManyToOne(() => User, (user) => user.orders)

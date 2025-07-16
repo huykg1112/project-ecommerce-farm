@@ -156,6 +156,7 @@ function ProfilePage() {
           );
           deleteCookie("access_token");
           deleteCookie("refresh_token");
+          deleteCookie("user_id");
           dispatch(logoutUser());
           router.push("/login");
         } else {

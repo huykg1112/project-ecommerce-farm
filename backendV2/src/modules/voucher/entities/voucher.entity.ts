@@ -1,12 +1,10 @@
 import {
   Column,
   Entity,
-  JoinColumn,
   ManyToMany,
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { Promotion } from '../../promotion/entities/promotion.entity';
 import { User } from '../../user/entities/user.entity';
 
 @Entity('voucher')
@@ -14,7 +12,7 @@ export class Voucher {
   @PrimaryGeneratedColumn('uuid')
   voucher_id: string;
 
-  @Column({ length: 50, unique: true })
+  @Column({ length: 50 })
   voucher_code!: string;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })

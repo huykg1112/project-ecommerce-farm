@@ -54,11 +54,13 @@ export default function AddressMapPicker({
 
   // Kiểm tra và gán tọa độ ban đầu
   const initialLat =
-    initialAddress?.latitude && isValidCoordinate(initialAddress.latitude, initialAddress.longitude)
+    initialAddress?.latitude &&
+    isValidCoordinate(initialAddress.latitude, initialAddress.longitude)
       ? initialAddress.latitude
       : defaultCoords.latitude;
   const initialLng =
-    initialAddress?.longitude && isValidCoordinate(initialAddress.latitude, initialAddress.longitude)
+    initialAddress?.longitude &&
+    isValidCoordinate(initialAddress.latitude, initialAddress.longitude)
       ? initialAddress.longitude
       : defaultCoords.longitude;
 
@@ -129,11 +131,17 @@ export default function AddressMapPicker({
           for (const component of result.address_components) {
             if (component.types?.includes("street")) {
               street = component.long_name;
-            } else if (component.types?.includes("administrative_area_level_3")) {
+            } else if (
+              component.types?.includes("administrative_area_level_3")
+            ) {
               ward = component.long_name;
-            } else if (component.types?.includes("administrative_area_level_2")) {
+            } else if (
+              component.types?.includes("administrative_area_level_2")
+            ) {
               district = component.long_name;
-            } else if (component.types?.includes("administrative_area_level_1")) {
+            } else if (
+              component.types?.includes("administrative_area_level_1")
+            ) {
               city = component.long_name;
             }
           }

@@ -10,10 +10,6 @@ import {
 } from 'class-validator';
 
 export class CreateVoucherDto {
-  @IsUUID()
-  @IsNotEmpty({ message: 'Promotion ID is required' })
-  promotion_id: string;
-
   @IsString()
   @IsNotEmpty({ message: 'Voucher code is required' })
   voucher_code: string;

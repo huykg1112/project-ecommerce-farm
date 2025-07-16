@@ -8,7 +8,11 @@ import {
   Patch,
   Post,
   Req,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { CloudinaryService } from '@root/src/cloudinary/cloudinary.service';
 import { CreateStoreOwnerRequestDto } from './dto/create-store_owner_request.dto';
 import { StoreOwnerRequestService } from './store_owner_request.service';
 
@@ -16,13 +20,30 @@ import { StoreOwnerRequestService } from './store_owner_request.service';
 export class StoreOwnerRequestController {
   constructor(
     private readonly storeOwnerRequestService: StoreOwnerRequestService,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
   // User requests to become distributor
   @Post()
-  async create(@Req() req, @Body() body: CreateStoreOwnerRequestDto) {
+  @UseInterceptors(FileInterceptor('image')) // If you want to handle file uploads
+  async create(
+    @Req() req,
+    @Body() body: CreateStoreOwnerRequestDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
     if (!req.user || !req.user.user_id)
       throw new ForbiddenException('Unauthorized');
+
+    console.log('body', body);
+
+    let imageUrl: string | null = null;
+    if (file) {
+      const result = await this.cloudinaryService.uploadImage(file);
+      imageUrl = result.url;
+    }
+    if (imageUrl) {
+      body.invenstory_img = imageUrl;
+    }
     return await this.storeOwnerRequestService.create(req.user.user_id, body);
   }
 
@@ -36,8 +57,8 @@ export class StoreOwnerRequestController {
 
   // Admin or owner: get one request
   @Get('getOne')
-  async findOne(@Body() body: { id: string }, @Req() req) {
-    const request = await this.storeOwnerRequestService.findOne(body.id);
+  async findOne(@Param('id') id: string, @Req() req) {
+    const request = await this.storeOwnerRequestService.findOne(id);
     if (req.user.role?.role_name !== 'Admin') {
       throw new ForbiddenException('Chỉ admin mới có thể xem yêu cầu của mình');
     }

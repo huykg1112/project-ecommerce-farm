@@ -30,9 +30,9 @@ export interface ProductManufacturer {
 }
 
 export interface ProductDistributor {
-  user_id: string;
+  distributor_id: string;
   full_name: string;
-  invenstory_id?: string;
+  invenstory?: Invenstory;
 }
 
 export interface ProductImage {
@@ -168,4 +168,19 @@ export interface ProductFormErrors {
   manufacturer_id?: string;
   ingredient_ids?: string;
   disease_ids?: string;
+}
+
+export interface Invenstory {
+  invenstory_id: string;
+  name?: string;
+  business_license?: string;
+  invenstory_address?: string;
+  invenstory_img?: string;
+  invenstory_lat?: string;
+  invenstory_lng?: string;
+  email?: string;
+  created_at: Date;
+  updated_at?: Date;
+  is_active: boolean;
+  is_deleted?: boolean;
 }

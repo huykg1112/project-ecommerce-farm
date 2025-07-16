@@ -2,116 +2,132 @@
 
 import { RequestFilters } from "@/components/(dashboard)/store-requests/request-filters";
 import { RequestModals } from "@/components/(dashboard)/store-requests/request-modals";
-import { RequestPagination } from "@/components/(dashboard)/store-requests/request-pagination";
 import { RequestTable } from "@/components/(dashboard)/store-requests/request-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  useStoreRequestActions,
-  useStoreRequests,
-} from "@/hooks/use-store-requests";
+import { StoreOwnerRequests } from "@/lib_dashboard/services/store_owner_request";
+import { StoreOwnerRequest } from "@/lib_dashboard/types/store_owner_request";
+
 import { CheckCircle, Clock, FileText, XCircle } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+const initFilters = {
+  search: "",
+  status: "all",
+};
 
 export default function AgencyRequestsPage() {
-  const {
-    requests,
-    loading,
-    pagination,
-    filters,
-    fetchRequests,
-    updateFilters,
-    resetFilters,
-  } = useStoreRequests();
+  const [filters, setFilters] = useState(initFilters);
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [approveModalOpen, setApproveModalOpen] = useState(false);
 
-  const {
-    selectedRequestId,
-    approveModalOpen,
-    rejectModalOpen,
-    viewModalOpen,
-    rejectionReason,
-    openApproveModal,
-    openRejectModal,
-    openViewModal,
-    closeModals,
-    setRejectionReason,
-    approveRequest,
-    rejectRequest,
-  } = useStoreRequestActions();
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [selectedRequestId, setSelectedRequestId] = useState("");
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [request, setRequest] = useState<StoreOwnerRequest[]>([]);
 
-  // Filter handlers
-  const handleSearchChange = useCallback(
-    (search: string) => {
-      updateFilters({ search, page: 1 });
-    },
-    [updateFilters]
-  );
-
-  const handleStatusChange = useCallback(
-    (status: string) => {
-      updateFilters({ status: status === "all" ? "" : status, page: 1 });
-    },
-    [updateFilters]
-  );
-
-  // Pagination handlers
-  const handlePageChange = useCallback(
-    (page: number) => {
-      updateFilters({ page });
-    },
-    [updateFilters]
-  );
-
-  const handleItemsPerPageChange = useCallback(
-    (limit: number) => {
-      updateFilters({ limit, page: 1 });
-    },
-    [updateFilters]
-  );
-
-  // Action handlers with refresh
-  const handleApprove = useCallback(async () => {
-    const success = await approveRequest();
-    if (success) {
-      await fetchRequests();
+  const fetchRequests = useCallback(async () => {
+    try {
+      setLoading(true);
+      const response = await StoreOwnerRequests.getStoreOwnerRequests();
+      setRequest(response);
+    } catch (error) {
+    } finally {
+      setLoading(false);
     }
-    return success;
-  }, [approveRequest, fetchRequests]);
+  }, [setRequest, setLoading]);
+  useEffect(() => {
+    fetchRequests();
+  }, [fetchRequests]);
+
+  const handleSearchChange = (search: string) => {
+    setFilters((prev) => ({ ...prev, search }));
+  };
+
+  const handleStatusChange = (status: string) => {
+    setFilters((prev) => ({ ...prev, status }));
+  };
+
+  const filteredRequests = useMemo(() => {
+    let filtered = request;
+    if (filters.search) {
+      filtered = filtered.filter((req) => {
+        if (req.name) {
+          return req.name.toLowerCase().includes(filters.search.toLowerCase());
+        }
+        return false;
+      });
+    }
+    if (filters.status !== "all") {
+      filtered = filtered.filter(
+        (req) => req.request_status === filters.status
+      );
+    }
+    return filtered;
+  }, [request, filters]);
+
+  const openViewModal = (requestId: string) => {
+    setSelectedRequestId(requestId);
+    setViewModalOpen(true);
+  };
+  const openApproveModal = (requestId: string) => {
+    setSelectedRequestId(requestId);
+    setApproveModalOpen(true);
+  };
+  const openRejectModal = (requestId: string) => {
+    setSelectedRequestId(requestId);
+    setRejectModalOpen(true);
+  };
+
+  const closeModals = () => {
+    setViewModalOpen(false);
+    setApproveModalOpen(false);
+    setRejectModalOpen(false);
+    setSelectedRequestId("");
+    setRejectionReason("");
+  };
+
+  const handleApprove = useCallback(async () => {
+    try {
+      await StoreOwnerRequests.approveStoreOwnerRequest(
+        selectedRequestId,
+        true
+      );
+      fetchRequests();
+      closeModals();
+    } catch (error) {
+      // Handle error
+    }
+  }, [selectedRequestId, fetchRequests, closeModals]);
 
   const handleReject = useCallback(async () => {
-    const success = await rejectRequest();
-    if (success) {
-      await fetchRequests();
+    try {
+      await StoreOwnerRequests.approveStoreOwnerRequest(
+        selectedRequestId,
+        false
+      );
+      fetchRequests();
+      closeModals();
+    } catch (error) {
+      // Handle error
     }
-    return success;
-  }, [rejectRequest, fetchRequests]);
+  }, [selectedRequestId, fetchRequests, closeModals]);
 
-  // Statistics
+  const resetFilters = () => {
+    setFilters(initFilters);
+  };
+
+  const handleDelete = async (requestId: string) => {};
   const stats = useMemo(() => {
-    const totalRequests = pagination.total;
-    const pendingRequests = requests.filter((req) => !req.approved_date).length;
-    const approvedRequests = requests.filter(
-      (req) => req.request_status && req.approved_date
-    ).length;
-    const rejectedRequests = requests.filter(
-      (req) => !req.request_status && req.approved_date
-    ).length;
-
     return {
-      totalRequests,
-      pendingRequests,
-      approvedRequests,
-      rejectedRequests,
+      totalRequests: request.length,
+      // chờ phê duyệt là request chưa có approved_date
+      pendingRequests: request.filter((req) => !req.approved_date).length,
+      approvedRequests: request.filter((req) => req.request_status).length,
+      rejectedRequests: request.filter((req) => !req.request_status).length,
     };
-  }, [requests, pagination.total]);
-
-  // Get selected request for modals
-  const selectedRequest = useMemo(() => {
-    return (
-      requests.find(
-        (req) => req.store_owner_request_id === selectedRequestId
-      ) || null
-    );
-  }, [requests, selectedRequestId]);
+  }, [request]);
+  console.log("Agency Requests:", request);
 
   return (
     <div className="space-y-6">
@@ -201,7 +217,7 @@ export default function AgencyRequestsPage() {
 
       {/* Requests Table */}
       <RequestTable
-        requests={requests}
+        requests={filteredRequests}
         onViewDetails={openViewModal}
         onApprove={openApproveModal}
         onReject={openRejectModal}
@@ -209,19 +225,21 @@ export default function AgencyRequestsPage() {
       />
 
       {/* Pagination */}
-      <RequestPagination
+      {/* <RequestPagination
         currentPage={filters.page || 1}
         totalPages={pagination.totalPages}
         totalItems={pagination.total}
         itemsPerPage={filters.limit || 10}
         onPageChange={handlePageChange}
         onItemsPerPageChange={handleItemsPerPageChange}
-      />
+      /> */}
 
       {/* Modals */}
       <RequestModals
         viewModalOpen={viewModalOpen}
-        selectedRequest={selectedRequest}
+        selectedRequestId={selectedRequestId}
+        requests={filteredRequests as StoreOwnerRequest[]}
+        onClose={closeModals}
         approveModalOpen={approveModalOpen}
         onApprove={handleApprove}
         rejectModalOpen={rejectModalOpen}

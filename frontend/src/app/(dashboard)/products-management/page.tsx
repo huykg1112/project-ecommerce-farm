@@ -1,11 +1,6 @@
 "use client";
 
-import { LockProductModal } from "@/components/(dashboard)/products/lock-product-modal";
-import { ProductFilters } from "@/components/(dashboard)/products/product-filterss";
 import { ProductFormModal } from "@/components/(dashboard)/products/product-form-modal";
-import { ProductPagination } from "@/components/(dashboard)/products/product-pagination";
-import { ProductTable } from "@/components/(dashboard)/products/product-table";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -13,18 +8,56 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useProducts } from "@/hooks/use-products";
-import { Plus } from "lucide-react";
+import { useCategories } from "@/hooks/use-categories";
+import { formatCurrency } from "@/lib/utils";
+import { productServiceManagement } from "@/lib_dashboard/services/product-service-management";
+import { productFiltersAtom } from "@/lib_dashboard/store/product-store-management";
+import { Product } from "@/lib_dashboard/types/product";
+import { useAtom } from "jotai";
+import { useEffect, useMemo, useState } from "react";
+
+const formatCurrencyInput = (value: number | undefined) => {
+  return value !== undefined ? formatCurrency(value) : "";
+};
 
 export default function ProductsPage() {
-  const {
-    loading,
-    error,
-    totalItems,
-    selectedProducts,
-    openAddModal,
-    clearSelection,
-  } = useProducts();
+  //dùng store của jotai
+  const [filteredProducts, setFilteredProducts] = useAtom(productFiltersAtom);
+  const { categories } = useCategories();
+
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productFilters, setProductFilters] = useState<Product[]>([]);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      const allProductsAdmin = await productServiceManagement.getProducts();
+      setProducts(allProductsAdmin.data);
+    };
+
+    fetchProducts();
+  }, []);
+
+  // tính toán cho card stats
+  const totalProducts = products?.length || 0;
+  const activeProducts = useMemo(() => {
+    if (!products) return 0;
+    return products.filter((product) => product.is_active).length;
+  }, [products]);
+  const inactiveProducts = useMemo(() => {
+    if (!products) return 0;
+    return products.filter((product) => !product.is_active).length;
+  }, [products]);
+  const avgPrice = useMemo(() => {
+    if (!products) return 0;
+    return totalProducts > 0
+      ? products.reduce((sum, p) => sum + p.unit_product_price, 0) /
+          totalProducts
+      : 0;
+  }, [products, totalProducts]);
+
+  // tính toán cho filter
+
+  console.log("Products:", products);
 
   return (
     <div className="space-y-6">
@@ -38,20 +71,11 @@ export default function ProductsPage() {
             Quản lý tất cả sản phẩm trên marketplace
           </p>
         </div>
-        <Button onClick={openAddModal}>
+        {/* <Button onClick={() => console.log("Open Add Modal")}>
           <Plus className="mr-2 h-4 w-4" />
           Thêm sản phẩm
-        </Button>
+        </Button> */}
       </div>
-
-      {/* Error Display */}
-      {error && (
-        <Card className="border-destructive">
-          <CardContent className="pt-6">
-            <p className="text-sm text-destructive">{error}</p>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -60,7 +84,7 @@ export default function ProductsPage() {
             <CardTitle className="text-sm font-medium">Tổng sản phẩm</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalItems}</div>
+            <div className="text-2xl font-bold">{totalProducts}</div>
           </CardContent>
         </Card>
         <Card>
@@ -71,45 +95,38 @@ export default function ProductsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {/* This would be calculated from actual data */}
-              {Math.floor(totalItems * 0.8)}
+              {activeProducts}
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Đã khóa</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Không hoạt động
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              {Math.floor(totalItems * 0.2)}
+              {inactiveProducts}
             </div>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Đã chọn</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Giá trung bình
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              {selectedProducts.length}
+              {formatCurrencyInput(avgPrice)}
             </div>
-            {selectedProducts.length > 0 && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={clearSelection}
-                className="mt-2 bg-transparent"
-              >
-                Bỏ chọn tất cả
-              </Button>
-            )}
           </CardContent>
         </Card>
       </div>
 
       {/* Filters */}
-      <Card>
+      {/* <Card>
         <CardHeader>
           <CardTitle>Bộ lọc</CardTitle>
           <CardDescription>
@@ -117,9 +134,12 @@ export default function ProductsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ProductFilters />
+          <ProductFilters
+            onFilterChange={(filters) => updateProductFilters(filters)}
+            onResetFilters={resetProductFilters}
+          />
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Products Table */}
       <Card>
@@ -130,16 +150,19 @@ export default function ProductsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <ProductTable />
+          {/* <ProductTable products={myProducts} loading={myProductsLoading} /> */}
         </CardContent>
       </Card>
 
       {/* Pagination */}
-      <ProductPagination />
+      {/* <ProductPagination
+        onPageChange={changePage}
+        onLimitChange={changeLimit}
+        onSortChange={sortProducts}
+      /> */}
 
       {/* Modals */}
       <ProductFormModal />
-      <LockProductModal />
     </div>
   );
 }

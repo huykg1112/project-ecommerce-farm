@@ -106,6 +106,7 @@ export interface RegisterRequest {
   address_store?: string;
   image_store?: string;
   image_store_public_id?: string;
+  image?: File; // For file upload
 }
 
 //admin

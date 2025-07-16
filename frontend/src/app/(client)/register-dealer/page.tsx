@@ -19,14 +19,14 @@ export default function RegisterDealerPage() {
   const [isStepCompleted, setIsStepCompleted] = useState(false);
   const [formData, setFormData] = useState({
     personalInfo: {
-      fullName: "",
+      full_name: "",
       email: "",
-      phone: "",
-      idNumber: "",
-      businessLicense: "",
+      phone_number: "",
+      id_number: "",
+      business_license: "",
     },
     dealerInfo: {
-      dealerName: "",
+      dealer_name: "",
       address: {
         fullAddress: "",
         latitude: 0,
@@ -51,8 +51,8 @@ export default function RegisterDealerPage() {
     const checkRole = async () => {
       try {
         const data = await userService.getProfile();
-        if (data.roleName === "Distributor") {
-         showToast.warning("Bạn đã là chủ đại lý. Không thể đăng ký thêm.");
+        if (data.role_name === "Distributor") {
+          showToast.warning("Bạn đã là chủ đại lý. Không thể đăng ký thêm.");
           router.push("/");
         }
       } catch (error) {
@@ -75,9 +75,9 @@ export default function RegisterDealerPage() {
             ...prev,
             personalInfo: {
               ...prev.personalInfo,
-              fullName: user.fullName || "",
+              full_name: user.full_name || "",
               email: user.email || "",
-              phone: user.phone || "",
+              phone_number: user.phone_number || "",
             },
           }));
         }
@@ -120,15 +120,19 @@ export default function RegisterDealerPage() {
         setIsStepCompleted(true);
         break;
       case 2: // Thông tin cá nhân
-        const { fullName, email, phone, idNumber, businessLicense } =
+        const { full_name, email, phone_number, id_number, business_license } =
           formData.personalInfo;
         setIsStepCompleted(
-          !!fullName && !!email && !!phone && !!idNumber && !!businessLicense
+          !!full_name &&
+            !!email &&
+            !!phone_number &&
+            !!id_number &&
+            !!business_license
         );
         break;
       case 3: // Thông tin đại lý
-        const { dealerName, address, image } = formData.dealerInfo;
-        setIsStepCompleted(!!dealerName && !!address.fullAddress && !!image);
+        const { dealer_name, address, image } = formData.dealerInfo;
+        setIsStepCompleted(!!dealer_name && !!address.fullAddress && !!image);
         break;
       case 4: // Điều khoản
         setIsStepCompleted(formData.termsAccepted);
@@ -153,28 +157,34 @@ export default function RegisterDealerPage() {
   const handleSubmit = async () => {
     try {
       const { personalInfo, dealerInfo } = formData;
-      
+
       // Gọi API đăng ký đại lý
-      const response = await userService.registerStore({
-        fullName: personalInfo.fullName,
+      const response = await userService.registerStore(dealerInfo.image, {
+        full_name: personalInfo.full_name,
         email: personalInfo.email,
-        phone: personalInfo.phone,
-        cccd: personalInfo.idNumber,
-        license: personalInfo.businessLicense,
-        nameStore: dealerInfo.dealerName,
-        addressStore: dealerInfo.address.fullAddress,
+        phone_number: personalInfo.phone_number,
+        cccd: personalInfo.id_number,
+        license: personalInfo.business_license,
+        name_store: dealerInfo.dealer_name,
+        address_store: dealerInfo.address.fullAddress,
         lat: dealerInfo.address.latitude,
         lng: dealerInfo.address.longitude,
-        imageStore: dealerInfo.image ? URL.createObjectURL(dealerInfo.image) : undefined,
+        image_store: dealerInfo.image
+          ? URL.createObjectURL(dealerInfo.image)
+          : undefined,
       });
 
       // Chuyển đến bước thành công
       setCurrentStep(5);
 
-      showToast.success("Yêu cầu đăng ký đại lý của bạn đã được gửi. Chúng tôi sẽ liên hệ với bạn sớm.");
+      showToast.success(
+        "Yêu cầu đăng ký đại lý của bạn đã được gửi. Chúng tôi sẽ liên hệ với bạn sớm."
+      );
     } catch (error: any) {
       console.error("Error submitting dealer registration:", error);
-      showToast.error(error.message || "Đã xảy ra lỗi khi gửi đăng ký. Vui lòng thử lại sau.");
+      showToast.error(
+        error.message || "Đã xảy ra lỗi khi gửi đăng ký. Vui lòng thử lại sau."
+      );
     }
   };
 

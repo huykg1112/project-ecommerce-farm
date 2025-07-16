@@ -86,17 +86,28 @@ export const userService = {
     return response.json();
   },
 
-  async registerStore(data: RegisterRequest): Promise<{ message: string }> {
-    const response = await fetch(`${API_URL}/user/registerDistributor`, {
+  async registerStore(
+    file: File | null,
+    data: RegisterRequest
+  ): Promise<{ message: string }> {
+    const formData = new FormData();
+    if (file) {
+      formData.append("image", file);
+    }
+    formData.append("name", data.name_store || "");
+    formData.append("business_license", data.license || "");
+    formData.append("invenstory_address", data.address_store || "");
+    formData.append("note", ""); // Nếu có thêm trường
+    formData.append("invenstory_lat", data.lat?.toString() || "");
+    formData.append("invenstory_lng", data.lng?.toString() || "");
+
+    const response = await fetch(`${API_URL}/store-owner-request`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${getCookie("access_token")}`,
+        Authorization: `Bearer ${getCookie("access_token")}`, // Thêm token nếu cần
       },
-      body: JSON.stringify(data),
+      body: formData, // Không cần `Content-Type`, trình duyệt sẽ tự động thêm
     });
-
-    console.log("response", response);
 
     if (!response.ok) {
       const error = await response.json();

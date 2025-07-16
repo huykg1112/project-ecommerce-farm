@@ -261,6 +261,7 @@ const userSlice = createSlice({
         if (isClient) {
           deleteCookie("access_token");
           deleteCookie("refresh_token");
+          deleteCookie("user_id");
           localStorage.removeItem("Authorization");
           localStorage.removeItem("wishlist");
         }

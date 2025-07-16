@@ -1,6 +1,11 @@
 import { store } from "@/lib/features/store";
 import { refreshToken } from "@/lib/features/user-slice";
-import { deleteCookie, getCookie, isTokenExpired, setCookie } from "@/lib/utils";
+import {
+  deleteCookie,
+  getCookie,
+  isTokenExpired,
+  setCookie,
+} from "@/lib/utils";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -45,6 +50,7 @@ export async function middleware(request: NextRequest) {
           // Nếu refresh thất bại, xóa token và redirect
           deleteCookie("access_token");
           deleteCookie("refresh_token");
+          deleteCookie("user_id");
           localStorage.removeItem("wishlist");
 
           if (isAuthApiRoute) {

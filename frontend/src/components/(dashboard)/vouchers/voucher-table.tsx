@@ -99,15 +99,7 @@ export const VoucherTable = memo<VoucherTableProps>(
         ),
         allowOverflow: true,
       },
-      {
-        name: "Khuyến mãi",
-        selector: (row: Voucher) => row.promotion?.promotion_name || "N/A",
-        cell: (row: Voucher) => (
-          <div className="text-[#74a65d]">
-            {row.promotion?.promotion_name || "N/A"}
-          </div>
-        ),
-      },
+
       {
         name: "Giá trị tối thiểu",
         selector: (row: Voucher) => row.min_order_value || 0,
@@ -119,7 +111,7 @@ export const VoucherTable = memo<VoucherTableProps>(
         ),
       },
       {
-        name: "Giảm tối đa",
+        name: "Giá trị voucher",
         selector: (row: Voucher) => row.max_discount_value || 0,
         sortable: true,
         cell: (row: Voucher) => (
