@@ -130,8 +130,8 @@ export function AppSidebar() {
             icon: Warehouse,
           },
           {
-            title: "Khuyến mãi",
-            url: "/promotions-management",
+            title: "Khuyến mãi & Voucher",
+            url: "/promotions-vouchers-management",
             icon: Percent,
           },
         ],

@@ -388,15 +388,14 @@ export class UserService {
   }
 
   async updateAvatar(
-    id: string,
+    user: User,
     avatarUrl: string,
     publicId: string,
   ): Promise<User> {
     if (!avatarUrl || !publicId) {
       throw new BadRequestException('Avatar URL and Public ID are required');
     }
-
-    const user = await this.userRepository.findOne({ where: { user_id: id } });
+    console.log('Updating avatar for user:', user);
     if (!user) {
       throw new NotFoundException('User not found');
     }

@@ -37,6 +37,8 @@ export const authService = {
 
     // Lưu token vào localStorage (chỉ ở phía client)
     if (isClient) {
+      deleteCookie("access_token");
+      deleteCookie("refresh_token");
       setCookie("access_token", result.access_token);
       setCookie("refresh_token", result.refresh_token);
     }

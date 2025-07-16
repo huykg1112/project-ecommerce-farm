@@ -34,6 +34,7 @@ export interface UserAddress {
   longitude: number | null;
   is_default: boolean;
   is_active: boolean;
+  is_deleted: boolean;
   created_at: string;
   updated_at: string;
 }

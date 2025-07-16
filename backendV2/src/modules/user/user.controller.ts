@@ -10,6 +10,7 @@ import {
   Put,
   Query,
   Req,
+  Request,
   UnauthorizedException,
   UploadedFile,
   UseInterceptors,
@@ -25,6 +26,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { RegisterUserDto } from './dto/register-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { UserFiltersDto } from './dto/user-filters.dto';
+import { User } from './entities/user.entity';
 import { UserService } from './user.service';
 
 // @UseGuards(JwtAuthGuard)
@@ -104,8 +106,12 @@ export class UserController {
       limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
     }),
   )
-  async uploadAvatar(@Req() req, @UploadedFile() file: Express.Multer.File) {
+  async uploadAvatar(
+    @Request() req,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
     // console.log('File received:', file);
+    console.log('User ID from request:', req.user);
     const userId = req.user.id;
     if (!file) {
       throw new BadRequestException('No file uploaded');
@@ -120,7 +126,7 @@ export class UserController {
       }
 
       const updatedUser = await this.userService.updateAvatar(
-        userId,
+        req.user as User,
         result.url,
         result.public_id,
       );

@@ -44,6 +44,7 @@ import {
   EyeIcon,
   EyeOffIcon,
   Heart,
+  LayoutDashboard,
   LogOut,
   Mail,
   MapPin,
@@ -138,6 +139,9 @@ function ProfilePage() {
           license_number: data.license_number || "",
         });
         setProfile(data);
+        // lọc các địa có is_active là true và is_deleted là false
+        address = address.filter((addr) => addr.is_active && !addr.is_deleted);
+
         setAddresses(address);
         const def = address.find((a) => a.is_default);
         setDefaultAddressId(def?.address_id);
@@ -165,7 +169,7 @@ function ProfilePage() {
     };
 
     fetchProfile();
-  }, [dispatch, router]);
+  }, [dispatch, router, userService]);
 
   // Handle form input changes
   const handleInputChange = (
@@ -209,6 +213,11 @@ function ProfilePage() {
       // Refresh profile data
       const updatedProfile = await userService.getProfile();
       setProfile(updatedProfile);
+      setAddresses(
+        updatedProfile.addresses.filter(
+          (addr) => addr.is_active && !addr.is_deleted
+        )
+      );
     } catch (error: any) {
       console.error("Failed to update profile:", error);
       showToast.error(error.message || "Cập nhật thông tin thất bại");
@@ -269,6 +278,8 @@ function ProfilePage() {
     try {
       setUploadingAvatar(true);
       await dispatch(updateAvatar(file)).unwrap();
+      const updatedProfile = await userService.getProfile();
+      setProfile(updatedProfile);
       showToast.success("Cập nhật avatar thành công");
     } catch (error: any) {
       showToast.error(error.message || "Cập nhật avatar thất bại");
@@ -280,8 +291,15 @@ function ProfilePage() {
   const handleSetDefault = async (address_id: string) => {
     try {
       await userService.setDefaultAddress(address_id);
+      setDefaultAddressId(address_id);
       const updatedProfile = await userService.getProfile();
       setProfile(updatedProfile);
+      setAddresses(
+        updatedProfile.addresses.filter(
+          (addr) => addr.is_active && !addr.is_deleted
+        )
+      );
+
       showToast.success("Đã cập nhật địa chỉ mặc định");
     } catch (error: any) {
       showToast.error(error.message || "Không thể cập nhật địa chỉ mặc định");
@@ -291,8 +309,20 @@ function ProfilePage() {
   const handleDeleteAddress = async (address_id: string) => {
     try {
       await userService.deleteAddress(address_id);
+
       const updatedProfile = await userService.getProfile();
       setProfile(updatedProfile);
+      setAddresses(
+        updatedProfile.addresses.filter(
+          (addr) => addr.is_active && !addr.is_deleted
+        )
+      );
+      if (defaultAddressId === address_id) {
+        setDefaultAddressId(undefined);
+      }
+      setDefaultAddressId(
+        updatedProfile.addresses.find((addr) => addr.is_default)?.address_id
+      );
       showToast.success("Đã xóa địa chỉ");
     } catch (error: any) {
       showToast.error(error.message || "Không thể xóa địa chỉ");
@@ -310,6 +340,14 @@ function ProfilePage() {
       setShowAddAddress(false);
       setNewAddress({ address_detail: "", latitude: 0, longitude: 0 });
       const updatedProfile = await userService.getProfile();
+      setAddresses(
+        updatedProfile.addresses.filter(
+          (addr) => addr.is_active && !addr.is_deleted
+        )
+      );
+      setDefaultAddressId(
+        updatedProfile.addresses.find((addr) => addr.is_default)?.address_id
+      );
       setProfile(updatedProfile);
       showToast.success("Đã thêm địa chỉ mới");
     } catch (error: any) {
@@ -349,6 +387,11 @@ function ProfilePage() {
   const handleShowNewPassword = () => {
     setIsShowNewPassword((prev) => !prev);
   };
+
+  const handleRoutingDashboard = () => {
+    router.push("/dashboard");
+  };
+
   return (
     <div className="container py-8">
       {/* Breadcrumb */}
@@ -445,6 +488,17 @@ function ProfilePage() {
                   Cài đặt tài khoản
                 </Button>
                 <Separator className="my-2" />
+
+                {profile?.role_name !== "Client" && (
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start bg-transparent  hover:bg-red-50"
+                    onClick={handleRoutingDashboard}
+                  >
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    Trang quản lý
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   className="w-full justify-start text-red-500 hover:text-red-700 hover:bg-red-50"
