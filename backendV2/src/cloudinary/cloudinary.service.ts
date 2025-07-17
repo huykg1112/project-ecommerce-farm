@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { v2 as cloudinary, UploadApiErrorResponse, UploadApiResponse } from 'cloudinary';
+import {
+  v2 as cloudinary,
+  UploadApiErrorResponse,
+  UploadApiResponse,
+} from 'cloudinary';
 
 @Injectable()
 export class CloudinaryService {
@@ -7,7 +11,9 @@ export class CloudinaryService {
     // Cloudinary đã được cấu hình trong CloudinaryModule
   }
 
-  async uploadImage(file: Express.Multer.File): Promise<{ url: string; public_id: string }> {
+  async uploadImage(
+    file: Express.Multer.File,
+  ): Promise<{ url: string; public_id: string }> {
     try {
       if (!file) {
         throw new Error('No file provided');
@@ -23,18 +29,20 @@ export class CloudinaryService {
             resource_type: 'image',
             folder: 'ecommerce-farm',
             transformation: [
-              { 
-                width: 1000, 
-                height: 1000, 
+              {
+                width: 1000,
+                height: 1000,
                 crop: 'limit',
-                quality: 'auto'
-              }
+                quality: 'auto',
+              },
             ],
           },
           (error: UploadApiErrorResponse, result: UploadApiResponse) => {
             if (error) {
               console.error('Cloudinary upload error:', error);
-              reject(new Error(error.message || 'Failed to upload to cloud storage'));
+              reject(
+                new Error(error.message || 'Failed to upload to cloud storage'),
+              );
             } else if (!result || !result.secure_url || !result.public_id) {
               reject(new Error('Invalid upload result from cloud storage'));
             } else {
@@ -63,7 +71,10 @@ export class CloudinaryService {
     }
   }
 
-  async updateImage(public_id: string, file: Express.Multer.File): Promise<{ url: string; public_id: string }> {
+  async updateImage(
+    public_id: string,
+    file: Express.Multer.File,
+  ): Promise<{ url: string; public_id: string }> {
     try {
       // Xóa ảnh cũ
       await this.deleteImage(public_id);
@@ -72,5 +83,11 @@ export class CloudinaryService {
     } catch (error) {
       throw new Error('Update failed: ' + error.message);
     }
+  }
+  //
+  uploadImages(
+    files: Express.Multer.File[],
+  ): Promise<{ url: string; public_id: string }[]> {
+    return Promise.all(files.map((file) => this.uploadImage(file)));
   }
 }

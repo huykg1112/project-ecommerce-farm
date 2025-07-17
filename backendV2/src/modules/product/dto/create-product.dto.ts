@@ -36,7 +36,19 @@ export class CreateProductDto {
   @IsBoolean()
   is_active?: boolean;
 
+  // danh mục sản phẩm
+
   @IsOptional()
-  @IsString()
+  @IsUUID()
   manufacturer_id?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID('all', { each: true })
+  ingredient_ids?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsUUID('all', { each: true })
+  disease_ids?: string[];
 }

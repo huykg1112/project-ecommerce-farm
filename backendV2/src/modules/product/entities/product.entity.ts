@@ -12,6 +12,7 @@ import { Category } from '../../category/entities/category.entity';
 import { Manufacturer } from '../../manufacturer/entities/manufacturer.entity';
 import { ProductIngredient } from '../../product-ingredient/entities/product-ingredient.entity';
 import { ProductDisease } from '../../product_disease/entities/product_disease.entity';
+import { ProductImage } from '../../product_image/entities/product_image.entity';
 import { Review } from '../../review/entities/review.entity';
 import { User } from '../../user/entities/user.entity';
 
@@ -73,4 +74,10 @@ export class Product {
 
   @ManyToOne(() => Manufacturer, (manufacturer) => manufacturer.products)
   manufacturer!: Manufacturer;
+
+  //ảnh
+  @OneToMany(() => ProductImage, (productImage) => productImage.product, {
+    nullable: true,
+  })
+  images: ProductImage[];
 }

@@ -10,8 +10,6 @@ import { ActiveIngredientModule } from './modules/active-ingredient/active-ingre
 import { AddressModule } from './modules/address/address.module';
 import { AiConsultationModule } from './modules/ai-consultation/ai-consultation.module';
 import { BatchProductModule } from './modules/batch-product/batch-product.module';
-import { CartItemModule } from './modules/cart-item/cart-item.module';
-import { CartModule } from './modules/cart/cart.module';
 import { CategoryModule } from './modules/category/category.module';
 import { DiseaseModule } from './modules/disease/disease.module';
 
@@ -35,7 +33,6 @@ import { TokenModule } from './modules/token/token.module';
 import { TreatmentPlanModule } from './modules/treatment-plan/treatment-plan.module';
 import { UserModule } from './modules/user/user.module';
 import { VoucherModule } from './modules/voucher/voucher.module';
-import { WishlistModule } from './modules/wishlist/wishlist.module';
 
 @Module({
   imports: [
@@ -79,11 +76,8 @@ import { WishlistModule } from './modules/wishlist/wishlist.module';
     PromotionModule,
     VoucherModule,
     ReviewModule,
-    WishlistModule,
     AiConsultationModule,
     TreatmentPlanModule,
-    CartModule,
-    CartItemModule,
     TokenModule,
     InvenstoryModule,
     ProductImageModule,

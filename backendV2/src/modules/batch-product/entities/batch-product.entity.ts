@@ -8,7 +8,6 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { CartItem } from '../../cart-item/entities/cart-item.entity';
 import { Invenstory } from '../../invenstory/entities/invenstory.entity';
 import { OrderDetail } from '../../order-detail/entities/order-detail.entity';
 import { ProductType } from '../../product-type/entities/product-type.entity';
@@ -59,11 +58,6 @@ export class BatchProduct {
     nullable: true,
   })
   product_types: ProductType[];
-
-  @OneToMany(() => CartItem, (cartItem) => cartItem.batch_product, {
-    nullable: true,
-  })
-  cart_items: CartItem[];
 
   @OneToMany(() => OrderDetail, (orderItem) => orderItem.batch_product, {
     nullable: true,

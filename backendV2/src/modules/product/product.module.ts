@@ -11,6 +11,7 @@ import { User } from '../user/entities/user.entity';
 import { Product } from './entities/product.entity';
 import { ProductController } from './product.controller';
 import { ProductService } from './product.service';
+import { ProductImage } from '../product_image/entities/product_image.entity';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { ProductService } from './product.service';
       Manufacturer,
       Review,
       BatchProduct,
+      ProductImage,
     ]),
     CategoryModule,
   ],

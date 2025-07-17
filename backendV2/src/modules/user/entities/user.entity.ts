@@ -12,7 +12,6 @@ import {
 } from 'typeorm';
 import { Address } from '../../address/entities/address.entity';
 import { AiConsultation } from '../../ai-consultation/entities/ai-consultation.entity';
-import { Cart } from '../../cart/entities/cart.entity';
 import { Invenstory } from '../../invenstory/entities/invenstory.entity';
 import { Order } from '../../order/entities/order.entity';
 import { Review } from '../../review/entities/review.entity';
@@ -20,7 +19,6 @@ import { Role } from '../../role/entities/role.entity';
 import { StoreOwnerRequest } from '../../store_owner_request/entities/store_owner_request.entity';
 import { Token } from '../../token/entities/token.entity';
 import { Voucher } from '../../voucher/entities/voucher.entity';
-import { Wishlist } from '../../wishlist/entities/wishlist.entity';
 
 export enum UserRole {
   ADMIN = 'Admin',
@@ -92,13 +90,7 @@ export class User {
   })
   @JoinTable({ name: 'user_voucher' }) // Bảng trung gian
   vouchers: Voucher[];
-
-  @OneToOne(() => Wishlist, (wishlist) => wishlist.user)
-  wishlist: Wishlist;
-
-  //1 user có một giỏ hàng và 1 giỏ hàng chỉ thuộc user đó
-  @OneToOne(() => Cart, (cart) => cart.user)
-  cart: Cart;
+;
 
   //1 user có 0 hoặc nhiều review và 1 review chỉ thuộc user đó
   @OneToMany(() => Review, (review) => review.user, {

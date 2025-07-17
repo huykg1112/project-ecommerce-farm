@@ -7,12 +7,14 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { In } from 'typeorm/find-options/operator/In';
+import { validate as isUUID } from 'uuid';
 import { Role } from '../../auth/enums/role.enum';
 import { BatchProduct } from '../batch-product/entities/batch-product.entity';
 import { Category } from '../category/entities/category.entity';
 import { Manufacturer } from '../manufacturer/entities/manufacturer.entity';
 import { ProductIngredient } from '../product-ingredient/entities/product-ingredient.entity';
 import { ProductDisease } from '../product_disease/entities/product_disease.entity';
+import { ProductImage } from '../product_image/entities/product_image.entity';
 import { User } from '../user/entities/user.entity';
 import { AdvancedProductFilterDto } from './dto/advanced-product-filter.dto';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -35,6 +37,8 @@ export class ProductService {
     private readonly batchProductRepo: Repository<BatchProduct>,
     @InjectRepository(ProductDisease)
     private readonly productDiseaseRepo: Repository<ProductDisease>,
+    @InjectRepository(ProductImage)
+    private readonly productImageRepo: Repository<ProductImage>,
   ) {}
 
   async create(createProductDto: CreateProductDto, user: User) {
@@ -68,6 +72,25 @@ export class ProductService {
         );
       }
     }
+    // Validate ingredients với quan hệ nhiều nhiều
+    if (createProductDto.ingredient_ids) {
+      const ingredients = await this.piRepo.find({
+        where: { ingredient_id: In(createProductDto.ingredient_ids) },
+      });
+      if (ingredients.length !== createProductDto.ingredient_ids.length) {
+        throw new NotFoundException('Có thành phần không tồn tại');
+      }
+    }
+
+    // Validate diseases với quan hệ nhiều nhiều
+    if (createProductDto.disease_ids) {
+      const diseases = await this.productDiseaseRepo.find({
+        where: { disease_id: In(createProductDto.disease_ids) },
+      });
+      if (diseases.length !== createProductDto.disease_ids.length) {
+        throw new NotFoundException('Có bệnh không tồn tại');
+      }
+    }
 
     // Validate price
     if (createProductDto.unit_product_price <= 0) {
@@ -80,6 +103,8 @@ export class ProductService {
       categories,
       distributor: user,
       unit_product_price: createProductDto.unit_product_price,
+      // product_ingredients: ingredients,
+      // productDiseases: diseases,
     });
 
     return await this.productRepo.save(product);
@@ -89,6 +114,7 @@ export class ProductService {
     return await this.productRepo.find({
       where: { is_deleted: false },
       relations: [
+        'images',
         'categories',
         'distributor',
         'distributor.invenstory',
@@ -106,6 +132,7 @@ export class ProductService {
     return await this.productRepo.find({
       where: { is_active: true, is_deleted: false },
       relations: [
+        'images',
         'categories',
         'distributor',
         'distributor.invenstory',
@@ -120,6 +147,10 @@ export class ProductService {
   }
 
   async findByDistributor(distributor_id: string) {
+    if (!isUUID(distributor_id)) {
+      throw new BadRequestException('Invalid distributor ID format');
+    }
+
     return await this.productRepo
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.categories', 'category')
@@ -140,6 +171,7 @@ export class ProductService {
     const product = await this.productRepo.findOne({
       where: { product_id, is_deleted: false },
       relations: [
+        'images',
         'categories',
         'distributor',
         'distributor.invenstory',
@@ -158,6 +190,7 @@ export class ProductService {
     const product = await this.productRepo.findOne({
       where: { product_id, is_active: true, is_deleted: false },
       relations: [
+        'images',
         'categories',
         'distributor',
         'distributor.invenstory',
@@ -655,5 +688,72 @@ export class ProductService {
         totalPages: Math.ceil(total / limit),
       },
     };
+  }
+
+  async addImagesToProduct(
+    product_id: string,
+    imageUrls: string[],
+    user: User,
+  ) {
+    const product = await this.productRepo.findOne({
+      where: { product_id, is_deleted: false },
+      relations: ['images', 'distributor'],
+    });
+
+    if (!product) {
+      throw new Error('Product not found');
+    }
+
+    if (
+      user.role?.role_name !== Role.ADMIN &&
+      product.distributor.user_id !== user.user_id
+    ) {
+      throw new Error('Permission denied');
+    }
+
+    const newImages = imageUrls.map((url) => {
+      return this.productImageRepo.create({
+        product,
+        image_url: url,
+      });
+    });
+
+    await this.productImageRepo.save(newImages);
+
+    return { message: 'Images added successfully', images: newImages };
+  }
+
+  async removeImagesFromProduct(
+    product_id: string,
+    imageIds: string[],
+    user: User,
+  ) {
+    const product = await this.productRepo.findOne({
+      where: { product_id, is_deleted: false },
+      relations: ['images', 'distributor'],
+    });
+
+    if (!product) {
+      throw new Error('Product not found');
+    }
+
+    if (
+      user.role?.role_name !== Role.ADMIN &&
+      product.distributor.user_id !== user.user_id
+    ) {
+      throw new Error('Permission denied');
+    }
+
+    const imagesToRemove = await this.productImageRepo.findByIds(imageIds);
+
+    if (
+      imagesToRemove.some((image) => image.product.product_id !== product_id)
+    ) {
+      throw new Error('Some images do not belong to the specified product');
+    }
+
+    await this.productImageRepo.remove(imagesToRemove);
+
+    return { message: 'Images removed successfully' };
   }
 }
