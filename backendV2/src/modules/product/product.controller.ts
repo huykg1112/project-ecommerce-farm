@@ -9,7 +9,10 @@ import {
   Query,
   Req,
   UseGuards,
+  UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { Role } from '../../auth/enums/role.enum';
 import { RolesGuard } from '../../auth/roles.guard';
 import { Public } from '../../public.decorator';
@@ -33,8 +36,13 @@ export class ProductController {
 
   //  @Roles(Role.DISTRIBUTOR, Role.ADMIN)
   @Post()
-  create(@Body() createProductDto: CreateProductDto, @Req() req) {
-    return this.productService.create(createProductDto, req.user);
+  @UseInterceptors(FilesInterceptor('images', 10)) // Cho phép tối đa 10 hình ảnh
+  create(
+    @Body() createProductDto: CreateProductDto,
+    @UploadedFiles() files: Express.Multer.File[],
+    @Req() req,
+  ) {
+    return this.productService.create(createProductDto, files || [], req.user);
   }
 
   @Public()
@@ -159,12 +167,14 @@ export class ProductController {
 
   //  @Roles(Role.DISTRIBUTOR, Role.ADMIN)
   @Patch(':id')
+  @UseInterceptors(FilesInterceptor('images', 10))
   update(
     @Param('id') id: string,
     @Body() updateProductDto: UpdateProductDto,
+    @UploadedFiles() files: Express.Multer.File[],
     @Req() req,
   ) {
-    return this.productService.update(id, updateProductDto, req.user);
+    return this.productService.update(id, updateProductDto, files || [], req.user);
   }
 
   //  @Roles(Role.DISTRIBUTOR, Role.ADMIN)
@@ -197,4 +207,25 @@ export class ProductController {
   }
 
   // Batch operations
+
+  // === IMAGE MANAGEMENT ENDPOINTS ===
+
+  @Post(':id/images')
+  @UseInterceptors(FilesInterceptor('images', 10))
+  addImages(
+    @Param('id') id: string,
+    @UploadedFiles() files: Express.Multer.File[],
+    @Req() req,
+  ) {
+    return this.productService.addImagesToProduct(id, files, req.user);
+  }
+
+  @Delete(':id/images')
+  removeImages(
+    @Param('id') id: string,
+    @Body() body: { image_ids: string[] },
+    @Req() req,
+  ) {
+    return this.productService.removeImagesFromProduct(id, body.image_ids, req.user);
+  }
 }
