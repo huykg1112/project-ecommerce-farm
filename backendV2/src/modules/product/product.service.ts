@@ -9,8 +9,11 @@ import { Repository } from 'typeorm';
 import { In } from 'typeorm/find-options/operator/In';
 import { validate as isUUID } from 'uuid';
 import { Role } from '../../auth/enums/role.enum';
+import { CloudinaryService } from '../../cloudinary/cloudinary.service';
+import { ActiveIngredient } from '../active-ingredient/entities/active-ingredient.entity';
 import { BatchProduct } from '../batch-product/entities/batch-product.entity';
 import { Category } from '../category/entities/category.entity';
+import { Disease } from '../disease/entities/disease.entity';
 import { Manufacturer } from '../manufacturer/entities/manufacturer.entity';
 import { ProductIngredient } from '../product-ingredient/entities/product-ingredient.entity';
 import { ProductDisease } from '../product_disease/entities/product_disease.entity';
@@ -39,9 +42,14 @@ export class ProductService {
     private readonly productDiseaseRepo: Repository<ProductDisease>,
     @InjectRepository(ProductImage)
     private readonly productImageRepo: Repository<ProductImage>,
+    @InjectRepository(ActiveIngredient)
+    private readonly activeIngredientRepo: Repository<ActiveIngredient>,
+    @InjectRepository(Disease)
+    private readonly diseaseRepo: Repository<Disease>,
+    private readonly cloudinaryService: CloudinaryService,
   ) {}
 
-  async create(createProductDto: CreateProductDto, user: User) {
+  async create(createProductDto: CreateProductDto, files: Express.Multer.File[], user: User) {
     // Chỉ cho phép Distributor hoặc Admin
     if (
       ![Role.DISTRIBUTOR, Role.ADMIN].includes(user.role?.role_name as Role)
@@ -58,8 +66,9 @@ export class ProductService {
     }
 
     // Validate manufacturer
+    let manufacturer = null;
     if (createProductDto.manufacturer_id) {
-      const manufacturer = await this.manufacturerRepo.findOne({
+      manufacturer = await this.manufacturerRepo.findOne({
         where: {
           id: createProductDto.manufacturer_id,
           isActive: true,
@@ -72,22 +81,25 @@ export class ProductService {
         );
       }
     }
-    // Validate ingredients với quan hệ nhiều nhiều
-    if (createProductDto.ingredient_ids) {
-      const ingredients = await this.piRepo.find({
-        where: { ingredient_id: In(createProductDto.ingredient_ids) },
+
+    // Validate ingredients
+    let validatedIngredients = [];
+    if (createProductDto.ingredient_ids && createProductDto.ingredient_ids.length > 0) {
+      validatedIngredients = await this.activeIngredientRepo.find({
+        where: { ingredient_id: In(createProductDto.ingredient_ids), is_deleted: false },
       });
-      if (ingredients.length !== createProductDto.ingredient_ids.length) {
+      if (validatedIngredients.length !== createProductDto.ingredient_ids.length) {
         throw new NotFoundException('Có thành phần không tồn tại');
       }
     }
 
-    // Validate diseases với quan hệ nhiều nhiều
-    if (createProductDto.disease_ids) {
-      const diseases = await this.productDiseaseRepo.find({
-        where: { disease_id: In(createProductDto.disease_ids) },
+    // Validate diseases
+    let validatedDiseases = [];
+    if (createProductDto.disease_ids && createProductDto.disease_ids.length > 0) {
+      validatedDiseases = await this.diseaseRepo.find({
+        where: { disease_id: In(createProductDto.disease_ids), is_deleted: false },
       });
-      if (diseases.length !== createProductDto.disease_ids.length) {
+      if (validatedDiseases.length !== createProductDto.disease_ids.length) {
         throw new NotFoundException('Có bệnh không tồn tại');
       }
     }
@@ -97,17 +109,73 @@ export class ProductService {
       throw new BadRequestException('Giá sản phẩm phải lớn hơn 0');
     }
 
+    // Upload hình ảnh lên Cloudinary
+    let uploadedImages = [];
+    if (files && files.length > 0) {
+      try {
+        uploadedImages = await this.cloudinaryService.uploadImages(files);
+      } catch (error) {
+        throw new BadRequestException(`Lỗi upload hình ảnh: ${error.message}`);
+      }
+    }
+
     // Tạo product
     const product = this.productRepo.create({
-      ...createProductDto,
+      product_name: createProductDto.product_name,
+      description: createProductDto.description,
+      usage_instructions: createProductDto.usage_instructions,
+      unit_product_price: createProductDto.unit_product_price,
+      is_active: createProductDto.is_active ?? true,
       categories,
       distributor: user,
-      unit_product_price: createProductDto.unit_product_price,
-      // product_ingredients: ingredients,
-      // productDiseases: diseases,
+      manufacturer,
     });
 
-    return await this.productRepo.save(product);
+    // Lưu product trước
+    const savedProduct = await this.productRepo.save(product);
+
+    // Tạo liên kết ingredients nếu có
+    if (validatedIngredients.length > 0) {
+      const productIngredients = validatedIngredients.map(ingredient => 
+        this.piRepo.create({
+          product_id: savedProduct.product_id,
+          ingredient_id: ingredient.ingredient_id,
+          product: savedProduct,
+          ingredient: ingredient,
+          is_primary: false, // Có thể thêm logic để xác định primary
+        })
+      );
+      await this.piRepo.save(productIngredients);
+    }
+
+    // Tạo liên kết diseases nếu có
+    if (validatedDiseases.length > 0) {
+      const productDiseases = validatedDiseases.map(disease => 
+        this.productDiseaseRepo.create({
+          product_id: savedProduct.product_id,
+          disease_id: disease.disease_id,
+          product: savedProduct,
+          disease: disease,
+          is_primary: false, // Có thể thêm logic để xác định primary
+        })
+      );
+      await this.productDiseaseRepo.save(productDiseases);
+    }
+
+    // Tạo liên kết hình ảnh nếu có
+    if (uploadedImages.length > 0) {
+      const productImages = uploadedImages.map(image => 
+        this.productImageRepo.create({
+          product: savedProduct,
+          image_url: image.url,
+          description: `Product image for ${savedProduct.product_name}`,
+        })
+      );
+      await this.productImageRepo.save(productImages);
+    }
+
+    // Trả về product với đầy đủ thông tin liên kết
+    return await this.findOne(savedProduct.product_id);
   }
 
   async findAll() {
@@ -208,6 +276,7 @@ export class ProductService {
   async update(
     product_id: string,
     updateProductDto: UpdateProductDto,
+    files: Express.Multer.File[],
     user: User,
   ) {
     const product = await this.productRepo.findOne({
@@ -236,8 +305,9 @@ export class ProductService {
     }
 
     // Validate manufacturer nếu có update
+    let manufacturer = product.manufacturer;
     if (updateProductDto.manufacturer_id) {
-      const manufacturer = await this.manufacturerRepo.findOne({
+      manufacturer = await this.manufacturerRepo.findOne({
         where: {
           id: updateProductDto.manufacturer_id,
           isActive: true,
@@ -259,13 +329,98 @@ export class ProductService {
       throw new BadRequestException('Giá sản phẩm phải lớn hơn 0');
     }
 
-    // Update product
-    Object.assign(product, updateProductDto, {
+    // Upload hình ảnh mới nếu có
+    let uploadedImages = [];
+    if (files && files.length > 0) {
+      try {
+        uploadedImages = await this.cloudinaryService.uploadImages(files);
+      } catch (error) {
+        throw new BadRequestException(`Lỗi upload hình ảnh: ${error.message}`);
+      }
+    }
+
+    // Cập nhật thông tin sản phẩm
+    Object.assign(product, {
+      product_name: updateProductDto.product_name || product.product_name,
+      description: updateProductDto.description || product.description,
+      usage_instructions: updateProductDto.usage_instructions || product.usage_instructions,
+      unit_product_price: updateProductDto.unit_product_price || product.unit_product_price,
+      is_active: updateProductDto.is_active ?? product.is_active,
       categories,
+      manufacturer,
       updated_at: new Date(),
     });
 
-    return await this.productRepo.save(product);
+    const updatedProduct = await this.productRepo.save(product);
+
+    // Cập nhật ingredients nếu có
+    if (updateProductDto.ingredient_ids) {
+      // Xóa liên kết cũ
+      await this.piRepo.delete({ product_id: product_id });
+      
+      // Tạo liên kết mới
+      if (updateProductDto.ingredient_ids.length > 0) {
+        const validatedIngredients = await this.activeIngredientRepo.find({
+          where: { ingredient_id: In(updateProductDto.ingredient_ids), is_deleted: false },
+        });
+        if (validatedIngredients.length !== updateProductDto.ingredient_ids.length) {
+          throw new NotFoundException('Có thành phần không tồn tại');
+        }
+        
+        const productIngredients = validatedIngredients.map(ingredient => 
+          this.piRepo.create({
+            product_id: updatedProduct.product_id,
+            ingredient_id: ingredient.ingredient_id,
+            product: updatedProduct,
+            ingredient: ingredient,
+            is_primary: false,
+          })
+        );
+        await this.piRepo.save(productIngredients);
+      }
+    }
+
+    // Cập nhật diseases nếu có
+    if (updateProductDto.disease_ids) {
+      // Xóa liên kết cũ
+      await this.productDiseaseRepo.delete({ product_id: product_id });
+      
+      // Tạo liên kết mới
+      if (updateProductDto.disease_ids.length > 0) {
+        const validatedDiseases = await this.diseaseRepo.find({
+          where: { disease_id: In(updateProductDto.disease_ids), is_deleted: false },
+        });
+        if (validatedDiseases.length !== updateProductDto.disease_ids.length) {
+          throw new NotFoundException('Có bệnh không tồn tại');
+        }
+        
+        const productDiseases = validatedDiseases.map(disease => 
+          this.productDiseaseRepo.create({
+            product_id: updatedProduct.product_id,
+            disease_id: disease.disease_id,
+            product: updatedProduct,
+            disease: disease,
+            is_primary: false,
+          })
+        );
+        await this.productDiseaseRepo.save(productDiseases);
+      }
+    }
+
+    // Thêm hình ảnh mới nếu có (không xóa hình cũ)
+    if (uploadedImages.length > 0) {
+      const productImages = uploadedImages.map(image => 
+        this.productImageRepo.create({
+          product: updatedProduct,
+          image_url: image.url,
+          description: `Product image for ${updatedProduct.product_name}`,
+        })
+      );
+      await this.productImageRepo.save(productImages);
+    }
+
+    // Trả về product với đầy đủ thông tin liên kết
+    return await this.findOne(updatedProduct.product_id);
   }
 
   async remove(product_id: string, user: User) {
@@ -692,7 +847,7 @@ export class ProductService {
 
   async addImagesToProduct(
     product_id: string,
-    imageUrls: string[],
+    files: Express.Multer.File[],
     user: User,
   ) {
     const product = await this.productRepo.findOne({
@@ -701,26 +856,44 @@ export class ProductService {
     });
 
     if (!product) {
-      throw new Error('Product not found');
+      throw new NotFoundException('Không tìm thấy sản phẩm');
     }
 
     if (
       user.role?.role_name !== Role.ADMIN &&
       product.distributor.user_id !== user.user_id
     ) {
-      throw new Error('Permission denied');
+      throw new ForbiddenException('Bạn không có quyền thêm hình ảnh cho sản phẩm này');
     }
 
-    const newImages = imageUrls.map((url) => {
+    if (!files || files.length === 0) {
+      throw new BadRequestException('Vui lòng chọn ít nhất một hình ảnh');
+    }
+
+    // Upload hình ảnh lên Cloudinary
+    let uploadedImages = [];
+    try {
+      uploadedImages = await this.cloudinaryService.uploadImages(files);
+    } catch (error) {
+      throw new BadRequestException(`Lỗi upload hình ảnh: ${error.message}`);
+    }
+
+    // Tạo records trong database
+    const newImages = uploadedImages.map((image) => {
       return this.productImageRepo.create({
         product,
-        image_url: url,
+        image_url: image.url,
+        description: `Product image for ${product.product_name}`,
       });
     });
 
     await this.productImageRepo.save(newImages);
 
-    return { message: 'Images added successfully', images: newImages };
+    return { 
+      message: 'Thêm hình ảnh thành công', 
+      images: newImages,
+      uploaded_count: uploadedImages.length
+    };
   }
 
   async removeImagesFromProduct(
@@ -734,26 +907,77 @@ export class ProductService {
     });
 
     if (!product) {
-      throw new Error('Product not found');
+      throw new NotFoundException('Không tìm thấy sản phẩm');
     }
 
     if (
       user.role?.role_name !== Role.ADMIN &&
       product.distributor.user_id !== user.user_id
     ) {
-      throw new Error('Permission denied');
+      throw new ForbiddenException('Bạn không có quyền xóa hình ảnh của sản phẩm này');
     }
 
-    const imagesToRemove = await this.productImageRepo.findByIds(imageIds);
+    if (!imageIds || imageIds.length === 0) {
+      throw new BadRequestException('Vui lòng chọn ít nhất một hình ảnh để xóa');
+    }
+
+    const imagesToRemove = await this.productImageRepo.find({
+      where: { product_image_id: In(imageIds) },
+      relations: ['product'],
+    });
+
+    if (imagesToRemove.length === 0) {
+      throw new NotFoundException('Không tìm thấy hình ảnh nào');
+    }
 
     if (
       imagesToRemove.some((image) => image.product.product_id !== product_id)
     ) {
-      throw new Error('Some images do not belong to the specified product');
+      throw new BadRequestException('Một số hình ảnh không thuộc về sản phẩm này');
+    }
+
+    // Xóa hình ảnh trên Cloudinary
+    for (const image of imagesToRemove) {
+      try {
+        // Extract public_id from cloudinary URL
+        const publicId = this.extractPublicIdFromUrl(image.image_url);
+        if (publicId) {
+          await this.cloudinaryService.deleteImage(publicId);
+        }
+      } catch (error) {
+        console.error(`Lỗi xóa hình ảnh trên Cloudinary: ${error.message}`);
+        // Vẫn tiếp tục xóa trong database
+      }
     }
 
     await this.productImageRepo.remove(imagesToRemove);
 
-    return { message: 'Images removed successfully' };
+    return { 
+      message: 'Xóa hình ảnh thành công', 
+      removed_count: imagesToRemove.length 
+    };
+  }
+
+  private extractPublicIdFromUrl(url: string): string | null {
+    try {
+      // Extract public_id from Cloudinary URL
+      // Example URL: https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg
+      const parts = url.split('/');
+      const uploadIndex = parts.findIndex(part => part === 'upload');
+      if (uploadIndex !== -1 && uploadIndex < parts.length - 1) {
+        // Get everything after 'upload/vXXXXXXXXXX/' or 'upload/'
+        const afterUpload = parts.slice(uploadIndex + 1);
+        if (afterUpload[0] && afterUpload[0].startsWith('v')) {
+          // Skip version
+          return afterUpload.slice(1).join('/').split('.')[0];
+        } else {
+          return afterUpload.join('/').split('.')[0];
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error('Error extracting public_id:', error);
+      return null;
+    }
   }
 }
