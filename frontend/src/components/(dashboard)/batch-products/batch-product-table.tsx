@@ -260,6 +260,32 @@ export function BatchProductTable({
                     <p className="text-sm text-gray-500">
                       {formatCurrency(batchProduct.product.unit_product_price)}
                     </p>
+                    {/* Product Types */}
+                    {batchProduct.product_types && batchProduct.product_types.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {batchProduct.product_types.map((type) => (
+                          <span
+                            key={type.product_type_id}
+                            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800"
+                          >
+                            {type.type_name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {/* Promotions */}
+                    {batchProduct.promotions && batchProduct.promotions.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {batchProduct.promotions.map((promotion) => (
+                          <span
+                            key={promotion.promotion_id}
+                            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800"
+                          >
+                            -{promotion.discount_percentage}%
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </TableCell>

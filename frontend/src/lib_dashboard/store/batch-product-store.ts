@@ -1,13 +1,19 @@
 import { showToast } from "@/lib/toast-provider";
 import { atom } from "jotai";
 import { batchProductService } from "../services/batch-product-service";
+import { productServiceManagement } from "../services/product-service-management";
+import { productTypeService } from "../services/product-type-service";
+import { promotionService } from "../services/promotio-service-management";
 import {
   BatchProduct,
   BatchProductFilters,
   BatchProductFormData,
   BatchProductPaginationResponse,
   BatchProductStats,
+  ProductType,
+  Promotion,
 } from "../types/batch-product";
+import { Product } from "../types/product";
 
 // ================================================
 // 📊 CORE DATA ATOMS
@@ -48,6 +54,12 @@ export const batchProductStatsAtom = atom<BatchProductStats>({
   totalQuantity: 0,
   averageQuantity: 0,
 });
+
+// Related data for form dropdowns
+export const productsListAtom = atom<Product[]>([]);
+export const productTypesListAtom = atom<ProductType[]>([]);
+export const promotionsListAtom = atom<Promotion[]>([]);
+export const warehousesListAtom = atom<Array<{id: string, name: string}>>([]);
 
 // ================================================
 // 🔍 FILTER & SEARCH ATOMS
@@ -95,6 +107,8 @@ export const batchProductFormDataAtom = atom<BatchProductFormData>({
   expiry_date: "",
   low_stock_threshold: 10,
   is_active: true,
+  product_type_ids: [],
+  promotion_ids: [],
 });
 
 export const isCreateBatchProductModalOpenAtom = atom<boolean>(false);
@@ -196,6 +210,8 @@ export const createBatchProductAtom = atom(
         expiry_date: "",
         low_stock_threshold: 10,
         is_active: true,
+        product_type_ids: [],
+        promotion_ids: [],
       });
 
       return newBatchProduct;
@@ -284,6 +300,36 @@ export const deleteBatchProductAtom = atom(
   }
 );
 
+// Load related data for form dropdowns
+export const loadFormDataAtom = atom(
+  null,
+  async (get, set) => {
+    try {
+      // Load products
+      const productsResponse = await productServiceManagement.getProducts({ limit: 1000 });
+      set(productsListAtom, productsResponse.data);
+      
+      // Load product types
+      const productTypes = await productTypeService.getActiveProductTypes();
+      set(productTypesListAtom, productTypes);
+
+      // Load promotions
+      const promotions = await promotionService.getPromotions();
+      set(promotionsListAtom, promotions.filter(p => p.is_active));
+
+      // Load warehouses (mock data for now)
+      set(warehousesListAtom, [
+        { id: "warehouse1", name: "Kho chính" },
+        { id: "warehouse2", name: "Kho phụ" },
+        { id: "warehouse3", name: "Kho miền Nam" },
+      ]);
+
+    } catch (error) {
+      console.error("Error loading form data:", error);
+    }
+  }
+);
+
 // Batch toggle status
 export const batchToggleStatusAtom = atom(
   null,
@@ -345,6 +391,22 @@ export const resetBatchProductFiltersAtom = atom(null, (get, set) => {
     limit: 10,
     sort_by: "created_at",
     sort_order: "desc",
+  });
+});
+
+// Reset form data
+export const resetFormDataAtom = atom(null, (get, set) => {
+  set(batchProductFormDataAtom, {
+    product_id: "",
+    invenstory_id: "",
+    batch_number: "",
+    quantity: 0,
+    manufactured_date: "",
+    expiry_date: "",
+    low_stock_threshold: 10,
+    is_active: true,
+    product_type_ids: [],
+    promotion_ids: [],
   });
 });
 

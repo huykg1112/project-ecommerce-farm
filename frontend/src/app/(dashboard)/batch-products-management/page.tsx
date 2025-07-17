@@ -1,6 +1,7 @@
 "use client";
 
 import { BatchProductFilters } from "@/components/(dashboard)/batch-products/batch-product-filters";
+import { BatchProductFormModal } from "@/components/(dashboard)/batch-products/batch-product-form-modal";
 import { BatchProductTable } from "@/components/(dashboard)/batch-products/batch-product-table";
 import { BatchActions } from "@/components/common/batch-actions";
 import { DeleteModal } from "@/components/common/delete-modal";
@@ -42,10 +43,16 @@ export default function BatchProductsManagementPage() {
     batchOperationLoading,
 
     // Modal states
+    isCreateModalOpen,
+    setIsCreateModalOpen,
+    isEditModalOpen,
+    setIsEditModalOpen,
     isDeleteModalOpen,
     setIsDeleteModalOpen,
 
     // Management functions
+    handleCreateBatchProduct,
+    handleUpdateBatchProduct,
     handleDeleteBatchProduct,
     handleBatchToggleStatus,
 
@@ -67,6 +74,18 @@ export default function BatchProductsManagementPage() {
     // Data loading functions
     loadBatchProducts,
     loadBatchProductStats,
+
+    // Form functions
+    formData,
+    updateFormData,
+    resetFormData,
+    loadFormDropdownData,
+
+    // Form dropdown data
+    products,
+    productTypes,
+    promotions,
+    warehouses,
   } = useBatchProductManagement();
 
   // Local state
@@ -119,9 +138,9 @@ export default function BatchProductsManagementPage() {
 
   // Handle edit batch product
   const handleEditBatchProduct = useCallback((batchProduct: BatchProduct) => {
-    // TODO: Implement edit modal
-    showToast.info("Chức năng chỉnh sửa sẽ được phát triển");
-  }, []);
+    setSelectedBatchProductForDelete(batchProduct); // Store for editing
+    setIsEditModalOpen(true);
+  }, [setIsEditModalOpen]);
 
   // Handle delete batch product
   const handleDeleteBatchProductClick = useCallback(
@@ -184,10 +203,10 @@ export default function BatchProductsManagementPage() {
   }, []);
 
   // Handle create new batch product
-  const handleCreateBatchProduct = useCallback(() => {
-    // TODO: Implement create modal
-    showToast.info("Chức năng tạo lô sản phẩm sẽ được phát triển");
-  }, []);
+  const handleCreateBatchProductClick = useCallback(() => {
+    resetFormData();
+    setIsCreateModalOpen(true);
+  }, [resetFormData, setIsCreateModalOpen]);
 
   // Quick filter functions
   const handleQuickFilterExpiringSoon = useCallback(() => {
@@ -220,7 +239,8 @@ export default function BatchProductsManagementPage() {
   useEffect(() => {
     loadBatchProducts();
     loadBatchProductStats();
-  }, []);
+    loadFormDropdownData();
+  }, [loadBatchProducts, loadBatchProductStats, loadFormDropdownData]);
 
   return (
     <div className="space-y-6">
@@ -243,7 +263,7 @@ export default function BatchProductsManagementPage() {
             Xuất dữ liệu
           </Button>
           <Button
-            onClick={handleCreateBatchProduct}
+            onClick={handleCreateBatchProductClick}
             className="flex items-center gap-2"
           >
             <Plus className="h-4 w-4" />
@@ -391,6 +411,43 @@ export default function BatchProductsManagementPage() {
           </Button>
         </div>
       </div>
+
+      {/* Create Modal */}
+      <BatchProductFormModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSubmit={handleCreateBatchProduct}
+        formData={formData}
+        onFormDataChange={updateFormData}
+        loading={batchOperationLoading}
+        products={products}
+        productTypes={productTypes}
+        promotions={promotions}
+        warehouses={warehouses}
+      />
+
+      {/* Edit Modal */}
+      <BatchProductFormModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedBatchProductForDelete(null);
+        }}
+        onSubmit={(data) => {
+          if (selectedBatchProductForDelete) {
+            return handleUpdateBatchProduct(selectedBatchProductForDelete.batch_id, data);
+          }
+          return Promise.resolve(false);
+        }}
+        initialData={selectedBatchProductForDelete}
+        formData={formData}
+        onFormDataChange={updateFormData}
+        loading={batchOperationLoading}
+        products={products}
+        productTypes={productTypes}
+        promotions={promotions}
+        warehouses={warehouses}
+      />
 
       {/* Delete Modal */}
       <DeleteModal

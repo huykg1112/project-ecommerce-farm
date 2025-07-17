@@ -21,7 +21,12 @@ import {
   isCreateBatchProductModalOpenAtom,
   isDeleteBatchProductModalOpenAtom,
   isEditBatchProductModalOpenAtom,
+  loadFormDataAtom,
+  productsListAtom,
+  productTypesListAtom,
+  promotionsListAtom,
   resetBatchProductFiltersAtom,
+  resetFormDataAtom,
   selectedBatchProductAtom,
   selectedBatchProductIdsAtom,
   selectedBatchProductsAtom,
@@ -29,6 +34,7 @@ import {
   toggleBatchProductSelectionAtom,
   updateBatchProductAtom,
   updateBatchProductFiltersAtom,
+  warehousesListAtom,
 } from "@/lib_dashboard/store/batch-product-store";
 import {
   BatchProductFilters,
@@ -49,6 +55,12 @@ export function useBatchProductManagement() {
   const [pagination] = useAtom(batchProductPaginationAtom);
   const [filters] = useAtom(batchProductFiltersAtom);
   const [formData] = useAtom(batchProductFormDataAtom);
+
+  // Form dropdown data
+  const [products] = useAtom(productsListAtom);
+  const [productTypes] = useAtom(productTypesListAtom);
+  const [promotions] = useAtom(promotionsListAtom);
+  const [warehouses] = useAtom(warehousesListAtom);
 
   // ================================================
   // 🔄 LOADING STATES
@@ -80,6 +92,9 @@ export function useBatchProductManagement() {
   const [, updateBatchProduct] = useAtom(updateBatchProductAtom);
   const [, deleteBatchProduct] = useAtom(deleteBatchProductAtom);
   const [, batchToggleStatus] = useAtom(batchToggleStatusAtom);
+
+  // Form data loading
+  const [, loadFormData] = useAtom(loadFormDataAtom);
 
   // ================================================
   // 🔍 FILTER FUNCTIONS
@@ -151,18 +166,20 @@ export function useBatchProductManagement() {
     [setFormData]
   );
 
+  const [, resetForm] = useAtom(resetFormDataAtom);
+
   const resetFormData = useCallback(() => {
-    setFormData({
-      product_id: "",
-      invenstory_id: "",
-      batch_number: "",
-      quantity: 0,
-      manufactured_date: "",
-      expiry_date: "",
-      low_stock_threshold: 10,
-      is_active: true,
-    });
-  }, [setFormData]);
+    resetForm();
+  }, [resetForm]);
+
+  // Load form dropdown data
+  const loadFormDropdownData = useCallback(async () => {
+    try {
+      await loadFormData();
+    } catch (error) {
+      console.error("Error loading form data:", error);
+    }
+  }, [loadFormData]);
 
   // ================================================
   // 🎛️ MANAGEMENT FUNCTIONS
@@ -351,5 +368,12 @@ export function useBatchProductManagement() {
     // Form functions
     updateFormData,
     resetFormData,
+    loadFormDropdownData,
+
+    // Form dropdown data
+    products,
+    productTypes,
+    promotions,
+    warehouses,
   };
 }

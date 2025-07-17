@@ -1,5 +1,21 @@
 import type { Product } from "./product";
 
+export interface ProductType {
+  product_type_id: string;
+  type_name: string;
+  description?: string;
+  is_active: boolean;
+}
+
+export interface Promotion {
+  promotion_id: string;
+  promotion_name: string;
+  discount_percentage: number;
+  start_date: Date;
+  end_date: Date;
+  is_active: boolean;
+}
+
 export interface BatchProduct {
   batch_id: string;
   product: Product;
@@ -15,6 +31,8 @@ export interface BatchProduct {
     invenstory_id: string;
     warehouse_name: string;
   };
+  product_types?: ProductType[];
+  promotions?: Promotion[];
 }
 
 export interface BatchProductFilters {
@@ -52,6 +70,8 @@ export interface CreateBatchProductDto {
   expiry_date: string;
   low_stock_threshold?: number;
   is_active?: boolean;
+  product_type_ids?: string[];
+  promotion_ids?: string[];
 }
 
 export interface UpdateBatchProductDto {
@@ -63,6 +83,8 @@ export interface UpdateBatchProductDto {
   expiry_date: string;
   low_stock_threshold?: number;
   is_active?: boolean;
+  product_type_ids?: string[];
+  promotion_ids?: string[];
 }
 
 export interface BatchProductStats {
@@ -95,4 +117,6 @@ export interface BatchProductFormData {
   expiry_date: string;
   low_stock_threshold: number;
   is_active: boolean;
+  product_type_ids: string[];
+  promotion_ids: string[];
 }
