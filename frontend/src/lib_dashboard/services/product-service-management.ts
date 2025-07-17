@@ -109,9 +109,21 @@ export const productServiceManagement = {
     }
   },
 
-  async createProduct(data: CreateProductRequest): Promise<Product> {
+  async createProduct(
+    data: CreateProductRequest,
+    files: File[]
+  ): Promise<Product> {
     try {
-      const response = await axiosInstance.post("/products", data);
+      const formData = new FormData();
+      formData.append("data", JSON.stringify(data));
+      files.forEach((file) => {
+        formData.append("images", file);
+      });
+      const response = await axiosInstance.post("/products", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi tạo sản phẩm";

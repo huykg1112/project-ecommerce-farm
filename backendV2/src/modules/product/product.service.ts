@@ -49,7 +49,11 @@ export class ProductService {
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
-  async create(createProductDto: CreateProductDto, files: Express.Multer.File[], user: User) {
+  async create(
+    createProductDto: CreateProductDto,
+    files: Express.Multer.File[],
+    user: User,
+  ) {
     // Chỉ cho phép Distributor hoặc Admin
     if (
       ![Role.DISTRIBUTOR, Role.ADMIN].includes(user.role?.role_name as Role)
@@ -66,7 +70,7 @@ export class ProductService {
     }
 
     // Validate manufacturer
-    let manufacturer = null;
+    let manufacturer: Manufacturer | null = null;
     if (createProductDto.manufacturer_id) {
       manufacturer = await this.manufacturerRepo.findOne({
         where: {
@@ -83,21 +87,35 @@ export class ProductService {
     }
 
     // Validate ingredients
-    let validatedIngredients = [];
-    if (createProductDto.ingredient_ids && createProductDto.ingredient_ids.length > 0) {
+    let validatedIngredients: ActiveIngredient[] = [];
+    if (
+      createProductDto.ingredient_ids &&
+      createProductDto.ingredient_ids.length > 0
+    ) {
       validatedIngredients = await this.activeIngredientRepo.find({
-        where: { ingredient_id: In(createProductDto.ingredient_ids), is_deleted: false },
+        where: {
+          ingredient_id: In(createProductDto.ingredient_ids),
+          is_deleted: false,
+        },
       });
-      if (validatedIngredients.length !== createProductDto.ingredient_ids.length) {
+      if (
+        validatedIngredients.length !== createProductDto.ingredient_ids.length
+      ) {
         throw new NotFoundException('Có thành phần không tồn tại');
       }
     }
 
     // Validate diseases
-    let validatedDiseases = [];
-    if (createProductDto.disease_ids && createProductDto.disease_ids.length > 0) {
+    let validatedDiseases: Disease[] = [];
+    if (
+      createProductDto.disease_ids &&
+      createProductDto.disease_ids.length > 0
+    ) {
       validatedDiseases = await this.diseaseRepo.find({
-        where: { disease_id: In(createProductDto.disease_ids), is_deleted: false },
+        where: {
+          disease_id: In(createProductDto.disease_ids),
+          is_deleted: false,
+        },
       });
       if (validatedDiseases.length !== createProductDto.disease_ids.length) {
         throw new NotFoundException('Có bệnh không tồn tại');
@@ -110,7 +128,7 @@ export class ProductService {
     }
 
     // Upload hình ảnh lên Cloudinary
-    let uploadedImages = [];
+    let uploadedImages: { url: string; public_id: string }[] = [];
     if (files && files.length > 0) {
       try {
         uploadedImages = await this.cloudinaryService.uploadImages(files);
@@ -127,8 +145,10 @@ export class ProductService {
       unit_product_price: createProductDto.unit_product_price,
       is_active: createProductDto.is_active ?? true,
       categories,
+      productDiseases: validatedDiseases,
+      product_ingredients: validatedIngredients,
       distributor: user,
-      manufacturer,
+      manufacturer: manufacturer ?? undefined,
     });
 
     // Lưu product trước
@@ -136,40 +156,40 @@ export class ProductService {
 
     // Tạo liên kết ingredients nếu có
     if (validatedIngredients.length > 0) {
-      const productIngredients = validatedIngredients.map(ingredient => 
+      const productIngredients = validatedIngredients.map((ingredient) =>
         this.piRepo.create({
           product_id: savedProduct.product_id,
           ingredient_id: ingredient.ingredient_id,
           product: savedProduct,
           ingredient: ingredient,
           is_primary: false, // Có thể thêm logic để xác định primary
-        })
+        }),
       );
       await this.piRepo.save(productIngredients);
     }
 
     // Tạo liên kết diseases nếu có
     if (validatedDiseases.length > 0) {
-      const productDiseases = validatedDiseases.map(disease => 
+      const productDiseases = validatedDiseases.map((disease) =>
         this.productDiseaseRepo.create({
           product_id: savedProduct.product_id,
           disease_id: disease.disease_id,
           product: savedProduct,
           disease: disease,
           is_primary: false, // Có thể thêm logic để xác định primary
-        })
+        }),
       );
       await this.productDiseaseRepo.save(productDiseases);
     }
 
     // Tạo liên kết hình ảnh nếu có
     if (uploadedImages.length > 0) {
-      const productImages = uploadedImages.map(image => 
+      const productImages = uploadedImages.map((image) =>
         this.productImageRepo.create({
           product: savedProduct,
           image_url: image.url,
           description: `Product image for ${savedProduct.product_name}`,
-        })
+        }),
       );
       await this.productImageRepo.save(productImages);
     }
@@ -305,7 +325,7 @@ export class ProductService {
     }
 
     // Validate manufacturer nếu có update
-    let manufacturer = product.manufacturer;
+    let manufacturer: Manufacturer | null = product?.manufacturer || null;
     if (updateProductDto.manufacturer_id) {
       manufacturer = await this.manufacturerRepo.findOne({
         where: {
@@ -321,6 +341,41 @@ export class ProductService {
       }
     }
 
+    let validatedIngredients: ActiveIngredient[] = [];
+    if (
+      updateProductDto.ingredient_ids &&
+      updateProductDto.ingredient_ids.length > 0
+    ) {
+      validatedIngredients = await this.activeIngredientRepo.find({
+        where: {
+          ingredient_id: In(updateProductDto.ingredient_ids),
+          is_deleted: false,
+        },
+      });
+      if (
+        validatedIngredients.length !== updateProductDto.ingredient_ids.length
+      ) {
+        throw new NotFoundException('Có thành phần không tồn tại');
+      }
+    }
+
+    // Validate diseases
+    let validatedDiseases: Disease[] = [];
+    if (
+      updateProductDto.disease_ids &&
+      updateProductDto.disease_ids.length > 0
+    ) {
+      validatedDiseases = await this.diseaseRepo.find({
+        where: {
+          disease_id: In(updateProductDto.disease_ids),
+          is_deleted: false,
+        },
+      });
+      if (validatedDiseases.length !== updateProductDto.disease_ids.length) {
+        throw new NotFoundException('Có bệnh không tồn tại');
+      }
+    }
+
     // Validate price
     if (
       updateProductDto.unit_product_price &&
@@ -330,7 +385,7 @@ export class ProductService {
     }
 
     // Upload hình ảnh mới nếu có
-    let uploadedImages = [];
+    let uploadedImages: { url: string; public_id: string }[] = [];
     if (files && files.length > 0) {
       try {
         uploadedImages = await this.cloudinaryService.uploadImages(files);
@@ -343,11 +398,15 @@ export class ProductService {
     Object.assign(product, {
       product_name: updateProductDto.product_name || product.product_name,
       description: updateProductDto.description || product.description,
-      usage_instructions: updateProductDto.usage_instructions || product.usage_instructions,
-      unit_product_price: updateProductDto.unit_product_price || product.unit_product_price,
+      usage_instructions:
+        updateProductDto.usage_instructions || product.usage_instructions,
+      unit_product_price:
+        updateProductDto.unit_product_price || product.unit_product_price,
       is_active: updateProductDto.is_active ?? product.is_active,
       categories,
-      manufacturer,
+      productDiseases: validatedDiseases,
+      product_ingredients: validatedIngredients,
+      manufacturer: manufacturer ?? undefined,
       updated_at: new Date(),
     });
 
@@ -357,24 +416,29 @@ export class ProductService {
     if (updateProductDto.ingredient_ids) {
       // Xóa liên kết cũ
       await this.piRepo.delete({ product_id: product_id });
-      
+
       // Tạo liên kết mới
       if (updateProductDto.ingredient_ids.length > 0) {
         const validatedIngredients = await this.activeIngredientRepo.find({
-          where: { ingredient_id: In(updateProductDto.ingredient_ids), is_deleted: false },
+          where: {
+            ingredient_id: In(updateProductDto.ingredient_ids),
+            is_deleted: false,
+          },
         });
-        if (validatedIngredients.length !== updateProductDto.ingredient_ids.length) {
+        if (
+          validatedIngredients.length !== updateProductDto.ingredient_ids.length
+        ) {
           throw new NotFoundException('Có thành phần không tồn tại');
         }
-        
-        const productIngredients = validatedIngredients.map(ingredient => 
+
+        const productIngredients = validatedIngredients.map((ingredient) =>
           this.piRepo.create({
             product_id: updatedProduct.product_id,
             ingredient_id: ingredient.ingredient_id,
             product: updatedProduct,
             ingredient: ingredient,
             is_primary: false,
-          })
+          }),
         );
         await this.piRepo.save(productIngredients);
       }
@@ -384,24 +448,27 @@ export class ProductService {
     if (updateProductDto.disease_ids) {
       // Xóa liên kết cũ
       await this.productDiseaseRepo.delete({ product_id: product_id });
-      
+
       // Tạo liên kết mới
       if (updateProductDto.disease_ids.length > 0) {
         const validatedDiseases = await this.diseaseRepo.find({
-          where: { disease_id: In(updateProductDto.disease_ids), is_deleted: false },
+          where: {
+            disease_id: In(updateProductDto.disease_ids),
+            is_deleted: false,
+          },
         });
         if (validatedDiseases.length !== updateProductDto.disease_ids.length) {
           throw new NotFoundException('Có bệnh không tồn tại');
         }
-        
-        const productDiseases = validatedDiseases.map(disease => 
+
+        const productDiseases = validatedDiseases.map((disease) =>
           this.productDiseaseRepo.create({
             product_id: updatedProduct.product_id,
             disease_id: disease.disease_id,
             product: updatedProduct,
             disease: disease,
             is_primary: false,
-          })
+          }),
         );
         await this.productDiseaseRepo.save(productDiseases);
       }
@@ -409,12 +476,12 @@ export class ProductService {
 
     // Thêm hình ảnh mới nếu có (không xóa hình cũ)
     if (uploadedImages.length > 0) {
-      const productImages = uploadedImages.map(image => 
+      const productImages = uploadedImages.map((image) =>
         this.productImageRepo.create({
           product: updatedProduct,
           image_url: image.url,
           description: `Product image for ${updatedProduct.product_name}`,
-        })
+        }),
       );
       await this.productImageRepo.save(productImages);
     }
@@ -863,7 +930,9 @@ export class ProductService {
       user.role?.role_name !== Role.ADMIN &&
       product.distributor.user_id !== user.user_id
     ) {
-      throw new ForbiddenException('Bạn không có quyền thêm hình ảnh cho sản phẩm này');
+      throw new ForbiddenException(
+        'Bạn không có quyền thêm hình ảnh cho sản phẩm này',
+      );
     }
 
     if (!files || files.length === 0) {
@@ -871,7 +940,7 @@ export class ProductService {
     }
 
     // Upload hình ảnh lên Cloudinary
-    let uploadedImages = [];
+    let uploadedImages: { url: string; public_id: string }[] = [];
     try {
       uploadedImages = await this.cloudinaryService.uploadImages(files);
     } catch (error) {
@@ -889,10 +958,10 @@ export class ProductService {
 
     await this.productImageRepo.save(newImages);
 
-    return { 
-      message: 'Thêm hình ảnh thành công', 
+    return {
+      message: 'Thêm hình ảnh thành công',
       images: newImages,
-      uploaded_count: uploadedImages.length
+      uploaded_count: uploadedImages.length,
     };
   }
 
@@ -914,11 +983,15 @@ export class ProductService {
       user.role?.role_name !== Role.ADMIN &&
       product.distributor.user_id !== user.user_id
     ) {
-      throw new ForbiddenException('Bạn không có quyền xóa hình ảnh của sản phẩm này');
+      throw new ForbiddenException(
+        'Bạn không có quyền xóa hình ảnh của sản phẩm này',
+      );
     }
 
     if (!imageIds || imageIds.length === 0) {
-      throw new BadRequestException('Vui lòng chọn ít nhất một hình ảnh để xóa');
+      throw new BadRequestException(
+        'Vui lòng chọn ít nhất một hình ảnh để xóa',
+      );
     }
 
     const imagesToRemove = await this.productImageRepo.find({
@@ -933,7 +1006,9 @@ export class ProductService {
     if (
       imagesToRemove.some((image) => image.product.product_id !== product_id)
     ) {
-      throw new BadRequestException('Một số hình ảnh không thuộc về sản phẩm này');
+      throw new BadRequestException(
+        'Một số hình ảnh không thuộc về sản phẩm này',
+      );
     }
 
     // Xóa hình ảnh trên Cloudinary
@@ -952,9 +1027,9 @@ export class ProductService {
 
     await this.productImageRepo.remove(imagesToRemove);
 
-    return { 
-      message: 'Xóa hình ảnh thành công', 
-      removed_count: imagesToRemove.length 
+    return {
+      message: 'Xóa hình ảnh thành công',
+      removed_count: imagesToRemove.length,
     };
   }
 
@@ -963,7 +1038,7 @@ export class ProductService {
       // Extract public_id from Cloudinary URL
       // Example URL: https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg
       const parts = url.split('/');
-      const uploadIndex = parts.findIndex(part => part === 'upload');
+      const uploadIndex = parts.findIndex((part) => part === 'upload');
       if (uploadIndex !== -1 && uploadIndex < parts.length - 1) {
         // Get everything after 'upload/vXXXXXXXXXX/' or 'upload/'
         const afterUpload = parts.slice(uploadIndex + 1);

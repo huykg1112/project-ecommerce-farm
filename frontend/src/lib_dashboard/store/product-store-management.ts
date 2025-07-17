@@ -120,6 +120,7 @@ export const productFormDataAtom = atom<ProductFormData>({
   ingredient_ids: [],
   disease_ids: [],
   is_active: true,
+  images: [],
 });
 
 export const productFormErrorsAtom = atom<Record<string, string>>({});
@@ -524,12 +525,12 @@ export const fetchMyProductStatsAtom = atom(null, async (get, set) => {
 // Create product
 export const createProductAtom = atom(
   null,
-  async (get, set, data: ProductFormData) => {
+  async (get, set, data: ProductFormData, files: File[]) => {
     set(productFormLoadingAtom, true);
     set(productFormErrorsAtom, {});
 
     try {
-      const product = await productServiceManagement.createProduct(data);
+      const product = await productServiceManagement.createProduct(data, files);
 
       // Update my products list
       const myProducts = get(myProductsAtom);
@@ -546,6 +547,7 @@ export const createProductAtom = atom(
         ingredient_ids: [],
         disease_ids: [],
         is_active: true,
+        images: [],
       });
 
       set(addProductModalAtom, false);
@@ -769,6 +771,7 @@ export const setProductForEditingAtom = atom(
       ingredient_ids: product.product_ingredients.map((i) => i.ingredient_id),
       disease_ids: product.diseases.map((d) => d.disease_id),
       is_active: product.is_active,
+      images: product.images.map((img) => img.image_url), // Assuming images are stored as URLs
     });
     set(selectedProductAtom, product);
   }
@@ -785,6 +788,7 @@ export const resetProductFormAtom = atom(null, (get, set) => {
     ingredient_ids: [],
     disease_ids: [],
     is_active: true,
+    images: [],
   });
   set(productFormErrorsAtom, {});
 });

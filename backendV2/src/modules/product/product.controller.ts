@@ -8,9 +8,9 @@ import {
   Post,
   Query,
   Req,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
-  UploadedFiles,
 } from '@nestjs/common';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { Role } from '../../auth/enums/role.enum';
@@ -174,7 +174,12 @@ export class ProductController {
     @UploadedFiles() files: Express.Multer.File[],
     @Req() req,
   ) {
-    return this.productService.update(id, updateProductDto, files || [], req.user);
+    return this.productService.update(
+      id,
+      updateProductDto,
+      files || [],
+      req.user,
+    );
   }
 
   //  @Roles(Role.DISTRIBUTOR, Role.ADMIN)
@@ -226,6 +231,10 @@ export class ProductController {
     @Body() body: { image_ids: string[] },
     @Req() req,
   ) {
-    return this.productService.removeImagesFromProduct(id, body.image_ids, req.user);
+    return this.productService.removeImagesFromProduct(
+      id,
+      body.image_ids,
+      req.user,
+    );
   }
 }

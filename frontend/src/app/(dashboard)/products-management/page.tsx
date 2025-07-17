@@ -12,7 +12,7 @@ import { showToast } from "@/lib/toast-provider";
 import { selectedProductAtom } from "@/lib_dashboard/store/product-store-management";
 import { useAtom } from "jotai";
 import { Download, Plus } from "lucide-react";
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 export default function ProductsManagementPage() {
   const {
@@ -71,6 +71,7 @@ export default function ProductsManagementPage() {
   } = useProductManagement();
 
   const [selectedProduct] = useAtom(selectedProductAtom);
+  const [productImages, setProductImages] = useState<File[]>([]);
 
   // Load data on component mount
   useEffect(() => {

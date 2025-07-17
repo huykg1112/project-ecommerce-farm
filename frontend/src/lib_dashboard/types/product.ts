@@ -157,6 +157,7 @@ export interface ProductFormData {
   ingredient_ids: string[];
   disease_ids: string[];
   is_active: boolean;
+  images: string[]; // For image uploads
 }
 
 export interface ProductFormErrors {
@@ -164,10 +165,12 @@ export interface ProductFormErrors {
   description?: string;
   usage_instructions?: string;
   unit_product_price?: string;
-  category_ids?: string;
+  category_ids?: string[];
   manufacturer_id?: string;
-  ingredient_ids?: string;
-  disease_ids?: string;
+  ingredient_ids?: string[];
+  disease_ids?: string[];
+  is_active?: boolean;
+  images?: string[];
 }
 
 export interface Invenstory {
