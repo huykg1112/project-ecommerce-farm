@@ -19,8 +19,8 @@ export interface Product {
 
 // Supporting interfaces - mapping theo serializeProduct() từ BE
 export interface ProductCategory {
-  category_id: string;
-  category_name: string;
+  id: string;
+  name: string;
 }
 
 export interface ProductManufacturer {
@@ -72,6 +72,7 @@ export interface CreateProductRequest {
   ingredient_ids?: string[];
   disease_ids?: string[];
   is_active?: boolean;
+  // images?: string[]; // For image uploads
 }
 
 export interface UpdateProductRequest {
@@ -84,6 +85,7 @@ export interface UpdateProductRequest {
   ingredient_ids?: string[];
   disease_ids?: string[];
   is_active?: boolean;
+  // images?: string[]; // For image uploads
 }
 
 export interface AdvancedProductFilterRequest extends ProductFilters {
@@ -157,7 +159,7 @@ export interface ProductFormData {
   ingredient_ids: string[];
   disease_ids: string[];
   is_active: boolean;
-  images: string[]; // For image uploads
+  // images: string[]; // For image uploads
 }
 
 export interface ProductFormErrors {
@@ -170,7 +172,7 @@ export interface ProductFormErrors {
   ingredient_ids?: string[];
   disease_ids?: string[];
   is_active?: boolean;
-  images?: string[];
+  // images?: string[];
 }
 
 export interface Invenstory {

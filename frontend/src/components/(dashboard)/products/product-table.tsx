@@ -99,7 +99,7 @@ export function ProductTable({
 
   const getPrimaryImage = useCallback((product: Product) => {
     const primaryImage = product.images?.find((img) => img.is_primary);
-    return primaryImage?.image_url || "/placeholder.svg";
+    return primaryImage?.image_url || "";
   }, []);
 
   const getImageCount = useCallback((product: Product) => {
@@ -212,10 +212,10 @@ export function ProductTable({
                         width={48}
                         height={48}
                         className="rounded-lg object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = "/placeholder.svg";
-                        }}
+                        // onError={(e) => {
+                        //   const target = e.target as HTMLImageElement;
+                        //   target.src = "/placeholder.svg";
+                        // }}
                       />
                       {getImageCount(product) > 1 && (
                         <Badge
@@ -249,11 +249,11 @@ export function ProductTable({
                     <div className="flex flex-wrap gap-1">
                       {product.categories?.slice(0, 2).map((category) => (
                         <Badge
-                          key={category.category_id}
+                          key={category.id}
                           variant="outline"
                           className="text-xs"
                         >
-                          {category.category_name}
+                          {category.name}
                         </Badge>
                       ))}
                       {product.categories?.length > 2 && (

@@ -109,21 +109,9 @@ export const productServiceManagement = {
     }
   },
 
-  async createProduct(
-    data: CreateProductRequest,
-    files: File[]
-  ): Promise<Product> {
+  async createProduct(data: CreateProductRequest): Promise<Product> {
     try {
-      const formData = new FormData();
-      formData.append("data", JSON.stringify(data));
-      files.forEach((file) => {
-        formData.append("images", file);
-      });
-      const response = await axiosInstance.post("/products", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const response = await axiosInstance.post("/products", data);
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi tạo sản phẩm";

@@ -9,7 +9,6 @@ import {
   Length,
   Min,
 } from 'class-validator';
-import { Transform } from 'class-transformer';
 
 export class CreateProductDto {
   @IsString()
@@ -52,6 +51,10 @@ export class CreateProductDto {
   @IsArray()
   @IsUUID('all', { each: true })
   disease_ids?: string[];
+
+  @IsOptional()
+  @IsArray()
+  image_ids?: string[];
 
   // Hình ảnh sẽ được xử lý qua multipart/form-data
   // Không cần validation ở đây vì sẽ được xử lý trong controller

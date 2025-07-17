@@ -120,7 +120,7 @@ export const productFormDataAtom = atom<ProductFormData>({
   ingredient_ids: [],
   disease_ids: [],
   is_active: true,
-  images: [],
+  // images: [],
 });
 
 export const productFormErrorsAtom = atom<Record<string, string>>({});
@@ -217,7 +217,7 @@ export const filteredProductsAtom = atom((get) => {
   // Category filter
   if (filters.category_id) {
     filtered = filtered.filter((product) =>
-      product.categories.some((cat) => cat.category_id === filters.category_id)
+      product.categories.some((cat) => cat.id === filters.category_id)
     );
   }
 
@@ -525,12 +525,12 @@ export const fetchMyProductStatsAtom = atom(null, async (get, set) => {
 // Create product
 export const createProductAtom = atom(
   null,
-  async (get, set, data: ProductFormData, files: File[]) => {
+  async (get, set, data: ProductFormData, files?: File[]) => {
     set(productFormLoadingAtom, true);
     set(productFormErrorsAtom, {});
 
     try {
-      const product = await productServiceManagement.createProduct(data, files);
+      const product = await productServiceManagement.createProduct(data);
 
       // Update my products list
       const myProducts = get(myProductsAtom);
@@ -547,7 +547,7 @@ export const createProductAtom = atom(
         ingredient_ids: [],
         disease_ids: [],
         is_active: true,
-        images: [],
+        // images: [],
       });
 
       set(addProductModalAtom, false);
@@ -766,12 +766,12 @@ export const setProductForEditingAtom = atom(
       description: product.description || "",
       usage_instructions: product.usage_instructions || "",
       unit_product_price: product.unit_product_price,
-      category_ids: product.categories.map((c) => c.category_id),
+      category_ids: product.categories.map((c) => c.id),
       manufacturer_id: product.manufacturer?.id || "",
       ingredient_ids: product.product_ingredients.map((i) => i.ingredient_id),
       disease_ids: product.diseases.map((d) => d.disease_id),
       is_active: product.is_active,
-      images: product.images.map((img) => img.image_url), // Assuming images are stored as URLs
+      // images: product.images.map((img) => img.image_url), // Assuming images are stored as URLs
     });
     set(selectedProductAtom, product);
   }
@@ -788,7 +788,7 @@ export const resetProductFormAtom = atom(null, (get, set) => {
     ingredient_ids: [],
     disease_ids: [],
     is_active: true,
-    images: [],
+    // images: [],
   });
   set(productFormErrorsAtom, {});
 });

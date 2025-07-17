@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class InitDatabase1752747793380 implements MigrationInterface {
-    name = 'InitDatabase1752747793380'
+export class InitDatabase1752755029130 implements MigrationInterface {
+    name = 'InitDatabase1752755029130'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TABLE "address" ("address_id" uuid NOT NULL DEFAULT uuid_generate_v4(), "address_detail" character varying(500), "latitude" numeric(9,6), "longitude" numeric(9,6), "is_default" boolean DEFAULT false, "is_active" boolean DEFAULT true, "is_deleted" boolean NOT NULL DEFAULT false, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "user_id" uuid, CONSTRAINT "PK_db4aae0a059fd4ef7709cb802b0" PRIMARY KEY ("address_id"))`);
@@ -29,11 +29,11 @@ export class InitDatabase1752747793380 implements MigrationInterface {
         await queryRunner.query(`CREATE TABLE "token" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "access_token" character varying(500), "access_token_expires_at" TIMESTAMP, "refresh_token" character varying(500), "refresh_token_expires_at" TIMESTAMP, "user_id" uuid, CONSTRAINT "PK_82fae97f905930df5d62a702fc9" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_d5b9f4694521b7fbb121aff385" ON "token" ("access_token") `);
         await queryRunner.query(`CREATE INDEX "IDX_b95cd28e9bf58b05f50e4ff909" ON "token" ("refresh_token") `);
-        await queryRunner.query(`CREATE TABLE "voucher" ("voucher_id" uuid NOT NULL DEFAULT uuid_generate_v4(), "voucher_code" character varying(50) NOT NULL, "min_order_value" numeric(10,2), "max_discount_value" numeric(10,2), "usage_limit" integer, "used_count" integer DEFAULT '0', "start_date" TIMESTAMP, "end_date" TIMESTAMP, "is_active" boolean DEFAULT true, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "is_deleted" boolean NOT NULL DEFAULT false, "distributorUserId" uuid, CONSTRAINT "PK_b885ed14e32391234a3bad969d2" PRIMARY KEY ("voucher_id"))`);
         await queryRunner.query(`CREATE TABLE "user" ("user_id" uuid NOT NULL DEFAULT uuid_generate_v4(), "username" character varying(50) NOT NULL, "email" character varying(100) NOT NULL, "password" character varying(255) NOT NULL, "full_name" character varying(255), "phone_number" character varying(20), "avatar" character varying(255), "avatarPublicId" character varying(255), "cccd" character varying(12), "is_active" boolean NOT NULL DEFAULT true, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "is_deleted" boolean NOT NULL DEFAULT false, "role_id" uuid NOT NULL, CONSTRAINT "PK_758b8ce7c18b9d347461b30228d" PRIMARY KEY ("user_id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_758b8ce7c18b9d347461b30228" ON "user" ("user_id") `);
         await queryRunner.query(`CREATE INDEX "IDX_78a916df40e02a9deb1c4b75ed" ON "user" ("username") `);
         await queryRunner.query(`CREATE INDEX "IDX_e12875dfb3b1d92d7d7c5377e2" ON "user" ("email") `);
+        await queryRunner.query(`CREATE TABLE "voucher" ("voucher_id" uuid NOT NULL DEFAULT uuid_generate_v4(), "voucher_code" character varying(50) NOT NULL, "min_order_value" numeric(10,2), "max_discount_value" numeric(10,2), "usage_limit" integer, "used_count" integer DEFAULT '0', "start_date" TIMESTAMP, "end_date" TIMESTAMP, "is_active" boolean DEFAULT true, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), "is_deleted" boolean NOT NULL DEFAULT false, "distributorUserId" uuid, CONSTRAINT "PK_b885ed14e32391234a3bad969d2" PRIMARY KEY ("voucher_id"))`);
         await queryRunner.query(`CREATE TABLE "product_category" ("productProductId" uuid NOT NULL, "categoryId" uuid NOT NULL, CONSTRAINT "PK_7429236ac90f0563018517ac244" PRIMARY KEY ("productProductId", "categoryId"))`);
         await queryRunner.query(`CREATE INDEX "IDX_8d3fb31ab54261ff8755eebc3e" ON "product_category" ("productProductId") `);
         await queryRunner.query(`CREATE INDEX "IDX_559e1bc4d01ef1e56d75117ab9" ON "product_category" ("categoryId") `);
@@ -73,8 +73,8 @@ export class InitDatabase1752747793380 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "invenstory" ADD CONSTRAINT "FK_fb0d44f6817f37d34e0961000d0" FOREIGN KEY ("distributor_id") REFERENCES "user"("user_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "store_owner_request" ADD CONSTRAINT "FK_2dc0ed4b4f3de021c88d95c130e" FOREIGN KEY ("user_id") REFERENCES "user"("user_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "token" ADD CONSTRAINT "FK_e50ca89d635960fda2ffeb17639" FOREIGN KEY ("user_id") REFERENCES "user"("user_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "voucher" ADD CONSTRAINT "FK_1da5d93c7dacaff28a6e965e4c1" FOREIGN KEY ("distributorUserId") REFERENCES "user"("user_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "user" ADD CONSTRAINT "FK_fb2e442d14add3cefbdf33c4561" FOREIGN KEY ("role_id") REFERENCES "role"("role_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "voucher" ADD CONSTRAINT "FK_1da5d93c7dacaff28a6e965e4c1" FOREIGN KEY ("distributorUserId") REFERENCES "user"("user_id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "product_category" ADD CONSTRAINT "FK_8d3fb31ab54261ff8755eebc3ef" FOREIGN KEY ("productProductId") REFERENCES "product"("product_id") ON DELETE CASCADE ON UPDATE CASCADE`);
         await queryRunner.query(`ALTER TABLE "product_category" ADD CONSTRAINT "FK_559e1bc4d01ef1e56d75117ab9c" FOREIGN KEY ("categoryId") REFERENCES "category"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "batch_product_type" ADD CONSTRAINT "FK_76f2d4dca3dd0acd0e449816f1e" FOREIGN KEY ("productTypeProductTypeId") REFERENCES "product_type"("product_type_id") ON DELETE CASCADE ON UPDATE CASCADE`);
@@ -94,8 +94,8 @@ export class InitDatabase1752747793380 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "batch_product_type" DROP CONSTRAINT "FK_76f2d4dca3dd0acd0e449816f1e"`);
         await queryRunner.query(`ALTER TABLE "product_category" DROP CONSTRAINT "FK_559e1bc4d01ef1e56d75117ab9c"`);
         await queryRunner.query(`ALTER TABLE "product_category" DROP CONSTRAINT "FK_8d3fb31ab54261ff8755eebc3ef"`);
-        await queryRunner.query(`ALTER TABLE "user" DROP CONSTRAINT "FK_fb2e442d14add3cefbdf33c4561"`);
         await queryRunner.query(`ALTER TABLE "voucher" DROP CONSTRAINT "FK_1da5d93c7dacaff28a6e965e4c1"`);
+        await queryRunner.query(`ALTER TABLE "user" DROP CONSTRAINT "FK_fb2e442d14add3cefbdf33c4561"`);
         await queryRunner.query(`ALTER TABLE "token" DROP CONSTRAINT "FK_e50ca89d635960fda2ffeb17639"`);
         await queryRunner.query(`ALTER TABLE "store_owner_request" DROP CONSTRAINT "FK_2dc0ed4b4f3de021c88d95c130e"`);
         await queryRunner.query(`ALTER TABLE "invenstory" DROP CONSTRAINT "FK_fb0d44f6817f37d34e0961000d0"`);
@@ -135,11 +135,11 @@ export class InitDatabase1752747793380 implements MigrationInterface {
         await queryRunner.query(`DROP INDEX "public"."IDX_559e1bc4d01ef1e56d75117ab9"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_8d3fb31ab54261ff8755eebc3e"`);
         await queryRunner.query(`DROP TABLE "product_category"`);
+        await queryRunner.query(`DROP TABLE "voucher"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_e12875dfb3b1d92d7d7c5377e2"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_78a916df40e02a9deb1c4b75ed"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_758b8ce7c18b9d347461b30228"`);
         await queryRunner.query(`DROP TABLE "user"`);
-        await queryRunner.query(`DROP TABLE "voucher"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_b95cd28e9bf58b05f50e4ff909"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_d5b9f4694521b7fbb121aff385"`);
         await queryRunner.query(`DROP TABLE "token"`);
