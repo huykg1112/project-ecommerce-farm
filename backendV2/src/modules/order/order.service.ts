@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm/dist/common/typeorm.decorators';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { BatchProduct } from '../batch-product/entities/batch-product.entity';
 import { OrderDetail } from '../order-detail/entities/order-detail.entity';
 import { OrderStatus } from '../order-status/entities/order-status.entity';
@@ -331,7 +331,7 @@ export class OrderService {
     return this.findOne(id);
   }
 
-  async cancelOrder(id: string) {
+  async cancelOrder(id: string, notes?: string) {
     const order = await this.findOne(id);
 
     const cancelledStatus = await this.orderStatusRepository.findOne({
@@ -342,9 +342,176 @@ export class OrderService {
     }
 
     order.status = cancelledStatus;
+    if (notes) {
+      order.notes = notes;
+    }
     await this.orderRepository.save(order);
 
-    return this.findOne(id);
+    return {
+      message: 'Order cancelled successfully',
+      order: await this.findOne(id),
+    };
+  }
+
+  async confirmOrder(id: string, notes?: string) {
+    const order = await this.findOne(id);
+
+    // Check if order can be confirmed
+    if (order.status.status_name !== 'PENDING') {
+      throw new BadRequestException('Only pending orders can be confirmed');
+    }
+
+    const confirmedStatus = await this.orderStatusRepository.findOne({
+      where: { status_name: 'CONFIRMED' },
+    });
+    if (!confirmedStatus) {
+      throw new BadRequestException('Confirmed status not found');
+    }
+
+    order.status = confirmedStatus;
+    if (notes) {
+      order.notes = notes;
+    }
+    await this.orderRepository.save(order);
+
+    return {
+      message: 'Order confirmed successfully',
+      order: await this.findOne(id),
+    };
+  }
+
+  // Batch operations
+  async batchUpdateStatus(orderIds: string[], statusId: string, notes?: string) {
+    const orders = await this.orderRepository.find({
+      where: { order_id: In(orderIds) },
+      relations: ['status', 'user', 'distributor', 'payment_method', 'order_details'],
+    });
+    if (orders.length !== orderIds.length) {
+      throw new BadRequestException('Some orders not found');
+    }
+
+    const status = await this.orderStatusRepository.findOne({
+      where: { status_id: statusId },
+    });
+    if (!status) {
+      throw new BadRequestException('Status not found');
+    }
+
+    const updatePromises = orders.map(async (order) => {
+      order.status = status;
+      if (notes) {
+        order.notes = notes;
+      }
+      return this.orderRepository.save(order);
+    });
+
+    await Promise.all(updatePromises);
+
+    return {
+      message: `Updated ${orders.length} orders successfully`,
+      success_count: orders.length,
+      failed_count: 0,
+    };
+  }
+
+  async batchConfirmOrders(orderIds: string[], notes?: string) {
+    const orders = await this.orderRepository.find({
+      where: { order_id: In(orderIds) },
+      relations: ['status', 'user', 'distributor', 'payment_method', 'order_details'],
+    });
+    if (orders.length !== orderIds.length) {
+      throw new BadRequestException('Some orders not found');
+    }
+
+    const confirmedStatus = await this.orderStatusRepository.findOne({
+      where: { status_name: 'CONFIRMED' },
+    });
+    if (!confirmedStatus) {
+      throw new BadRequestException('Confirmed status not found');
+    }
+
+    let successCount = 0;
+    let failedCount = 0;
+    const failedOrders: string[] = [];
+
+    const updatePromises = orders.map(async (order) => {
+      try {
+        if (order.status.status_name !== 'PENDING') {
+          failedCount++;
+          failedOrders.push(order.order_id);
+          return;
+        }
+
+        order.status = confirmedStatus;
+        if (notes) {
+          order.notes = notes;
+        }
+        await this.orderRepository.save(order);
+        successCount++;
+      } catch (error) {
+        failedCount++;
+        failedOrders.push(order.order_id);
+      }
+    });
+
+    await Promise.all(updatePromises);
+
+    return {
+      message: `Confirmed ${successCount} orders successfully`,
+      success_count: successCount,
+      failed_count: failedCount,
+      failed_orders: failedOrders,
+    };
+  }
+
+  async batchCancelOrders(orderIds: string[], notes?: string) {
+    const orders = await this.orderRepository.find({
+      where: { order_id: In(orderIds) },
+      relations: ['status', 'user', 'distributor', 'payment_method', 'order_details'],
+    });
+    if (orders.length !== orderIds.length) {
+      throw new BadRequestException('Some orders not found');
+    }
+
+    const cancelledStatus = await this.orderStatusRepository.findOne({
+      where: { status_name: 'CANCELLED' },
+    });
+    if (!cancelledStatus) {
+      throw new BadRequestException('Cancelled status not found');
+    }
+
+    let successCount = 0;
+    let failedCount = 0;
+    const failedOrders: string[] = [];
+
+    const updatePromises = orders.map(async (order) => {
+      try {
+        if (!['PENDING', 'CONFIRMED'].includes(order.status.status_name)) {
+          failedCount++;
+          failedOrders.push(order.order_id);
+          return;
+        }
+
+        order.status = cancelledStatus;
+        if (notes) {
+          order.notes = notes;
+        }
+        await this.orderRepository.save(order);
+        successCount++;
+      } catch (error) {
+        failedCount++;
+        failedOrders.push(order.order_id);
+      }
+    });
+
+    await Promise.all(updatePromises);
+
+    return {
+      message: `Cancelled ${successCount} orders successfully`,
+      success_count: successCount,
+      failed_count: failedCount,
+      failed_orders: failedOrders,
+    };
   }
 
   async remove(id: string) {
