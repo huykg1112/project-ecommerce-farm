@@ -9,6 +9,7 @@ import {
   fetchOrderByIdAtom,
   fetchOrdersAtom,
   fetchOrderStatsAtom,
+  fetchOrderStatusesAtom,
   filteredOrdersAtom,
   isAllOrdersSelectedAtom,
   isOrdersIndeterminateAtom,
@@ -17,6 +18,7 @@ import {
   ordersDataAtom,
   ordersLoadingAtom,
   orderStatsAtom,
+  orderStatusesAtom,
   resetOrderFiltersAtom,
   selectedOrderAtom,
   selectedOrdersAtom,
@@ -48,11 +50,13 @@ export const useOrderManagement = () => {
   const selectedOrder = useAtomValue(selectedOrderAtom);
   const isAllSelected = useAtomValue(isAllOrdersSelectedAtom);
   const isIndeterminate = useAtomValue(isOrdersIndeterminateAtom);
+  const orderStatuses = useAtomValue(orderStatusesAtom);
 
   // === ACTIONS ===
   const [, fetchOrders] = useAtom(fetchOrdersAtom);
   const [, fetchOrderStats] = useAtom(fetchOrderStatsAtom);
   const [, fetchOrderById] = useAtom(fetchOrderByIdAtom);
+  const [, fetchOrderStatuses] = useAtom(fetchOrderStatusesAtom);
   const [, updateOrderStatus] = useAtom(updateOrderStatusAtom);
   const [, confirmOrder] = useAtom(confirmOrderAtom);
   const [, cancelOrder] = useAtom(cancelOrderAtom);
@@ -88,6 +92,13 @@ export const useOrderManagement = () => {
   const getOrderStats = useCallback(async () => {
     return await fetchOrderStats();
   }, [fetchOrderStats]);
+
+  /**
+   * Load order statuses
+   */
+  const getOrderStatuses = useCallback(async () => {
+    return await fetchOrderStatuses();
+  }, [fetchOrderStatuses]);
 
   /**
    * Get order by ID
@@ -325,30 +336,34 @@ export const useOrderManagement = () => {
     // Auto load data when component mounts
     getAllOrders();
     getOrderStats();
-  }, [getAllOrders, getOrderStats]);
+    getOrderStatuses();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array to prevent rerender
 
-  return {
-    // === DATA STATES ===
-    allOrders,
-    filteredOrders,
-    ordersLoading,
-    orderStats,
-    selectedOrders,
-    orderCounts,
-    filters,
-    selectedOrder,
+      return {
+      // === DATA STATES ===
+      allOrders,
+      filteredOrders,
+      ordersLoading,
+      orderStats,
+      selectedOrders,
+      orderCounts,
+      filters,
+      selectedOrder,
+      orderStatuses,
 
-    // === LOADING STATES ===
-    batchOperationLoading,
+      // === LOADING STATES ===
+      batchOperationLoading,
 
-    // === SELECTION STATES ===
-    isAllSelected,
-    isIndeterminate,
+      // === SELECTION STATES ===
+      isAllSelected,
+      isIndeterminate,
 
-    // === QUERY FUNCTIONS ===
-    getAllOrders,
-    getOrderStats,
-    getOrderById,
+      // === QUERY FUNCTIONS ===
+      getAllOrders,
+      getOrderStats,
+      getOrderById,
+      getOrderStatuses,
 
     // === FILTER FUNCTIONS ===
     updateOrderFilters,

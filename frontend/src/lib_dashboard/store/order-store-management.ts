@@ -6,6 +6,7 @@ import {
   Order,
   OrderFilters,
   OrderStatsResponse,
+  OrderStatus,
   OrderTableColumn,
   OrderViewMode,
   UpdateOrderStatusRequest,
@@ -43,6 +44,10 @@ export const orderStatsAtom = atom<OrderStatsResponse>({
   total_revenue: 0,
   avg_order_value: 0,
 });
+
+// Order statuses
+export const orderStatusesAtom = atom<OrderStatus[]>([]);
+export const orderStatusesLoadingAtom = atom<boolean>(false);
 
 // ================================================
 // 🔍 FILTER & SEARCH ATOMS
@@ -270,6 +275,20 @@ export const fetchOrderStatsAtom = atom(null, async (get, set) => {
     console.error("Error fetching order stats:", error);
   } finally {
     set(orderStatsLoadingAtom, false);
+  }
+});
+
+// Fetch order statuses
+export const fetchOrderStatusesAtom = atom(null, async (get, set) => {
+  set(orderStatusesLoadingAtom, true);
+
+  try {
+    const statuses = await orderServiceManagement.getOrderStatuses();
+    set(orderStatusesAtom, statuses);
+  } catch (error) {
+    console.error("Error fetching order statuses:", error);
+  } finally {
+    set(orderStatusesLoadingAtom, false);
   }
 });
 

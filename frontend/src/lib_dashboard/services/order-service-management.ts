@@ -7,6 +7,7 @@ import {
   OrderFilters,
   OrderPaginationResponse,
   OrderStatsResponse,
+  OrderStatus,
   UpdateOrderStatusRequest,
   UpdateOrderStatusResponse,
 } from "../types/order";
@@ -17,7 +18,7 @@ export const orderServiceManagement = {
 
   async getAllOrders(filters?: OrderFilters): Promise<Order[]> {
     try {
-      const response = await axiosInstance.get("/orders", {
+      const response = await axiosInstance.get("/order", {
         params: filters,
       });
       return response.data;
@@ -33,7 +34,7 @@ export const orderServiceManagement = {
 
   async getOrderById(id: string): Promise<Order> {
     try {
-      const response = await axiosInstance.get(`/orders/${id}`);
+      const response = await axiosInstance.get(`/order/${id}`);
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi lấy thông tin đơn hàng";
@@ -47,7 +48,9 @@ export const orderServiceManagement = {
 
   async getOrdersByUser(userId: string): Promise<Order[]> {
     try {
-      const response = await axiosInstance.get(`/orders/user/${userId}`);
+      const response = await axiosInstance.get(`/order/my-orders`, {
+        params: { user_id: userId },
+      });
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi lấy danh sách đơn hàng của người dùng";
@@ -61,10 +64,28 @@ export const orderServiceManagement = {
 
   async getOrdersByDistributor(distributorId: string): Promise<Order[]> {
     try {
-      const response = await axiosInstance.get(`/orders/distributor/${distributorId}`);
+      const response = await axiosInstance.get(`/order/distributor-orders`, {
+        params: { distributor_id: distributorId },
+      });
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi lấy danh sách đơn hàng của nhà phân phối";
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        msg = error.response.data.message;
+      }
+      showToast.error(msg);
+      throw error;
+    }
+  },
+
+  // === Order Status Operations ===
+
+  async getOrderStatuses(): Promise<OrderStatus[]> {
+    try {
+      const response = await axiosInstance.get("/order-status");
+      return response.data;
+    } catch (error) {
+      let msg = "Lỗi khi lấy danh sách trạng thái đơn hàng";
       if (axios.isAxiosError(error) && error.response?.data?.message) {
         msg = error.response.data.message;
       }
@@ -80,7 +101,7 @@ export const orderServiceManagement = {
     data: UpdateOrderStatusRequest
   ): Promise<UpdateOrderStatusResponse> {
     try {
-      const response = await axiosInstance.patch(`/orders/${orderId}/status`, data);
+      const response = await axiosInstance.patch(`/order/${orderId}/status`, data);
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi cập nhật trạng thái đơn hàng";
@@ -94,7 +115,7 @@ export const orderServiceManagement = {
 
   async confirmOrder(orderId: string, notes?: string): Promise<UpdateOrderStatusResponse> {
     try {
-      const response = await axiosInstance.patch(`/orders/${orderId}/confirm`, { notes });
+      const response = await axiosInstance.patch(`/order/${orderId}/confirm`, { notes });
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi xác nhận đơn hàng";
@@ -108,7 +129,7 @@ export const orderServiceManagement = {
 
   async cancelOrder(orderId: string, notes?: string): Promise<UpdateOrderStatusResponse> {
     try {
-      const response = await axiosInstance.patch(`/orders/${orderId}/cancel`, { notes });
+      const response = await axiosInstance.patch(`/order/${orderId}/cancel`, { notes });
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi hủy đơn hàng";
@@ -126,7 +147,7 @@ export const orderServiceManagement = {
     request: BatchUpdateStatusRequest
   ): Promise<BatchOperationResponse> {
     try {
-      const response = await axiosInstance.patch("/orders/batch-status", request);
+      const response = await axiosInstance.patch("/order/batch-status", request);
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi cập nhật trạng thái hàng loạt";
@@ -143,7 +164,7 @@ export const orderServiceManagement = {
     notes?: string
   ): Promise<BatchOperationResponse> {
     try {
-      const response = await axiosInstance.patch("/orders/batch-confirm", {
+      const response = await axiosInstance.patch("/order/batch-confirm", {
         order_ids: orderIds,
         notes,
       });
@@ -163,7 +184,7 @@ export const orderServiceManagement = {
     notes?: string
   ): Promise<BatchOperationResponse> {
     try {
-      const response = await axiosInstance.patch("/orders/batch-cancel", {
+      const response = await axiosInstance.patch("/order/batch-cancel", {
         order_ids: orderIds,
         notes,
       });
@@ -186,7 +207,7 @@ export const orderServiceManagement = {
     toDate?: string
   ): Promise<OrderStatsResponse> {
     try {
-      const response = await axiosInstance.get("/orders/statistics", {
+      const response = await axiosInstance.get("/order/statistics", {
         params: { distributorId, fromDate, toDate },
       });
       return response.data;
@@ -204,7 +225,7 @@ export const orderServiceManagement = {
 
   async exportOrders(filters?: OrderFilters): Promise<Blob> {
     try {
-      const response = await axiosInstance.get("/orders/export", {
+      const response = await axiosInstance.get("/order/export", {
         params: filters,
         responseType: "blob",
       });

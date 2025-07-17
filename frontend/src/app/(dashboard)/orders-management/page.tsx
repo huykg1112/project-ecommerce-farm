@@ -4,11 +4,12 @@ import { OrderBatchActions } from "@/components/(dashboard)/orders/order-batch-a
 import { OrderDetailModal } from "@/components/(dashboard)/orders/order-detail-modal";
 import { OrderFilters } from "@/components/(dashboard)/orders/order-filters";
 import { OrderTable } from "@/components/(dashboard)/orders/order-table";
+import { OrderUpdateStatusModal } from "@/components/(dashboard)/orders/order-update-status-modal";
 import { StatisticsCards } from "@/components/common/statistics-cards";
 import { Button } from "@/components/ui/button";
 import { useOrderManagement } from "@/hooks/use-order-management";
 import { showToast } from "@/lib/toast-provider";
-import { orderDetailModalAtom } from "@/lib_dashboard/store/order-store-management";
+import { orderDetailModalAtom, updateStatusModalAtom } from "@/lib_dashboard/store/order-store-management";
 import { useAtom } from "jotai";
 import { Download, RefreshCw } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
@@ -71,9 +72,7 @@ export default function OrdersManagementPage() {
 
   // Modal states
   const [detailModalOpen, setDetailModalOpen] = useAtom(orderDetailModalAtom);
-  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
-  const [cancelModalOpen, setCancelModalOpen] = useState(false);
-  const [updateStatusModalOpen, setUpdateStatusModalOpen] = useState(false);
+  const [updateStatusModalOpen, setUpdateStatusModalOpen] = useAtom(updateStatusModalAtom);
 
   // Action handlers
   const handleViewDetails = useCallback(
@@ -114,11 +113,29 @@ export default function OrdersManagementPage() {
 
   const handleUpdateStatusAction = useCallback(
     async (orderId: string) => {
-      // This would open a modal to select new status
-      // For now, just show a message
-      showToast.info("Tính năng cập nhật trạng thái đang được phát triển");
+      try {
+        await getOrderById(orderId);
+        setUpdateStatusModalOpen(true);
+      } catch (error) {
+        showToast.error("Không thể tải thông tin đơn hàng");
+      }
     },
-    []
+    [getOrderById, setUpdateStatusModalOpen]
+  );
+
+  const handleUpdateStatusSubmit = useCallback(
+    async (statusId: string, notes?: string) => {
+      if (!selectedOrder) return;
+      
+      try {
+        await handleUpdateOrderStatus(selectedOrder.order_id, { status_id: statusId, notes });
+        showToast.success("Cập nhật trạng thái đơn hàng thành công!");
+      } catch (error) {
+        showToast.error("Không thể cập nhật trạng thái đơn hàng");
+        throw error;
+      }
+    },
+    [selectedOrder, handleUpdateOrderStatus]
   );
 
   // Batch action handlers
@@ -180,6 +197,10 @@ export default function OrdersManagementPage() {
   const closeDetailModal = useCallback(() => {
     setDetailModalOpen(false);
   }, [setDetailModalOpen]);
+
+  const closeUpdateStatusModal = useCallback(() => {
+    setUpdateStatusModalOpen(false);
+  }, [setUpdateStatusModalOpen]);
 
   return (
     <div className="space-y-6">
@@ -316,6 +337,16 @@ export default function OrdersManagementPage() {
         open={detailModalOpen}
         onClose={closeDetailModal}
         loading={ordersLoading}
+      />
+
+      {/* Update Status Modal */}
+      <OrderUpdateStatusModal
+        order={selectedOrder}
+        open={updateStatusModalOpen}
+        onClose={closeUpdateStatusModal}
+        onSubmit={handleUpdateStatusSubmit}
+        loading={batchOperationLoading}
+        orderStatuses={orderStatuses}
       />
     </div>
   );
