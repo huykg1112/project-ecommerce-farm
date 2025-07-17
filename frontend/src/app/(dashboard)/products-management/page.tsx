@@ -25,28 +25,28 @@ export default function ProductsManagementPage() {
     productCounts,
     pagination,
     filters,
-    
+
     // Loading states
     productsLoading,
     batchOperationLoading,
-    
+
     // Query functions
     getMyProducts,
     getMyProductStats,
-    
+
     // Filter functions
     updateProductFilters,
     resetProductFilters,
     changePage,
     changeLimit,
     sortProducts,
-    
+
     // Selection functions
     toggleProductSelection,
     toggleAllProductsSelection,
     clearSelections,
     getSelectedCount,
-    
+
     // Management functions
     createProduct,
     updateProduct,
@@ -54,7 +54,7 @@ export default function ProductsManagementPage() {
     toggleProductStatus,
     batchToggleStatus,
     batchDeleteProducts,
-    
+
     // Modal states
     addProductModal,
     editProductModal,
@@ -63,7 +63,7 @@ export default function ProductsManagementPage() {
     openEditModal,
     openDeleteModal,
     closeModals,
-    
+
     // Form states
     productFormData,
     updateProductForm,
@@ -89,9 +89,9 @@ export default function ProductsManagementPage() {
 
   const handleCategoryChange = useCallback(
     (category_id: string) => {
-      updateProductFilters({ 
-        category_id: category_id === "all" ? "" : category_id, 
-        page: 1 
+      updateProductFilters({
+        category_id: category_id === "all" ? "" : category_id,
+        page: 1,
       });
     },
     [updateProductFilters]
@@ -99,9 +99,9 @@ export default function ProductsManagementPage() {
 
   const handleStatusChange = useCallback(
     (status: string) => {
-      updateProductFilters({ 
-        status: status === "all" ? "all" : status as "active" | "inactive", 
-        page: 1 
+      updateProductFilters({
+        status: status === "all" ? "all" : (status as "active" | "inactive"),
+        page: 1,
       });
     },
     [updateProductFilters]
@@ -109,10 +109,10 @@ export default function ProductsManagementPage() {
 
   const handlePriceRangeChange = useCallback(
     (priceRange: { min?: number; max?: number }) => {
-      updateProductFilters({ 
-        price_min: priceRange.min, 
-        price_max: priceRange.max, 
-        page: 1 
+      updateProductFilters({
+        price_min: priceRange.min,
+        price_max: priceRange.max,
+        page: 1,
       });
     },
     [updateProductFilters]
@@ -147,7 +147,7 @@ export default function ProductsManagementPage() {
 
   const handleEditProduct = useCallback(
     (productId: string) => {
-      const product = myProducts.find(p => p.product_id === productId);
+      const product = myProducts.find((p) => p.product_id === productId);
       if (product) {
         setProductForEditing(product);
         openEditModal();
@@ -192,11 +192,17 @@ export default function ProductsManagementPage() {
       showToast.error("Không thể tạo sản phẩm");
       return false;
     }
-  }, [createProduct, productFormData, getMyProducts, getMyProductStats, closeModals]);
+  }, [
+    createProduct,
+    productFormData,
+    getMyProducts,
+    getMyProductStats,
+    closeModals,
+  ]);
 
   const handleUpdateProduct = useCallback(async () => {
     if (!selectedProduct?.product_id) return false;
-    
+
     try {
       await updateProduct(selectedProduct.product_id, productFormData);
       await getMyProducts();
@@ -208,11 +214,18 @@ export default function ProductsManagementPage() {
       showToast.error("Không thể cập nhật sản phẩm");
       return false;
     }
-  }, [updateProduct, selectedProduct, productFormData, getMyProducts, getMyProductStats, closeModals]);
+  }, [
+    updateProduct,
+    selectedProduct,
+    productFormData,
+    getMyProducts,
+    getMyProductStats,
+    closeModals,
+  ]);
 
   const handleDeleteProductConfirm = useCallback(async () => {
     if (!selectedProduct?.product_id) return false;
-    
+
     try {
       await deleteProduct(selectedProduct.product_id);
       await getMyProducts();
@@ -224,7 +237,13 @@ export default function ProductsManagementPage() {
       showToast.error("Không thể xóa sản phẩm");
       return false;
     }
-  }, [deleteProduct, selectedProduct, getMyProducts, getMyProductStats, closeModals]);
+  }, [
+    deleteProduct,
+    selectedProduct,
+    getMyProducts,
+    getMyProductStats,
+    closeModals,
+  ]);
 
   // Batch action handlers
   const handleBatchActivate = useCallback(async () => {
@@ -236,7 +255,13 @@ export default function ProductsManagementPage() {
     } catch (error) {
       showToast.error("Không thể kích hoạt sản phẩm");
     }
-  }, [batchToggleStatus, selectedProducts, getMyProducts, getMyProductStats, clearSelections]);
+  }, [
+    batchToggleStatus,
+    selectedProducts,
+    getMyProducts,
+    getMyProductStats,
+    clearSelections,
+  ]);
 
   const handleBatchDeactivate = useCallback(async () => {
     try {
@@ -247,7 +272,13 @@ export default function ProductsManagementPage() {
     } catch (error) {
       showToast.error("Không thể tạm dừng sản phẩm");
     }
-  }, [batchToggleStatus, selectedProducts, getMyProducts, getMyProductStats, clearSelections]);
+  }, [
+    batchToggleStatus,
+    selectedProducts,
+    getMyProducts,
+    getMyProductStats,
+    clearSelections,
+  ]);
 
   const handleBatchDelete = useCallback(async () => {
     try {
@@ -258,14 +289,23 @@ export default function ProductsManagementPage() {
     } catch (error) {
       showToast.error("Không thể xóa sản phẩm");
     }
-  }, [batchDeleteProducts, selectedProducts, getMyProducts, getMyProductStats, clearSelections]);
+  }, [
+    batchDeleteProducts,
+    selectedProducts,
+    getMyProducts,
+    getMyProductStats,
+    clearSelections,
+  ]);
 
   // Statistics
-  const stats = useMemo(() => ({
-    total: myProductStats.total_products,
-    active: myProductStats.active_products,
-    inactive: myProductStats.inactive_products,
-  }), [myProductStats]);
+  const stats = useMemo(
+    () => ({
+      total: myProductStats.total_products,
+      active: myProductStats.active_products,
+      inactive: myProductStats.inactive_products,
+    }),
+    [myProductStats]
+  );
 
   // Get selected product name for delete modal
   const selectedProductName = useMemo(() => {

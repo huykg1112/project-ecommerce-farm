@@ -1,7 +1,12 @@
 "use client";
-
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -12,7 +17,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCategories } from "@/hooks/use-categories";
-import { Search, RotateCcw } from "lucide-react";
+import { RotateCcw, Search } from "lucide-react";
 import { useCallback, useState } from "react";
 
 interface ProductFiltersProps {
@@ -41,16 +46,20 @@ export function ProductFilters({
   onReset,
 }: ProductFiltersProps) {
   const { categories, loading: categoriesLoading } = useCategories();
-  
+
   // Local state for price inputs to handle intermediate values
-  const [localPriceMin, setLocalPriceMin] = useState<string>(price_min?.toString() || "");
-  const [localPriceMax, setLocalPriceMax] = useState<string>(price_max?.toString() || "");
+  const [localPriceMin, setLocalPriceMin] = useState<string>(
+    price_min?.toString() || ""
+  );
+  const [localPriceMax, setLocalPriceMax] = useState<string>(
+    price_max?.toString() || ""
+  );
 
   // Handle price range changes with debouncing
   const handlePriceChange = useCallback(() => {
     const min = localPriceMin ? parseFloat(localPriceMin) : undefined;
     const max = localPriceMax ? parseFloat(localPriceMax) : undefined;
-    
+
     if (min !== price_min || max !== price_max) {
       onPriceRangeChange({ min, max });
     }
@@ -68,11 +77,14 @@ export function ProductFilters({
     handlePriceChange();
   }, [handlePriceChange]);
 
-  const handlePriceKeyPress = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handlePriceChange();
-    }
-  }, [handlePriceChange]);
+  const handlePriceKeyPress = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "Enter") {
+        handlePriceChange();
+      }
+    },
+    [handlePriceChange]
+  );
 
   const handleReset = useCallback(() => {
     setLocalPriceMin("");
@@ -115,11 +127,12 @@ export function ProductFilters({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả danh mục</SelectItem>
-                {!categoriesLoading && categories?.map((category) => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
+                {!categoriesLoading &&
+                  categories?.map((category) => (
+                    <SelectItem key={category.id} value={category.id}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>

@@ -63,7 +63,9 @@ export function ProductTable({
 
   // Check if selection is indeterminate
   const isIndeterminate = useMemo(() => {
-    return selectedProducts.length > 0 && selectedProducts.length < products.length;
+    return (
+      selectedProducts.length > 0 && selectedProducts.length < products.length
+    );
   }, [products.length, selectedProducts.length]);
 
   const handleSelectAll = useCallback(
@@ -108,7 +110,9 @@ export function ProductTable({
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-[#44703d]">📦 Danh sách sản phẩm</CardTitle>
+          <CardTitle className="text-[#44703d]">
+            📦 Danh sách sản phẩm
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -133,7 +137,9 @@ export function ProductTable({
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-[#44703d]">📦 Danh sách sản phẩm</CardTitle>
+          <CardTitle className="text-[#44703d]">
+            📦 Danh sách sản phẩm
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-center py-8">
@@ -163,7 +169,9 @@ export function ProductTable({
                   <Checkbox
                     checked={isAllSelected}
                     ref={(el) => {
-                      if (el) el.indeterminate = isIndeterminate;
+                      if (el)
+                        (el as HTMLInputElement).indeterminate =
+                          isIndeterminate;
                     }}
                     onCheckedChange={handleSelectAll}
                   />
@@ -191,7 +199,9 @@ export function ProductTable({
                   <TableCell>
                     <Checkbox
                       checked={selectedProducts.includes(product.product_id)}
-                      onCheckedChange={() => handleSelectProduct(product.product_id)}
+                      onCheckedChange={() =>
+                        handleSelectProduct(product.product_id)
+                      }
                     />
                   </TableCell>
                   <TableCell>
