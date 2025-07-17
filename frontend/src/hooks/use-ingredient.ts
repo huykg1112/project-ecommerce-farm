@@ -95,7 +95,7 @@ export function useIngredient() {
   const fetchList = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await activeIngredientService.list(filters);
+      const data = await activeIngredientService.list();
 
       // Map backend data to frontend format
       const mappedData = data.map((item: any) => ({

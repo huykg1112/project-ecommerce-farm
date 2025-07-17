@@ -1,6 +1,5 @@
 "use client";
 
-import { ProductFilters } from "@/components/(dashboard)/products/product-filters";
 import { ProductFormModal } from "@/components/(dashboard)/products/product-form-modal";
 import { ProductPagination } from "@/components/(dashboard)/products/product-pagination";
 import { ProductTable } from "@/components/(dashboard)/products/product-table";
@@ -317,6 +316,8 @@ export default function ProductsManagementPage() {
     openAddModal();
   }, [resetProductForm, openAddModal]);
 
+  console.log("myProducts:", myProducts);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -350,16 +351,14 @@ export default function ProductsManagementPage() {
           </Button>
         </div>
       </div>
-
-      {/* Statistics Cards */}
+      Statistics Cards
       <StatisticsCards
         stats={stats}
         title="sản phẩm"
         loading={myProductsLoading}
       />
-
       {/* Filters */}
-      <ProductFilters
+      {/* <ProductFilters
         search={filters.search || ""}
         category_id={filters.category_id || "all"}
         status={filters.status || "all"}
@@ -370,8 +369,7 @@ export default function ProductsManagementPage() {
         onStatusChange={handleStatusChange}
         onPriceRangeChange={handlePriceRangeChange}
         onReset={resetProductFilters}
-      />
-
+      /> */}
       {/* Batch Actions */}
       <BatchActions
         selectedCount={getSelectedCount()}
@@ -381,7 +379,6 @@ export default function ProductsManagementPage() {
         loading={batchOperationLoading}
         title="sản phẩm"
       />
-
       {/* Products Table */}
       <ProductTable
         products={myProducts}
@@ -394,7 +391,6 @@ export default function ProductsManagementPage() {
         onDeleteProduct={handleDeleteProduct}
         loading={myProductsLoading}
       />
-
       {/* Pagination */}
       <ProductPagination
         currentPage={filters.page || 1}
@@ -407,7 +403,6 @@ export default function ProductsManagementPage() {
         sortBy={filters.sort_by || "created_at"}
         sortOrder={filters.sort_order || "desc"}
       />
-
       {/* Modals */}
       <ProductFormModal
         open={addProductModal}
@@ -418,7 +413,6 @@ export default function ProductsManagementPage() {
         title="Thêm sản phẩm mới"
         submitText="Tạo sản phẩm"
       />
-
       <ProductFormModal
         open={editProductModal}
         onClose={closeModals}
@@ -429,7 +423,6 @@ export default function ProductsManagementPage() {
         submitText="Cập nhật"
         isEdit
       />
-
       <DeleteModal
         open={deleteProductModal}
         handleConfirm={handleDeleteProductConfirm}

@@ -1,47 +1,41 @@
 import {
-  adminProductStatsAtom,
-  allProductsAdminAtom,
-  fetchAdminProductStatsAtom,
-  fetchAllProductsAdminAtom,
+  addProductModalAtom,
+  batchDeleteProductsAtom,
+  batchOperationLoadingAtom,
+  batchToggleStatusAtom,
+  clearSelectionsAtom,
+  // Actions
+  createProductAtom,
+  deleteProductAtom,
+  deleteProductModalAtom,
+  editProductModalAtom,
   fetchMyProductsAtom,
   fetchMyProductStatsAtom,
   myProductsAtom,
   myProductsLoadingAtom,
   myProductStatsAtom,
   productCountsByStatusAtom,
-  selectedProductsAtom,
-  statsDistributorIdAtom,
+  productDetailModalAtom,
+  // Pagination and filters
+  productFiltersAtom,
   // Form management atoms
   productFormDataAtom,
   productFormErrorsAtom,
   productFormLoadingAtom,
-  addProductModalAtom,
-  editProductModalAtom,
-  deleteProductModalAtom,
-  productDetailModalAtom,
-  batchOperationLoadingAtom,
-  // Actions
-  createProductAtom,
-  updateProductAtom,
-  deleteProductAtom,
-  toggleProductStatusAtom,
-  batchToggleStatusAtom,
-  batchDeleteProductsAtom,
-  toggleProductSelectionAtom,
-  toggleAllProductsSelectionAtom,
-  updateProductFormAtom,
-  setProductForEditingAtom,
-  resetProductFormAtom,
-  clearSelectionsAtom,
-  // Pagination and filters
-  productFiltersAtom,
   productPaginationAtom,
-  updateFiltersAtom,
   resetFiltersAtom,
-  fetchProductsAtom,
+  resetProductFormAtom,
   selectedProductAtom,
+  selectedProductsAtom,
+  setProductForEditingAtom,
+  toggleAllProductsSelectionAtom,
+  toggleProductSelectionAtom,
+  toggleProductStatusAtom,
+  updateFiltersAtom,
+  updateProductAtom,
+  updateProductFormAtom,
 } from "@/lib_dashboard/store/product-store-management";
-import { ProductFilters, ProductFormData } from "@/lib_dashboard/types/product";
+import { ProductFilters } from "@/lib_dashboard/types/product";
 import { useAtom, useAtomValue } from "jotai";
 import { useCallback, useEffect } from "react";
 // Import removed to avoid circular dependency
@@ -51,7 +45,6 @@ import { useCallback, useEffect } from "react";
  * Kết hợp tất cả functionality cần thiết cho trang quản lý
  */
 export const useProductManagement = () => {
-
   // === DIRECT ATOM ACCESS ===
   const myProducts = useAtomValue(myProductsAtom);
   const myProductsLoading = useAtomValue(myProductsLoadingAtom);
@@ -59,16 +52,16 @@ export const useProductManagement = () => {
   const selectedProducts = useAtomValue(selectedProductsAtom);
   const productCounts = useAtomValue(productCountsByStatusAtom);
   const batchOperationLoading = useAtomValue(batchOperationLoadingAtom);
-  
+
   // Pagination and filters
   const pagination = useAtomValue(productPaginationAtom);
   const filters = useAtomValue(productFiltersAtom);
-  
+
   // Form management
   const productFormData = useAtomValue(productFormDataAtom);
   const productFormErrors = useAtomValue(productFormErrorsAtom);
   const productFormLoading = useAtomValue(productFormLoadingAtom);
-  
+
   // Modal states
   const addProductModal = useAtomValue(addProductModalAtom);
   const editProductModal = useAtomValue(editProductModalAtom);
@@ -84,21 +77,23 @@ export const useProductManagement = () => {
   const [, toggleProductStatus] = useAtom(toggleProductStatusAtom);
   const [, batchToggleStatus] = useAtom(batchToggleStatusAtom);
   const [, batchDeleteProducts] = useAtom(batchDeleteProductsAtom);
-  
+
   // Selection actions
   const [, toggleProductSelection] = useAtom(toggleProductSelectionAtom);
-  const [, toggleAllProductsSelection] = useAtom(toggleAllProductsSelectionAtom);
+  const [, toggleAllProductsSelection] = useAtom(
+    toggleAllProductsSelectionAtom
+  );
   const [, clearSelections] = useAtom(clearSelectionsAtom);
-  
+
   // Form actions
   const [, updateProductForm] = useAtom(updateProductFormAtom);
   const [, setProductForEditing] = useAtom(setProductForEditingAtom);
   const [, resetProductForm] = useAtom(resetProductFormAtom);
-  
+
   // Filter actions
   const [, updateFilters] = useAtom(updateFiltersAtom);
   const [, resetFilters] = useAtom(resetFiltersAtom);
-  
+
   // Modal actions
   const [addModalOpen, setAddModalOpen] = useAtom(addProductModalAtom);
   const [editModalOpen, setEditModalOpen] = useAtom(editProductModalAtom);
@@ -182,14 +177,18 @@ export const useProductManagement = () => {
    * Check if all products are selected
    */
   const isAllSelected = useCallback(() => {
-    return myProducts.length > 0 && selectedProducts.length === myProducts.length;
+    return (
+      myProducts.length > 0 && selectedProducts.length === myProducts.length
+    );
   }, [myProducts, selectedProducts]);
 
   /**
    * Check if selection is indeterminate
    */
   const isIndeterminate = useCallback(() => {
-    return selectedProducts.length > 0 && selectedProducts.length < myProducts.length;
+    return (
+      selectedProducts.length > 0 && selectedProducts.length < myProducts.length
+    );
   }, [myProducts, selectedProducts]);
 
   // === MODAL MANAGEMENT ===
@@ -211,13 +210,16 @@ export const useProductManagement = () => {
   /**
    * Open delete product modal
    */
-  const openDeleteModal = useCallback((productId: string) => {
-    const product = myProducts.find(p => p.product_id === productId);
-    if (product) {
-      setSelectedProduct(product);
-      setDeleteModalOpen(true);
-    }
-  }, [myProducts, setSelectedProduct, setDeleteModalOpen]);
+  const openDeleteModal = useCallback(
+    (productId: string) => {
+      const product = myProducts.find((p) => p.product_id === productId);
+      if (product) {
+        setSelectedProduct(product);
+        setDeleteModalOpen(true);
+      }
+    },
+    [myProducts, setSelectedProduct, setDeleteModalOpen]
+  );
 
   /**
    * Close all modals
@@ -227,19 +229,21 @@ export const useProductManagement = () => {
     setEditModalOpen(false);
     setDeleteModalOpen(false);
     setSelectedProduct(null);
-  }, [setAddModalOpen, setEditModalOpen, setDeleteModalOpen, setSelectedProduct]);
+  }, [
+    setAddModalOpen,
+    setEditModalOpen,
+    setDeleteModalOpen,
+    setSelectedProduct,
+  ]);
 
   // === AUTO-LOAD DATA ===
   useEffect(() => {
     // Auto load data when component mounts
-    if (myProducts.length === 0 && !myProductsLoading) {
-      fetchMyProducts();
-      fetchMyProductStats();
-    }
-  }, [myProducts.length, myProductsLoading, fetchMyProducts, fetchMyProductStats]);
+    fetchMyProducts();
+    fetchMyProductStats();
+  }, []);
 
   return {
-
     // === DATA STATES ===
     myProducts,
     myProductsLoading,
@@ -257,7 +261,7 @@ export const useProductManagement = () => {
     // === FORM STATES ===
     productFormData,
     productFormErrors,
-    
+
     // === MODAL STATES ===
     addProductModal,
     editProductModal,

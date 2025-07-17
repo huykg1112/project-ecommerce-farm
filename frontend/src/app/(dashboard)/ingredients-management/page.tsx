@@ -1,6 +1,5 @@
 "use client";
 
-import { BatchActions } from "@/components/common/batch-actions";
 import { DeleteModal } from "@/components/common/delete-modal";
 import { Button } from "@/components/ui/button";
 import { useIngredient } from "@/hooks/use-ingredient";
@@ -13,6 +12,7 @@ import { useCallback, useEffect, useMemo } from "react";
 import { IngredientsFilters } from "@/components/(dashboard)/ingredients/ingredients-filters";
 import { IngredientFormModal } from "@/components/(dashboard)/ingredients/ingredients-form-modal";
 import { IngredientsTable } from "@/components/(dashboard)/ingredients/ingredients-table";
+import { BatchActions } from "@/components/common/batch-actions";
 import { StatisticsCards } from "@/components/common/statistics-cards";
 import { activeIngredientsFormDataAtom } from "@/lib_dashboard/store/active-ingredient-store";
 
@@ -95,7 +95,6 @@ export default function IngredientsPage() {
 
   const handleItemsPerPageChange = useCallback((limit: number) => {
     // Items per page is handled by filter/search on frontend
-    console.log("Items per page changed to:", limit);
   }, []);
 
   // Action handlers
@@ -118,28 +117,15 @@ export default function IngredientsPage() {
     [openDeleteModal]
   );
 
-  const handleExport = useCallback(() => {
-    toast({
-      title: "Thông báo",
-      description: "Tính năng xuất dữ liệu đang được phát triển",
-    });
-  }, [toast]);
+  const handleExport = useCallback(() => {}, [toast]);
 
   // Form handlers
   const handleCreateIngredient = useCallback(async () => {
     try {
       await addIngredient(formData);
-      toast({
-        title: "Thành công",
-        description: "Tạo hoạt chất mới thành công",
-      });
+
       return true;
     } catch (error) {
-      toast({
-        title: "Lỗi",
-        description: "Không thể tạo hoạt chất mới",
-        variant: "destructive",
-      });
       return false;
     }
   }, [addIngredient, formData, toast]);
@@ -148,17 +134,9 @@ export default function IngredientsPage() {
     if (!formData.ingredient_id) return false;
     try {
       await editIngredient(formData.ingredient_id, formData);
-      toast({
-        title: "Thành công",
-        description: "Cập nhật hoạt chất thành công",
-      });
+
       return true;
     } catch (error) {
-      toast({
-        title: "Lỗi",
-        description: "Không thể cập nhật hoạt chất",
-        variant: "destructive",
-      });
       return false;
     }
   }, [editIngredient, formData, toast]);
@@ -171,17 +149,9 @@ export default function IngredientsPage() {
 
     try {
       await deleteIngredient(selectedIngredient.ingredient_id);
-      toast({
-        title: "Thành công",
-        description: "Xóa hoạt chất thành công",
-      });
+
       return true;
     } catch (error) {
-      toast({
-        title: "Lỗi",
-        description: "Không thể xóa hoạt chất",
-        variant: "destructive",
-      });
       return false;
     }
   }, [deleteIngredient, ingredients, selectedIngredients, toast]);
@@ -197,49 +167,19 @@ export default function IngredientsPage() {
   const handleBatchActivate = useCallback(async () => {
     try {
       await batchToggleStatus(true);
-      toast({
-        title: "Thành công",
-        description: `Đã kích hoạt ${selectedIngredients.length} hoạt chất`,
-      });
-    } catch (error) {
-      toast({
-        title: "Lỗi",
-        description: "Không thể kích hoạt hoạt chất",
-        variant: "destructive",
-      });
-    }
+    } catch (error) {}
   }, [batchToggleStatus, selectedIngredients, toast]);
 
   const handleBatchDeactivate = useCallback(async () => {
     try {
       await batchToggleStatus(false);
-      toast({
-        title: "Thành công",
-        description: `Đã tắt ${selectedIngredients.length} hoạt chất`,
-      });
-    } catch (error) {
-      toast({
-        title: "Lỗi",
-        description: "Không thể tắt hoạt chất",
-        variant: "destructive",
-      });
-    }
+    } catch (error) {}
   }, [batchToggleStatus, selectedIngredients, toast]);
 
   const handleBatchDelete = useCallback(async () => {
     try {
       await batchDeleteIngredients();
-      toast({
-        title: "Thành công",
-        description: `Đã xóa ${selectedIngredients.length} hoạt chất`,
-      });
-    } catch (error) {
-      toast({
-        title: "Lỗi",
-        description: "Không thể xóa hoạt chất",
-        variant: "destructive",
-      });
-    }
+    } catch (error) {}
   }, [batchDeleteIngredients, selectedIngredients, toast]);
 
   // Statistics
@@ -307,6 +247,7 @@ export default function IngredientsPage() {
             onBatchActivate={handleBatchActivate}
             onBatchDeactivate={handleBatchDeactivate}
             onBatchDelete={handleBatchDelete}
+            loading={loading}
             title="hoạt chất"
           />
         </div>

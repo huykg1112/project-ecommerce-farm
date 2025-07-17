@@ -26,9 +26,9 @@ import {
   Edit,
   Eye,
   MoreHorizontal,
-  Trash2,
   ToggleLeft,
   ToggleRight,
+  Trash2,
 } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useMemo } from "react";

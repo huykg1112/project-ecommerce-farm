@@ -1,9 +1,6 @@
 import { showToast } from "@/lib/toast-provider";
 import axios from "axios";
-import {
-  ActiveIngredientFilters,
-  ActiveIngredientFormData,
-} from "../store/active-ingredient-store";
+import { ActiveIngredientFormData } from "../store/active-ingredient-store";
 import { axiosInstance } from "./axios-instance";
 
 export interface CreateActiveIngredientRequest {
@@ -21,7 +18,7 @@ export interface UpdateActiveIngredientRequest {
 }
 
 class ActiveIngredientService {
-  async list(filters: ActiveIngredientFilters) {
+  async list() {
     try {
       const response = await axiosInstance.get("/active-ingredient");
       const result = response.data;

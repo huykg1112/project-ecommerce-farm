@@ -104,6 +104,7 @@ export function useManufacturers() {
 
       allManufacturersRef.current = mappedData;
       filterAndPaginate();
+      setLoading(false);
     } catch (error) {
       showToast.error("Không thể tải danh sách nhà sản xuất");
     } finally {
