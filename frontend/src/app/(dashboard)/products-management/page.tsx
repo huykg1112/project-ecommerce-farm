@@ -1,5 +1,6 @@
 "use client";
 
+import { ProductFilters } from "@/components/(dashboard)/products/product-filters";
 import { ProductFormModal } from "@/components/(dashboard)/products/product-form-modal";
 import { ProductPagination } from "@/components/(dashboard)/products/product-pagination";
 import { ProductTable } from "@/components/(dashboard)/products/product-table";
@@ -186,10 +187,8 @@ export default function ProductsManagementPage() {
       await getMyProducts();
       await getMyProductStats();
       closeModals();
-      showToast.success("Tạo sản phẩm thành công!");
       return true;
     } catch (error) {
-      showToast.error("Không thể tạo sản phẩm");
       return false;
     }
   }, [
@@ -231,10 +230,8 @@ export default function ProductsManagementPage() {
       await getMyProducts();
       await getMyProductStats();
       closeModals();
-      showToast.success("Xóa sản phẩm thành công!");
       return true;
     } catch (error) {
-      showToast.error("Không thể xóa sản phẩm");
       return false;
     }
   }, [
@@ -352,14 +349,14 @@ export default function ProductsManagementPage() {
           </Button>
         </div>
       </div>
-      Statistics Cards
+      {/* Statistics Cards */}
       <StatisticsCards
         stats={stats}
         title="sản phẩm"
         loading={myProductsLoading}
       />
       {/* Filters */}
-      {/* <ProductFilters
+      <ProductFilters
         search={filters.search || ""}
         category_id={filters.category_id || "all"}
         status={filters.status || "all"}
@@ -370,7 +367,7 @@ export default function ProductsManagementPage() {
         onStatusChange={handleStatusChange}
         onPriceRangeChange={handlePriceRangeChange}
         onReset={resetProductFilters}
-      /> */}
+      />
       {/* Batch Actions */}
       <BatchActions
         selectedCount={getSelectedCount()}

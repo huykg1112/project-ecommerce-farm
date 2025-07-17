@@ -3,7 +3,7 @@ import { User } from "@/types/entities";
 export interface Promotion {
   promotion_id: string;
   created_by?: User;
-  promotion_name?: string;
+  promotion_name: string;
   description?: string;
   discount_value?: number;
   start_date?: Date;

@@ -137,7 +137,7 @@ export function AppSidebar() {
           },
           {
             title: "Khuyến mãi",
-            url: "promotions-management",
+            url: "promotion-management",
             icon: Percent,
           },
         ],

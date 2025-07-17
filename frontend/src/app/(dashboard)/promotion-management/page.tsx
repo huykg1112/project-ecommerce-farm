@@ -51,6 +51,7 @@ export default function PromotionManagementPage() {
   // Filter promotions
   const filteredPromotions = useMemo(() => {
     let filtered = promotions;
+    console;
 
     if (searchTerm) {
       const search = searchTerm.toLowerCase();
