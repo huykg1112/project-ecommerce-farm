@@ -232,11 +232,9 @@ export const useProductManagement = () => {
   // === AUTO-LOAD DATA ===
   useEffect(() => {
     // Auto load data when component mounts
-    if (myProducts.length === 0 && !myProductsLoading) {
-      fetchMyProducts();
-      fetchMyProductStats();
-    }
-  }, [myProducts.length, myProductsLoading, fetchMyProducts, fetchMyProductStats]);
+    fetchMyProducts();
+    fetchMyProductStats();
+  }, []);
 
   return {
 
