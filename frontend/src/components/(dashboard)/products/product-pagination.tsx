@@ -1,14 +1,7 @@
 "use client";
 
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -16,6 +9,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react";
+import { useCallback } from "react";
 
 interface ProductPaginationProps {
   currentPage: number;
@@ -23,7 +26,10 @@ interface ProductPaginationProps {
   totalItems: number;
   itemsPerPage: number;
   onPageChange: (page: number) => void;
-  onLimitChange: (limit: number) => void;
+  onItemsPerPageChange: (itemsPerPage: number) => void;
+  onSortChange: (sortBy: string, sortOrder: "asc" | "desc") => void;
+  sortBy: string;
+  sortOrder: "asc" | "desc";
 }
 
 export function ProductPagination({
@@ -32,130 +38,219 @@ export function ProductPagination({
   totalItems,
   itemsPerPage,
   onPageChange,
-  onLimitChange,
+  onItemsPerPageChange,
+  onSortChange,
+  sortBy,
+  sortOrder,
 }: ProductPaginationProps) {
-  const handlePageChange = (page: number) => {
-    onPageChange(page);
-  };
+  const handlePageChange = useCallback(
+    (page: number) => {
+      if (page >= 1 && page <= totalPages) {
+        onPageChange(page);
+      }
+    },
+    [onPageChange, totalPages]
+  );
 
-  const handleItemsPerPageChange = (value: string) => {
-    const newLimit = Number.parseInt(value);
-    onLimitChange(newLimit);
-    handlePageChange(1);
-  };
+  const handleItemsPerPageChange = useCallback(
+    (value: string) => {
+      onItemsPerPageChange(parseInt(value));
+    },
+    [onItemsPerPageChange]
+  );
 
-  const generatePageNumbers = () => {
+  const handleSortChange = useCallback(
+    (field: string) => {
+      if (sortBy === field) {
+        // Toggle sort order if same field
+        onSortChange(field, sortOrder === "asc" ? "desc" : "asc");
+      } else {
+        // Set new field with default desc order
+        onSortChange(field, "desc");
+      }
+    },
+    [sortBy, sortOrder, onSortChange]
+  );
+
+  const getSortIcon = useCallback(
+    (field: string) => {
+      if (sortBy !== field) {
+        return <ArrowUpDown className="h-4 w-4" />;
+      }
+      return sortOrder === "asc" ? (
+        <ArrowUp className="h-4 w-4" />
+      ) : (
+        <ArrowDown className="h-4 w-4" />
+      );
+    },
+    [sortBy, sortOrder]
+  );
+
+  const getPageNumbers = useCallback(() => {
     const pages = [];
     const maxVisiblePages = 5;
-
+    
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
       }
     } else {
-      if (currentPage <= 3) {
-        for (let i = 1; i <= 4; i++) {
-          pages.push(i);
-        }
-        pages.push("ellipsis");
-        pages.push(totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        pages.push(1);
-        pages.push("ellipsis");
-        for (let i = totalPages - 3; i <= totalPages; i++) {
-          pages.push(i);
-        }
-      } else {
-        pages.push(1);
-        pages.push("ellipsis");
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
-          pages.push(i);
-        }
-        pages.push("ellipsis");
-        pages.push(totalPages);
+      const startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+      const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+      
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
       }
     }
-
+    
     return pages;
-  };
+  }, [currentPage, totalPages]);
 
-  if (totalPages <= 1) return null;
+  const startItem = (currentPage - 1) * itemsPerPage + 1;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
 
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center space-x-2">
-        <p className="text-sm text-muted-foreground">
-          Hiển thị {Math.min((currentPage - 1) * itemsPerPage + 1, totalItems)}{" "}
-          đến {Math.min(currentPage * itemsPerPage, totalItems)} trong tổng số{" "}
-          {totalItems} sản phẩm
-        </p>
-      </div>
+    <Card>
+      <CardContent className="pt-6">
+        <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
+          {/* Sort Controls */}
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-600">Sắp xếp theo:</span>
+            <div className="flex space-x-1">
+              <Button
+                variant={sortBy === "created_at" ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleSortChange("created_at")}
+                className={`text-xs ${
+                  sortBy === "created_at"
+                    ? "bg-[#90c577] hover:bg-[#74a65d]"
+                    : "border-[#90c577] text-[#44703d] hover:bg-[#accc8b]/20"
+                }`}
+              >
+                Ngày tạo {getSortIcon("created_at")}
+              </Button>
+              <Button
+                variant={sortBy === "name" ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleSortChange("name")}
+                className={`text-xs ${
+                  sortBy === "name"
+                    ? "bg-[#90c577] hover:bg-[#74a65d]"
+                    : "border-[#90c577] text-[#44703d] hover:bg-[#accc8b]/20"
+                }`}
+              >
+                Tên {getSortIcon("name")}
+              </Button>
+              <Button
+                variant={sortBy === "price" ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleSortChange("price")}
+                className={`text-xs ${
+                  sortBy === "price"
+                    ? "bg-[#90c577] hover:bg-[#74a65d]"
+                    : "border-[#90c577] text-[#44703d] hover:bg-[#accc8b]/20"
+                }`}
+              >
+                Giá {getSortIcon("price")}
+              </Button>
+              <Button
+                variant={sortBy === "rating" ? "default" : "outline"}
+                size="sm"
+                onClick={() => handleSortChange("rating")}
+                className={`text-xs ${
+                  sortBy === "rating"
+                    ? "bg-[#90c577] hover:bg-[#74a65d]"
+                    : "border-[#90c577] text-[#44703d] hover:bg-[#accc8b]/20"
+                }`}
+              >
+                Đánh giá {getSortIcon("rating")}
+              </Button>
+            </div>
+          </div>
 
-      <div className="flex items-center space-x-6">
-        <div className="flex items-center space-x-2">
-          <p className="text-sm font-medium">Hiển thị</p>
-          <Select
-            value={itemsPerPage.toString()}
-            onValueChange={handleItemsPerPageChange}
-          >
-            <SelectTrigger className="h-8 w-[70px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent side="top">
-              {[10, 20, 30, 40, 50].map((pageSize) => (
-                <SelectItem key={pageSize} value={pageSize.toString()}>
-                  {pageSize}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-sm font-medium">mục</p>
-        </div>
+          {/* Items Per Page */}
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-600">Hiển thị:</span>
+            <Select
+              value={itemsPerPage.toString()}
+              onValueChange={handleItemsPerPageChange}
+            >
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+              </SelectContent>
+            </Select>
+            <span className="text-sm text-gray-600">mục</span>
+          </div>
 
-        <Pagination>
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+          {/* Pagination Info */}
+          <div className="text-sm text-gray-600">
+            Hiển thị {startItem}-{endItem} trên {totalItems} sản phẩm
+          </div>
+
+          {/* Pagination Controls */}
+          <div className="flex items-center space-x-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(1)}
+              disabled={currentPage === 1}
+              className="border-[#90c577] text-[#44703d] hover:bg-[#accc8b]/20"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="border-[#90c577] text-[#44703d] hover:bg-[#accc8b]/20"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+
+            {getPageNumbers().map((page) => (
+              <Button
+                key={page}
+                variant={currentPage === page ? "default" : "outline"}
+                size="sm"
+                onClick={() => handlePageChange(page)}
                 className={
-                  currentPage === 1
-                    ? "pointer-events-none opacity-50"
-                    : "cursor-pointer"
+                  currentPage === page
+                    ? "bg-[#90c577] hover:bg-[#74a65d]"
+                    : "border-[#90c577] text-[#44703d] hover:bg-[#accc8b]/20"
                 }
-              />
-            </PaginationItem>
-
-            {generatePageNumbers().map((page, index) => (
-              <PaginationItem key={index}>
-                {page === "ellipsis" ? (
-                  <PaginationEllipsis />
-                ) : (
-                  <PaginationLink
-                    onClick={() => handlePageChange(page as number)}
-                    isActive={currentPage === page}
-                    className="cursor-pointer"
-                  >
-                    {page}
-                  </PaginationLink>
-                )}
-              </PaginationItem>
+              >
+                {page}
+              </Button>
             ))}
 
-            <PaginationItem>
-              <PaginationNext
-                onClick={() =>
-                  handlePageChange(Math.min(totalPages, currentPage + 1))
-                }
-                className={
-                  currentPage === totalPages
-                    ? "pointer-events-none opacity-50"
-                    : "cursor-pointer"
-                }
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
-    </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="border-[#90c577] text-[#44703d] hover:bg-[#accc8b]/20"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(totalPages)}
+              disabled={currentPage === totalPages}
+              className="border-[#90c577] text-[#44703d] hover:bg-[#accc8b]/20"
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

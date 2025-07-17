@@ -22,630 +22,469 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useProducts } from "@/hooks/use-products";
-import type {
-  CreateProductRequest,
-  UpdateProductRequest,
-} from "@/lib_dashboard/mock/server";
-import { Plus, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCategories } from "@/hooks/use-categories";
+import { useManufacturers } from "@/hooks/use-manufacturers";
+import { useActiveIngredients } from "@/hooks/use-active-ingredients";
+import { useDiseases } from "@/hooks/use-diseases";
+import { formatCurrency } from "@/lib/utils";
+import { ProductFormData } from "@/lib_dashboard/types/product";
+import {
+  ImagePlus,
+  Trash2,
+  Upload,
+  X,
+  Star,
+  StarOff,
+} from "lucide-react";
+import Image from "next/image";
+import { useCallback, useRef, useState } from "react";
 
-interface ProductFormData {
-  product_name: string;
-  description: string;
-  usage_instructions: string;
-  unit_product_price: number;
-  category_ids: string[];
-  distributor_id: string;
-  is_active: boolean;
-  images: Array<{
-    id: string;
-    url: string;
-    is_primary: boolean;
-    alt_text?: string;
-  }>;
-  diseases: Array<{
-    id: string;
-    disease_id: string;
-    is_primary: boolean;
-  }>;
-  ingredients: Array<{
-    id: string;
-    ingredient_id: string;
-    concentration: number;
-    is_primary: boolean;
-  }>;
+interface ProductFormModalProps {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: () => Promise<boolean>;
+  formData: ProductFormData;
+  onUpdateFormData: (updates: Partial<ProductFormData>) => void;
+  title: string;
+  submitText: string;
+  isEdit?: boolean;
 }
 
-export function ProductFormModal() {
-  const {
-    isAddModalOpen,
-    isEditModalOpen,
-    editingProduct,
-    closeModals,
-    createProduct,
-    updateProduct,
-    categories,
-    diseases,
-    activeIngredients,
-    closeAddModal,
-  } = useProducts();
+interface ImageUpload {
+  id: string;
+  file?: File;
+  url: string;
+  is_primary: boolean;
+  alt_text?: string;
+}
 
-  const [formData, setFormData] = useState<ProductFormData>({
-    product_name: "",
-    description: "",
-    usage_instructions: "",
-    unit_product_price: 0,
-    category_ids: [],
-    distributor_id: "dist1", // Default to first distributor for demo
-    is_active: true,
-    images: [],
-    diseases: [],
-    ingredients: [],
-  });
+export function ProductFormModal({
+  open,
+  onClose,
+  onSubmit,
+  formData,
+  onUpdateFormData,
+  title,
+  submitText,
+  isEdit = false,
+}: ProductFormModalProps) {
+  // Hooks for dropdowns
+  const { categories, loading: categoriesLoading } = useCategories();
+  const { manufacturers, loading: manufacturersLoading } = useManufacturers();
+  const { activeIngredients, loading: ingredientsLoading } = useActiveIngredients();
+  const { diseases, loading: diseasesLoading } = useDiseases();
 
+  // Local state
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [images, setImages] = useState<ImageUpload[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const isOpen = isAddModalOpen || isEditModalOpen;
-  const isEditing = isEditModalOpen && editingProduct;
-
-  // Reset form when modal opens/closes
-  useEffect(() => {
-    if (isOpen) {
-      if (isEditing && editingProduct) {
-        setFormData({
-          product_name: editingProduct.product_name,
-          description: editingProduct.description,
-          usage_instructions: editingProduct.usage_instructions,
-          unit_product_price: editingProduct.unit_product_price,
-          category_ids: editingProduct.categories.map((c) => c.category_id),
-          distributor_id: editingProduct.distributor.user_id,
-          is_active: editingProduct.is_active,
-          images:
-            editingProduct.product_images?.map((img) => ({
-              id: img.image_id,
-              url: img.image_url,
-              is_primary: img.is_primary,
-              alt_text: img.alt_text,
-            })) || [],
-          diseases:
-            editingProduct.product_diseases?.map((pd) => ({
-              id: pd.product_disease_id,
-              disease_id: pd.disease.disease_id,
-              is_primary: pd.is_primary,
-            })) || [],
-          ingredients:
-            editingProduct.product_ingredients?.map((pi) => ({
-              id: pi.product_ingredient_id,
-              ingredient_id: pi.active_ingredient.ingredient_id,
-              concentration: pi.concentration,
-              is_primary: pi.is_primary,
-            })) || [],
-        });
-      } else {
-        setFormData({
-          product_name: "",
-          description: "",
-          usage_instructions: "",
-          unit_product_price: 0,
-          category_ids: [],
-          distributor_id: "dist1",
-          is_active: true,
-          images: [],
-          diseases: [],
-          ingredients: [],
-        });
-      }
-      setErrors({});
-    }
-  }, [isOpen, isEditing, editingProduct]);
-
-  const validateForm = (): boolean => {
+  // Validation
+  const validateForm = useCallback((): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.product_name.trim()) {
+    if (!formData.product_name?.trim()) {
       newErrors.product_name = "Tên sản phẩm là bắt buộc";
     }
 
-    if (!formData.description.trim()) {
+    if (!formData.description?.trim()) {
       newErrors.description = "Mô tả sản phẩm là bắt buộc";
     }
 
-    if (!formData.usage_instructions.trim()) {
+    if (!formData.usage_instructions?.trim()) {
       newErrors.usage_instructions = "Hướng dẫn sử dụng là bắt buộc";
     }
 
-    if (formData.unit_product_price <= 0) {
+    if (!formData.unit_product_price || formData.unit_product_price <= 0) {
       newErrors.unit_product_price = "Giá sản phẩm phải lớn hơn 0";
     }
 
-    if (formData.category_ids.length === 0) {
+    if (!formData.category_ids?.length) {
       newErrors.category_ids = "Phải chọn ít nhất một danh mục";
+    }
+
+    if (images.length === 0) {
+      newErrors.images = "Phải có ít nhất một hình ảnh sản phẩm";
+    }
+
+    if (images.length > 0 && !images.some(img => img.is_primary)) {
+      newErrors.images = "Phải chọn một hình ảnh làm ảnh chính";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [formData, images]);
 
-  const handleSubmit = async () => {
+  // Form handlers
+  const handleSubmit = useCallback(async () => {
     if (!validateForm()) return;
 
     try {
       setLoading(true);
-
-      if (isEditing && editingProduct) {
-        const updateData: UpdateProductRequest = {
-          product_id: editingProduct.product_id,
-          product_name: formData.product_name,
-          description: formData.description,
-          usage_instructions: formData.usage_instructions,
-          unit_product_price: formData.unit_product_price,
-          category_ids: formData.category_ids,
-          is_active: formData.is_active,
-        };
-        await updateProduct(updateData);
-      } else {
-        const createData: CreateProductRequest = {
-          distributor_id: formData.distributor_id,
-          category_ids: formData.category_ids,
-          product_name: formData.product_name,
-          description: formData.description,
-          usage_instructions: formData.usage_instructions,
-          unit_product_price: formData.unit_product_price,
-          is_active: formData.is_active,
-        };
-        await createProduct(createData);
+      
+      // TODO: Handle image upload to Cloudinary here
+      // For now, we'll just pass the form data
+      const success = await onSubmit();
+      
+      if (success) {
+        setImages([]);
+        setErrors({});
       }
     } catch (error) {
-      console.error("Failed to save product:", error);
+      console.error("Submit error:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [onSubmit, validateForm]);
 
-  const handleCategoryToggle = (categoryId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      category_ids: prev.category_ids.includes(categoryId)
-        ? prev.category_ids.filter((id) => id !== categoryId)
-        : [...prev.category_ids, categoryId],
-    }));
-  };
+  const handleClose = useCallback(() => {
+    setImages([]);
+    setErrors({});
+    onClose();
+  }, [onClose]);
 
-  const addImage = () => {
-    const newImage = {
-      id: `img_${Date.now()}`,
-      url: "/placeholder.svg",
-      is_primary: formData.images.length === 0,
-      alt_text: "",
-    };
-    setFormData((prev) => ({
-      ...prev,
-      images: [...prev.images, newImage],
-    }));
-  };
+  const updateFormData = useCallback(
+    (updates: Partial<ProductFormData>) => {
+      onUpdateFormData(updates);
+      // Clear related errors
+      if (updates.product_name !== undefined) {
+        setErrors(prev => ({ ...prev, product_name: "" }));
+      }
+      if (updates.description !== undefined) {
+        setErrors(prev => ({ ...prev, description: "" }));
+      }
+      if (updates.usage_instructions !== undefined) {
+        setErrors(prev => ({ ...prev, usage_instructions: "" }));
+      }
+      if (updates.unit_product_price !== undefined) {
+        setErrors(prev => ({ ...prev, unit_product_price: "" }));
+      }
+      if (updates.category_ids !== undefined) {
+        setErrors(prev => ({ ...prev, category_ids: "" }));
+      }
+    },
+    [onUpdateFormData]
+  );
 
-  const removeImage = (imageId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      images: prev.images.filter((img) => img.id !== imageId),
-    }));
-  };
+  // Image handling
+  const handleImageUpload = useCallback((files: FileList | null) => {
+    if (!files) return;
 
-  const addDisease = () => {
-    const newDisease = {
-      id: `disease_${Date.now()}`,
-      disease_id: "",
-      is_primary: false,
-    };
-    setFormData((prev) => ({
-      ...prev,
-      diseases: [...prev.diseases, newDisease],
-    }));
-  };
+    const remainingSlots = 5 - images.length;
+    const filesToAdd = Array.from(files).slice(0, remainingSlots);
 
-  const removeDisease = (diseaseId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      diseases: prev.diseases.filter((d) => d.id !== diseaseId),
-    }));
-  };
+    filesToAdd.forEach(file => {
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const newImage: ImageUpload = {
+            id: Date.now().toString() + Math.random().toString(),
+            file,
+            url: e.target?.result as string,
+            is_primary: images.length === 0, // First image is primary by default
+            alt_text: file.name,
+          };
+          setImages(prev => [...prev, newImage]);
+          setErrors(prev => ({ ...prev, images: "" }));
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+  }, [images.length]);
 
-  const updateDisease = (diseaseId: string, field: string, value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      diseases: prev.diseases.map((d) =>
-        d.id === diseaseId ? { ...d, [field]: value } : d
-      ),
-    }));
-  };
+  const handleImageRemove = useCallback((imageId: string) => {
+    setImages(prev => {
+      const updated = prev.filter(img => img.id !== imageId);
+      // If we removed the primary image, make the first remaining image primary
+      if (updated.length > 0 && !updated.some(img => img.is_primary)) {
+        updated[0].is_primary = true;
+      }
+      return updated;
+    });
+  }, []);
 
-  const addIngredient = () => {
-    const newIngredient = {
-      id: `ingredient_${Date.now()}`,
-      ingredient_id: "",
-      concentration: 0,
-      is_primary: false,
-    };
-    setFormData((prev) => ({
-      ...prev,
-      ingredients: [...prev.ingredients, newIngredient],
-    }));
-  };
+  const handleSetPrimaryImage = useCallback((imageId: string) => {
+    setImages(prev => 
+      prev.map(img => ({
+        ...img,
+        is_primary: img.id === imageId,
+      }))
+    );
+  }, []);
 
-  const removeIngredient = (ingredientId: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      ingredients: prev.ingredients.filter((i) => i.id !== ingredientId),
-    }));
-  };
+  // Category selection
+  const handleCategoryToggle = useCallback((categoryId: string) => {
+    const currentCategories = formData.category_ids || [];
+    const updatedCategories = currentCategories.includes(categoryId)
+      ? currentCategories.filter(id => id !== categoryId)
+      : [...currentCategories, categoryId];
+    
+    updateFormData({ category_ids: updatedCategories });
+  }, [formData.category_ids, updateFormData]);
 
-  const updateIngredient = (
-    ingredientId: string,
-    field: string,
-    value: any
-  ) => {
-    setFormData((prev) => ({
-      ...prev,
-      ingredients: prev.ingredients.map((i) =>
-        i.id === ingredientId ? { ...i, [field]: value } : i
-      ),
-    }));
-  };
-  const handleCloseModal = useCallback(() => {
-    closeModals();
-  }, [closeModals]);
+  // Ingredient selection
+  const handleIngredientToggle = useCallback((ingredientId: string) => {
+    const currentIngredients = formData.ingredient_ids || [];
+    const updatedIngredients = currentIngredients.includes(ingredientId)
+      ? currentIngredients.filter(id => id !== ingredientId)
+      : [...currentIngredients, ingredientId];
+    
+    updateFormData({ ingredient_ids: updatedIngredients });
+  }, [formData.ingredient_ids, updateFormData]);
+
+  // Disease selection
+  const handleDiseaseToggle = useCallback((diseaseId: string) => {
+    const currentDiseases = formData.disease_ids || [];
+    const updatedDiseases = currentDiseases.includes(diseaseId)
+      ? currentDiseases.filter(id => id !== diseaseId)
+      : [...currentDiseases, diseaseId];
+    
+    updateFormData({ disease_ids: updatedDiseases });
+  }, [formData.disease_ids, updateFormData]);
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleCloseModal}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            {isEditing ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}
-          </DialogTitle>
+          <DialogTitle className="text-[#44703d]">{title}</DialogTitle>
           <DialogDescription>
-            {isEditing
-              ? "Cập nhật thông tin sản phẩm và các mối quan hệ liên quan."
-              : "Nhập thông tin chi tiết cho sản phẩm mới."}
+            {isEdit 
+              ? "Cập nhật thông tin sản phẩm thuốc bảo vệ thực vật"
+              : "Thêm sản phẩm thuốc bảo vệ thực vật mới vào hệ thống"
+            }
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="grid gap-6 py-4">
           {/* Basic Information */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Thông tin cơ bản</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="product_name">
-                    Tên sản phẩm <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="product_name"
-                    value={formData.product_name}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        product_name: e.target.value,
-                      }))
-                    }
-                    placeholder="Nhập tên sản phẩm"
-                  />
-                  {errors.product_name && (
-                    <p className="text-sm text-destructive">
-                      {errors.product_name}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="unit_product_price">
-                    Giá sản phẩm (VNĐ){" "}
-                    <span className="text-destructive">*</span>
-                  </Label>
-                  <Input
-                    id="unit_product_price"
-                    type="number"
-                    min="0"
-                    step="1000"
-                    value={formData.unit_product_price}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        unit_product_price: Number(e.target.value),
-                      }))
-                    }
-                    placeholder="0"
-                  />
-                  {errors.unit_product_price && (
-                    <p className="text-sm text-destructive">
-                      {errors.unit_product_price}
-                    </p>
-                  )}
-                </div>
+              {/* Product Name */}
+              <div className="space-y-2">
+                <Label htmlFor="product_name">
+                  Tên sản phẩm <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="product_name"
+                  value={formData.product_name || ""}
+                  onChange={(e) => updateFormData({ product_name: e.target.value })}
+                  placeholder="Nhập tên sản phẩm..."
+                  className={errors.product_name ? "border-red-500" : ""}
+                />
+                {errors.product_name && (
+                  <p className="text-sm text-red-500">{errors.product_name}</p>
+                )}
               </div>
 
+              {/* Description */}
               <div className="space-y-2">
                 <Label htmlFor="description">
-                  Mô tả sản phẩm <span className="text-destructive">*</span>
+                  Mô tả sản phẩm <span className="text-red-500">*</span>
                 </Label>
                 <Textarea
                   id="description"
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      description: e.target.value,
-                    }))
-                  }
-                  placeholder="Nhập mô tả chi tiết về sản phẩm"
-                  rows={3}
+                  value={formData.description || ""}
+                  onChange={(e) => updateFormData({ description: e.target.value })}
+                  placeholder="Mô tả chi tiết về sản phẩm..."
+                  rows={4}
+                  className={errors.description ? "border-red-500" : ""}
                 />
                 {errors.description && (
-                  <p className="text-sm text-destructive">
-                    {errors.description}
-                  </p>
+                  <p className="text-sm text-red-500">{errors.description}</p>
                 )}
               </div>
 
+              {/* Usage Instructions */}
               <div className="space-y-2">
                 <Label htmlFor="usage_instructions">
-                  Hướng dẫn sử dụng <span className="text-destructive">*</span>
+                  Hướng dẫn sử dụng <span className="text-red-500">*</span>
                 </Label>
                 <Textarea
                   id="usage_instructions"
-                  value={formData.usage_instructions}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      usage_instructions: e.target.value,
-                    }))
-                  }
-                  placeholder="Nhập hướng dẫn sử dụng chi tiết"
+                  value={formData.usage_instructions || ""}
+                  onChange={(e) => updateFormData({ usage_instructions: e.target.value })}
+                  placeholder="Hướng dẫn chi tiết cách sử dụng sản phẩm..."
                   rows={3}
+                  className={errors.usage_instructions ? "border-red-500" : ""}
                 />
                 {errors.usage_instructions && (
-                  <p className="text-sm text-destructive">
-                    {errors.usage_instructions}
-                  </p>
+                  <p className="text-sm text-red-500">{errors.usage_instructions}</p>
                 )}
               </div>
+
+              {/* Price */}
+              <div className="space-y-2">
+                <Label htmlFor="unit_product_price">
+                  Giá sản phẩm (VND) <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="unit_product_price"
+                  type="number"
+                  value={formData.unit_product_price || ""}
+                  onChange={(e) => updateFormData({ unit_product_price: parseFloat(e.target.value) || 0 })}
+                  placeholder="0"
+                  min="0"
+                  step="1000"
+                  className={errors.unit_product_price ? "border-red-500" : ""}
+                />
+                {formData.unit_product_price > 0 && (
+                  <p className="text-sm text-gray-500">
+                    {formatCurrency(formData.unit_product_price)}
+                  </p>
+                )}
+                {errors.unit_product_price && (
+                  <p className="text-sm text-red-500">{errors.unit_product_price}</p>
+                )}
+              </div>
+
+              {/* Manufacturer */}
+              <div className="space-y-2">
+                <Label htmlFor="manufacturer_id">Nhà sản xuất</Label>
+                <Select
+                  value={formData.manufacturer_id || ""}
+                  onValueChange={(value) => updateFormData({ manufacturer_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Chọn nhà sản xuất" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Không chọn</SelectItem>
+                    {!manufacturersLoading && manufacturers?.map((manufacturer) => (
+                      <SelectItem key={manufacturer.id} value={manufacturer.id}>
+                        {manufacturer.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Status */}
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="is_active"
+                  checked={formData.is_active}
+                  onCheckedChange={(checked) => updateFormData({ is_active: Boolean(checked) })}
+                />
+                <Label htmlFor="is_active">Sản phẩm đang hoạt động</Label>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Images */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">
+                Hình ảnh sản phẩm <span className="text-red-500">*</span>
+              </CardTitle>
+              <DialogDescription>
+                Tải lên tối đa 5 hình ảnh. Hình ảnh đầu tiên sẽ là ảnh chính.
+              </DialogDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Upload Button */}
+              <div className="flex items-center gap-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={images.length >= 5}
+                  className="border-[#90c577] text-[#44703d] hover:bg-[#accc8b]/20"
+                >
+                  <ImagePlus className="h-4 w-4 mr-2" />
+                  Thêm hình ảnh ({images.length}/5)
+                </Button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={(e) => handleImageUpload(e.target.files)}
+                  className="hidden"
+                />
+              </div>
+
+              {/* Image Preview Grid */}
+              {images.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                  {images.map((image) => (
+                    <div key={image.id} className="relative group">
+                      <div className="aspect-square relative border-2 rounded-lg overflow-hidden">
+                        <Image
+                          src={image.url}
+                          alt={image.alt_text || "Product image"}
+                          fill
+                          className="object-cover"
+                        />
+                        
+                        {/* Primary indicator */}
+                        {image.is_primary && (
+                          <Badge className="absolute top-2 left-2 bg-yellow-500 text-white">
+                            Ảnh chính
+                          </Badge>
+                        )}
+                        
+                        {/* Actions */}
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => handleSetPrimaryImage(image.id)}
+                            disabled={image.is_primary}
+                          >
+                            {image.is_primary ? (
+                              <Star className="h-4 w-4" />
+                            ) : (
+                              <StarOff className="h-4 w-4" />
+                            )}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => handleImageRemove(image.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {errors.images && (
+                <p className="text-sm text-red-500">{errors.images}</p>
+              )}
             </CardContent>
           </Card>
 
           {/* Categories */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Danh mục sản phẩm</CardTitle>
+              <CardTitle className="text-lg">
+                Danh mục sản phẩm <span className="text-red-500">*</span>
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2">
-                <Label>
-                  Chọn danh mục <span className="text-destructive">*</span>
-                </Label>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {categories.map((category) => (
-                    <div
-                      key={category.category_id}
-                      className="flex items-center space-x-2"
-                    >
-                      <Checkbox
-                        id={`category_${category.category_id}`}
-                        checked={formData.category_ids.includes(
-                          category.category_id
-                        )}
-                        onCheckedChange={() =>
-                          handleCategoryToggle(category.category_id)
-                        }
-                      />
-                      <Label
-                        htmlFor={`category_${category.category_id}`}
-                        className="text-sm font-normal cursor-pointer"
-                      >
-                        {category.category_name}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-                {formData.category_ids.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {formData.category_ids.map((categoryId) => {
-                      const category = categories.find(
-                        (c) => c.category_id === categoryId
-                      );
-                      return category ? (
-                        <Badge key={categoryId} variant="secondary">
-                          {category.category_name}
-                        </Badge>
-                      ) : null;
-                    })}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {!categoriesLoading && categories?.map((category) => (
+                  <div key={category.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`category-${category.id}`}
+                      checked={formData.category_ids?.includes(category.id) || false}
+                      onCheckedChange={() => handleCategoryToggle(category.id)}
+                    />
+                    <Label htmlFor={`category-${category.id}`} className="text-sm">
+                      {category.name}
+                    </Label>
                   </div>
-                )}
-                {errors.category_ids && (
-                  <p className="text-sm text-destructive">
-                    {errors.category_ids}
-                  </p>
-                )}
+                ))}
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Product Images */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center justify-between">
-                Hình ảnh sản phẩm
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addImage}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Thêm ảnh
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {formData.images.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Chưa có hình ảnh nào.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {formData.images.map((image, index) => (
-                    <div
-                      key={image.id}
-                      className="flex items-center space-x-3 p-3 border rounded-lg"
-                    >
-                      <div className="flex-1 space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <Input
-                            placeholder="URL hình ảnh"
-                            value={image.url}
-                            onChange={(e) => {
-                              setFormData((prev) => ({
-                                ...prev,
-                                images: prev.images.map((img) =>
-                                  img.id === image.id
-                                    ? { ...img, url: e.target.value }
-                                    : img
-                                ),
-                              }));
-                            }}
-                          />
-                          <div className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`primary_${image.id}`}
-                              checked={image.is_primary}
-                              onCheckedChange={(checked) => {
-                                setFormData((prev) => ({
-                                  ...prev,
-                                  images: prev.images.map((img) => ({
-                                    ...img,
-                                    is_primary:
-                                      img.id === image.id ? !!checked : false,
-                                  })),
-                                }));
-                              }}
-                            />
-                            <Label
-                              htmlFor={`primary_${image.id}`}
-                              className="text-sm"
-                            >
-                              Ảnh chính
-                            </Label>
-                          </div>
-                        </div>
-                        <Input
-                          placeholder="Mô tả ảnh (tùy chọn)"
-                          value={image.alt_text || ""}
-                          onChange={(e) => {
-                            setFormData((prev) => ({
-                              ...prev,
-                              images: prev.images.map((img) =>
-                                img.id === image.id
-                                  ? { ...img, alt_text: e.target.value }
-                                  : img
-                              ),
-                            }));
-                          }}
-                        />
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeImage(image.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Diseases */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center justify-between">
-                Bệnh điều trị
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addDisease}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Thêm bệnh
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {formData.diseases.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Chưa có bệnh nào được liên kết.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {formData.diseases.map((disease) => (
-                    <div
-                      key={disease.id}
-                      className="flex items-center space-x-3 p-3 border rounded-lg"
-                    >
-                      <div className="flex-1">
-                        <Select
-                          value={disease.disease_id}
-                          onValueChange={(value) =>
-                            updateDisease(disease.id, "disease_id", value)
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Chọn bệnh" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {diseases.map((d) => (
-                              <SelectItem
-                                key={d.disease_id}
-                                value={d.disease_id}
-                              >
-                                {d.disease_name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`disease_primary_${disease.id}`}
-                          checked={disease.is_primary}
-                          onCheckedChange={(checked) =>
-                            updateDisease(disease.id, "is_primary", !!checked)
-                          }
-                        />
-                        <Label
-                          htmlFor={`disease_primary_${disease.id}`}
-                          className="text-sm"
-                        >
-                          Điều trị chính
-                        </Label>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeDisease(disease.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
+              {errors.category_ids && (
+                <p className="text-sm text-red-500 mt-2">{errors.category_ids}</p>
               )}
             </CardContent>
           </Card>
@@ -653,137 +492,67 @@ export function ProductFormModal() {
           {/* Active Ingredients */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg flex items-center justify-between">
-                Hoạt chất
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addIngredient}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Thêm hoạt chất
-                </Button>
-              </CardTitle>
+              <CardTitle className="text-lg">Hoạt chất</CardTitle>
             </CardHeader>
             <CardContent>
-              {formData.ingredients.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Chưa có hoạt chất nào được liên kết.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {formData.ingredients.map((ingredient) => (
-                    <div
-                      key={ingredient.id}
-                      className="flex items-center space-x-3 p-3 border rounded-lg"
-                    >
-                      <div className="flex-1">
-                        <Select
-                          value={ingredient.ingredient_id}
-                          onValueChange={(value) =>
-                            updateIngredient(
-                              ingredient.id,
-                              "ingredient_id",
-                              value
-                            )
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Chọn hoạt chất" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {activeIngredients.map((ai) => (
-                              <SelectItem
-                                key={ai.ingredient_id}
-                                value={ai.ingredient_id}
-                              >
-                                {ai.ingredient_name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="w-24">
-                        <Input
-                          type="number"
-                          min="0"
-                          max="100"
-                          step="0.1"
-                          placeholder="Nồng độ %"
-                          value={ingredient.concentration}
-                          onChange={(e) =>
-                            updateIngredient(
-                              ingredient.id,
-                              "concentration",
-                              Number(e.target.value)
-                            )
-                          }
-                        />
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id={`ingredient_primary_${ingredient.id}`}
-                          checked={ingredient.is_primary}
-                          onCheckedChange={(checked) =>
-                            updateIngredient(
-                              ingredient.id,
-                              "is_primary",
-                              !!checked
-                            )
-                          }
-                        />
-                        <Label
-                          htmlFor={`ingredient_primary_${ingredient.id}`}
-                          className="text-sm"
-                        >
-                          Chính
-                        </Label>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => removeIngredient(ingredient.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-40 overflow-y-auto">
+                {!ingredientsLoading && activeIngredients?.map((ingredient) => (
+                  <div key={ingredient.ingredient_id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`ingredient-${ingredient.ingredient_id}`}
+                      checked={formData.ingredient_ids?.includes(ingredient.ingredient_id) || false}
+                      onCheckedChange={() => handleIngredientToggle(ingredient.ingredient_id)}
+                    />
+                    <Label htmlFor={`ingredient-${ingredient.ingredient_id}`} className="text-sm">
+                      {ingredient.ingredient_name}
+                    </Label>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
 
-          {/* Status */}
+          {/* Diseases */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Trạng thái</CardTitle>
+              <CardTitle className="text-lg">Bệnh điều trị</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="is_active"
-                  checked={formData.is_active}
-                  onCheckedChange={(checked) =>
-                    setFormData((prev) => ({ ...prev, is_active: !!checked }))
-                  }
-                />
-                <Label htmlFor="is_active">Kích hoạt sản phẩm</Label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-40 overflow-y-auto">
+                {!diseasesLoading && diseases?.map((disease) => (
+                  <div key={disease.disease_id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`disease-${disease.disease_id}`}
+                      checked={formData.disease_ids?.includes(disease.disease_id) || false}
+                      onCheckedChange={() => handleDiseaseToggle(disease.disease_id)}
+                    />
+                    <Label htmlFor={`disease-${disease.disease_id}`} className="text-sm">
+                      {disease.disease_name}
+                    </Label>
+                  </div>
+                ))}
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                Sản phẩm sẽ hiển thị trên marketplace khi được kích hoạt
-              </p>
             </CardContent>
           </Card>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={closeModals} disabled={loading}>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleClose}
+            disabled={loading}
+            className="border-[#90c577] text-[#44703d] hover:bg-[#accc8b]/20"
+          >
             Hủy
           </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? "Đang lưu..." : isEditing ? "Cập nhật" : "Tạo sản phẩm"}
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            disabled={loading}
+            className="bg-[#90c577] hover:bg-[#74a65d] text-white"
+          >
+            {loading ? "Đang xử lý..." : submitText}
           </Button>
         </DialogFooter>
       </DialogContent>

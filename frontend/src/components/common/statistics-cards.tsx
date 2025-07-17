@@ -1,62 +1,76 @@
-import { Eye, EyeOff, Package } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+"use client";
 
-type StatisticsCardProps = {
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+
+interface StatisticsCardsProps {
   stats: {
     total: number;
     active: number;
     inactive: number;
   };
   title: string;
-};
+  loading?: boolean;
+}
 
-export const StatisticsCards = ({ stats, title }: StatisticsCardProps) => {
+export function StatisticsCards({ stats, title, loading = false }: StatisticsCardsProps) {
+  if (loading) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 3 }).map((_, index) => (
+          <Card key={index}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <Skeleton className="h-4 w-[100px]" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-8 w-[60px]" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <div className="grid gap-4 md:grid-cols-3">
-      <Card className="card-agricultural">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-semibold text-[#44703d]">
-            Tổng số {title}
+          <CardTitle className="text-sm font-medium">
+            Tổng {title}
           </CardTitle>
-          <Package className="h-5 w-5 text-[#74a65d]" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-[#44703d]">{stats.total}</div>
-          <p className="text-xs text-[#74a65d]">
-            Tất cả {title} trong hệ thống
-          </p>
+          <div className="text-2xl font-bold text-[#44703d]">
+            {stats.total}
+          </div>
         </CardContent>
       </Card>
-
-      <Card className="card-agricultural">
+      
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-semibold text-[#44703d]">
+          <CardTitle className="text-sm font-medium">
             Đang hoạt động
           </CardTitle>
-          <Eye className="h-5 w-5 text-[#90c577]" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-[#44703d]">
+          <div className="text-2xl font-bold text-green-600">
             {stats.active}
           </div>
-          <p className="text-xs text-[#74a65d]">{title} hiển thị công khai</p>
         </CardContent>
       </Card>
-
-      <Card className="card-agricultural">
+      
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-semibold text-[#44703d]">
-            Đã tắt
+          <CardTitle className="text-sm font-medium">
+            Tạm dừng
           </CardTitle>
-          <EyeOff className="h-5 w-5 text-red-500" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-[#44703d]">
+          <div className="text-2xl font-bold text-red-600">
             {stats.inactive}
           </div>
-          <p className="text-xs text-[#74a65d]">{title} tạm thời ẩn</p>
         </CardContent>
       </Card>
     </div>
   );
-};
+}
