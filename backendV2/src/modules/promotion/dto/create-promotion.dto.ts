@@ -16,7 +16,7 @@ export class CreatePromotionDto {
   @IsOptional()
   description?: string;
 
-  @IsNumber({}, { message: 'Giá trị giảm giá phải là số' })
+  @IsNumber({}, { message: 'Giá trị giảm giá phải là số %' })
   discount_value: number;
 
   @IsDateString({}, { message: 'Ngày bắt đầu không hợp lệ' })

@@ -10,39 +10,41 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
-import type { Voucher } from "@/types/entities";
+import { Promotion } from "@/lib_dashboard/types/promotion";
 import { Edit, Gift, MoreHorizontal, Trash2 } from "lucide-react";
 import { memo, useCallback, useMemo, useState } from "react";
 import DataTable, { TableColumn } from "react-data-table-component";
 import { customStyles } from "../user-statistics/user-data-table";
 
-interface VoucherTableProps {
-  vouchers: Voucher[];
-  selectedVouchers: string[];
-  onSelectVoucher: (voucherId: string) => void;
+interface PromotionTableProps {
+  promotions: Promotion[];
+  selectedPromotions: string[];
+  onSelectPromotion: (promotionId: string) => void;
   onSelectAll: (checked: boolean) => void;
-  onToggleStatus: (voucherId: string) => void;
-  onEditVoucher: (voucherId: string) => void;
-  onDeleteVoucher: (voucherId: string) => void;
+  onToggleStatus: (promotionId: string) => void;
+  onEditPromotion: (promotionId: string) => void;
+  onDeletePromotion: (promotionId: string) => void;
   loading?: boolean;
 }
 
-export const VoucherTable = memo<VoucherTableProps>(
+export const PromotionTable = memo<PromotionTableProps>(
   ({
-    vouchers,
-    selectedVouchers,
-    onSelectVoucher,
+    promotions,
+    selectedPromotions,
+    onSelectPromotion,
     onSelectAll,
     onToggleStatus,
-    onEditVoucher,
-    onDeleteVoucher,
+    onEditPromotion,
+    onDeletePromotion,
     loading = false,
   }) => {
     const [itemsPerPage, setItemsPerPage] = useState(5);
 
     const isAllSelected = useMemo(() => {
-      return vouchers.length > 0 && selectedVouchers.length === vouchers.length;
-    }, [vouchers.length, selectedVouchers.length]);
+      return (
+        promotions.length > 0 && selectedPromotions.length === promotions.length
+      );
+    }, [promotions.length, selectedPromotions.length]);
 
     const getStatusBadge = useCallback((isActive: boolean) => {
       return isActive
@@ -77,25 +79,25 @@ export const VoucherTable = memo<VoucherTableProps>(
           />
         ),
         width: "48px",
-        cell: (row: Voucher) => (
+        cell: (row: Promotion) => (
           <Checkbox
-            checked={selectedVouchers.includes(row.voucher_id)}
-            onCheckedChange={() => onSelectVoucher(row.voucher_id)}
-            aria-label={`Chọn ${row.voucher_code}`}
+            checked={selectedPromotions.includes(row.promotion_id)}
+            onCheckedChange={() => onSelectPromotion(row.promotion_id)}
+            aria-label={`Chọn ${row.promotion_name}`}
             className="data-[state=checked]:bg-[#74a65d] data-[state=checked]:border-[#74a65d]"
           />
         ),
         allowOverflow: true,
       },
       {
-        name: "Mã voucher",
-        selector: (row: Voucher) => row.voucher_code,
+        name: "Mã khuyến mãi",
+        selector: (row: Promotion) => row.promotion_name,
         sortable: true,
-        cell: (row: Voucher) => (
+        cell: (row: Promotion) => (
           <div className="flex items-center gap-2">
             <Gift className="h-4 w-4 text-[#74a65d]" />
             <span className="font-semibold text-[#44703d]">
-              {row.voucher_code}
+              {row.promotion_name}
             </span>
           </div>
         ),
@@ -103,53 +105,45 @@ export const VoucherTable = memo<VoucherTableProps>(
       },
 
       {
-        name: "Giá trị tối thiểu",
-        selector: (row: Voucher) => row.min_order_value || 0,
+        name: "Tỷ lệ giảm giá",
+        selector: (row: Promotion) => row.discount_value || 0,
         sortable: true,
-        cell: (row: Voucher) => (
+        cell: (row: Promotion) => (
           <div className="text-[#44703d]">
-            {row.min_order_value ? formatCurrency(row.min_order_value) : "N/A"}
+            {row.discount_value ? `${row.discount_value}%` : "N/A"}
           </div>
         ),
       },
       {
-        name: "Giá trị voucher",
-        selector: (row: Voucher) => row.max_discount_value || 0,
+        name: "Mô tả",
+        selector: (row: Promotion) => row.description,
         sortable: true,
-        cell: (row: Voucher) => (
+        cell: (row: Promotion) => (
           <div className="text-[#44703d]">
-            {row.max_discount_value
-              ? formatCurrency(row.max_discount_value)
-              : "N/A"}
+            {row.description || "Không có mô tả"}
           </div>
         ),
-      },
-      {
-        name: "Sử dụng",
-        selector: (row: Voucher) => row.used_count,
-        sortable: true,
-        cell: (row: Voucher) => (
-          <div className="text-[#44703d]">
-            {row.used_count}/{row.usage_limit || "∞"}
-          </div>
-        ),
+        with: "300px",
       },
       {
         name: "Hạn sử dụng",
-        selector: (row: Voucher) => row.end_date || "",
+        selector: (row: Promotion) => row.end_date || "",
         sortable: true,
-        cell: (row: Voucher) => (
+        cell: (row: Promotion) => (
           <div className="text-[#44703d]">
+            {formatDate(row?.start_date || new Date())}-
             {formatDate(row?.end_date || new Date())}
           </div>
         ),
       },
       {
         name: "Trạng thái",
-        selector: (row: Voucher) => row.is_active,
+        selector: (row: Promotion) => row.is_active,
         sortable: true,
-        cell: (row: Voucher) => {
-          const { label, variant, className } = getStatusBadge(row.is_active);
+        cell: (row: Promotion) => {
+          const { label, variant, className } = getStatusBadge(
+            row?.is_active || false
+          );
           return (
             <Badge variant={variant} className={className}>
               {label}
@@ -159,18 +153,18 @@ export const VoucherTable = memo<VoucherTableProps>(
       },
       {
         name: "Kích hoạt",
-        selector: (row: Voucher) => row.is_active,
-        cell: (row: Voucher) => (
+        selector: (row: Promotion) => row.is_active,
+        cell: (row: Promotion) => (
           <Switch
             checked={row.is_active}
-            onCheckedChange={() => onToggleStatus(row.voucher_id)}
+            onCheckedChange={() => onToggleStatus(row.promotion_id)}
             className="data-[state=checked]:bg-[#74a65d]"
           />
         ),
       },
       {
         width: "80px",
-        cell: (row: Voucher) => (
+        cell: (row: Promotion) => (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -185,18 +179,18 @@ export const VoucherTable = memo<VoucherTableProps>(
               className="bg-white border-[#accc8b]"
             >
               <DropdownMenuItem
-                onClick={() => onEditVoucher(row.voucher_id)}
+                onClick={() => onEditPromotion(row.promotion_id)}
                 className="hover:bg-[#accc8b]/20 text-[#44703d]"
               >
                 <Edit className="mr-2 h-4 w-4" />
                 Chỉnh sửa
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => onDeleteVoucher(row.voucher_id)}
+                onClick={() => onDeletePromotion(row.promotion_id)}
                 className="hover:bg-red-50 text-red-600"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                Xóa voucher
+                Xóa khuyến mãi
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -220,8 +214,8 @@ export const VoucherTable = memo<VoucherTableProps>(
     return (
       <div className="rounded-lg border border-[#accc8b]/30 bg-white overflow-hidden">
         <DataTable
-          columns={columns as TableColumn<Voucher>[]}
-          data={vouchers}
+          columns={columns as TableColumn<Promotion>[]}
+          data={promotions}
           customStyles={customStyles}
           pagination
           paginationPerPage={itemsPerPage}
@@ -243,4 +237,4 @@ export const VoucherTable = memo<VoucherTableProps>(
   }
 );
 
-VoucherTable.displayName = "VoucherTable";
+PromotionTable.displayName = "PromotionTable";
