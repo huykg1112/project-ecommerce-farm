@@ -11,434 +11,295 @@ import {
   productCountsByStatusAtom,
   selectedProductsAtom,
   statsDistributorIdAtom,
+  // Form management atoms
+  productFormDataAtom,
+  productFormErrorsAtom,
+  productFormLoadingAtom,
+  addProductModalAtom,
+  editProductModalAtom,
+  deleteProductModalAtom,
+  productDetailModalAtom,
+  batchOperationLoadingAtom,
+  // Actions
+  createProductAtom,
+  updateProductAtom,
+  deleteProductAtom,
+  toggleProductStatusAtom,
+  batchToggleStatusAtom,
+  batchDeleteProductsAtom,
+  toggleProductSelectionAtom,
+  toggleAllProductsSelectionAtom,
+  updateProductFormAtom,
+  setProductForEditingAtom,
+  resetProductFormAtom,
+  clearSelectionsAtom,
+  // Pagination and filters
+  productFiltersAtom,
+  productPaginationAtom,
+  updateFiltersAtom,
+  resetFiltersAtom,
+  fetchProductsAtom,
+  selectedProductAtom,
 } from "@/lib_dashboard/store/product-store-management";
-import { ProductFilters } from "@/lib_dashboard/types/product";
+import { ProductFilters, ProductFormData } from "@/lib_dashboard/types/product";
 import { useAtom, useAtomValue } from "jotai";
 import { useCallback, useEffect } from "react";
-import { useProductQueryCommon } from "./use-product-common";
+// Import removed to avoid circular dependency
 
 /**
- * Hook dành cho quản lý sản phẩm - Distributor và Admin
+ * Hook tổng hợp cho quản lý sản phẩm trong dashboard
+ * Kết hợp tất cả functionality cần thiết cho trang quản lý
  */
-export const useProductQueryManagement = () => {
-  // === INHERIT FROM COMMON ===
-  const common = useProductQueryCommon();
+export const useProductManagement = () => {
 
-  // === MANAGEMENT-SPECIFIC DATA ===
+  // === DIRECT ATOM ACCESS ===
   const myProducts = useAtomValue(myProductsAtom);
   const myProductsLoading = useAtomValue(myProductsLoadingAtom);
   const myProductStats = useAtomValue(myProductStatsAtom);
   const selectedProducts = useAtomValue(selectedProductsAtom);
   const productCounts = useAtomValue(productCountsByStatusAtom);
+  const batchOperationLoading = useAtomValue(batchOperationLoadingAtom);
+  
+  // Pagination and filters
+  const pagination = useAtomValue(productPaginationAtom);
+  const filters = useAtomValue(productFiltersAtom);
+  
+  // Form management
+  const productFormData = useAtomValue(productFormDataAtom);
+  const productFormErrors = useAtomValue(productFormErrorsAtom);
+  const productFormLoading = useAtomValue(productFormLoadingAtom);
+  
+  // Modal states
+  const addProductModal = useAtomValue(addProductModalAtom);
+  const editProductModal = useAtomValue(editProductModalAtom);
+  const deleteProductModal = useAtomValue(deleteProductModalAtom);
+  const productDetailModal = useAtomValue(productDetailModalAtom);
 
-  // === ADMIN-SPECIFIC DATA ===
-  const allProductsAdmin = useAtomValue(allProductsAdminAtom);
-  const adminProductStats = useAtomValue(adminProductStatsAtom);
-  const statsDistributorId = useAtomValue(statsDistributorIdAtom);
-
-  // === MANAGEMENT ACTIONS ===
+  // === ACTIONS ===
   const [, fetchMyProducts] = useAtom(fetchMyProductsAtom);
   const [, fetchMyProductStats] = useAtom(fetchMyProductStatsAtom);
-  const [, fetchAllProductsAdmin] = useAtom(fetchAllProductsAdminAtom);
-  const [, fetchAdminProductStats] = useAtom(fetchAdminProductStatsAtom);
+  const [, createProduct] = useAtom(createProductAtom);
+  const [, updateProduct] = useAtom(updateProductAtom);
+  const [, deleteProduct] = useAtom(deleteProductAtom);
+  const [, toggleProductStatus] = useAtom(toggleProductStatusAtom);
+  const [, batchToggleStatus] = useAtom(batchToggleStatusAtom);
+  const [, batchDeleteProducts] = useAtom(batchDeleteProductsAtom);
+  
+  // Selection actions
+  const [, toggleProductSelection] = useAtom(toggleProductSelectionAtom);
+  const [, toggleAllProductsSelection] = useAtom(toggleAllProductsSelectionAtom);
+  const [, clearSelections] = useAtom(clearSelectionsAtom);
+  
+  // Form actions
+  const [, updateProductForm] = useAtom(updateProductFormAtom);
+  const [, setProductForEditing] = useAtom(setProductForEditingAtom);
+  const [, resetProductForm] = useAtom(resetProductFormAtom);
+  
+  // Filter actions
+  const [, updateFilters] = useAtom(updateFiltersAtom);
+  const [, resetFilters] = useAtom(resetFiltersAtom);
+  
+  // Modal actions
+  const [addModalOpen, setAddModalOpen] = useAtom(addProductModalAtom);
+  const [editModalOpen, setEditModalOpen] = useAtom(editProductModalAtom);
+  const [deleteModalOpen, setDeleteModalOpen] = useAtom(deleteProductModalAtom);
+  const [, setSelectedProduct] = useAtom(selectedProductAtom);
 
-  // === DISTRIBUTOR QUERY FUNCTIONS ===
+  // === MANAGEMENT FUNCTIONS ===
 
   /**
-   * Lấy danh sách sản phẩm của distributor hiện tại
+   * Load my products
    */
   const getMyProducts = useCallback(async () => {
     return await fetchMyProducts();
   }, [fetchMyProducts]);
 
   /**
-   * Lấy thống kê sản phẩm của distributor hiện tại
+   * Load my product statistics
    */
   const getMyProductStats = useCallback(async () => {
     return await fetchMyProductStats();
   }, [fetchMyProductStats]);
 
   /**
-   * Lấy sản phẩm của tôi theo trạng thái
+   * Update product filters
    */
-  const getMyProductsByStatus = useCallback(
-    (status: "active" | "inactive") => {
-      return myProducts.filter((product) =>
-        status === "active" ? product.is_active : !product.is_active
-      );
+  const updateProductFilters = useCallback(
+    (newFilters: Partial<ProductFilters>) => {
+      updateFilters(newFilters);
     },
-    [myProducts]
+    [updateFilters]
   );
 
   /**
-   * Lấy sản phẩm của tôi theo category
+   * Reset product filters
    */
-  const getMyProductsByCategory = useCallback(
-    (categoryId: string) => {
-      return myProducts.filter((product) =>
-        product.categories.some((cat) => cat.category_id === categoryId)
-      );
+  const resetProductFilters = useCallback(() => {
+    resetFilters();
+  }, [resetFilters]);
+
+  /**
+   * Change page
+   */
+  const changePage = useCallback(
+    (page: number) => {
+      updateFilters({ page });
     },
-    [myProducts]
+    [updateFilters]
   );
 
   /**
-   * Lấy sản phẩm của tôi theo manufacturer
+   * Change items per page
    */
-  const getMyProductsByManufacturer = useCallback(
-    (manufacturerId: string) => {
-      return myProducts.filter(
-        (product) => product.manufacturer?.id === manufacturerId
-      );
+  const changeLimit = useCallback(
+    (limit: number) => {
+      updateFilters({ limit, page: 1 });
     },
-    [myProducts]
+    [updateFilters]
   );
 
   /**
-   * Tìm kiếm trong sản phẩm của tôi
+   * Sort products
    */
-  const searchMyProducts = useCallback(
-    (searchTerm: string) => {
-      const searchLower = searchTerm.toLowerCase();
-      return myProducts.filter(
-        (product) =>
-          product.product_name.toLowerCase().includes(searchLower) ||
-          product.description?.toLowerCase().includes(searchLower)
-      );
+  const sortProducts = useCallback(
+    (
+      sortBy: ProductFilters["sort_by"],
+      sortOrder: ProductFilters["sort_order"] = "desc"
+    ) => {
+      updateFilters({ sort_by: sortBy, sort_order: sortOrder, page: 1 });
     },
-    [myProducts]
+    [updateFilters]
   );
 
   /**
-   * Lấy sản phẩm có rating cao nhất của tôi
-   */
-  const getMyTopRatedProducts = useCallback(
-    (limit: number = 10) => {
-      return [...myProducts]
-        .sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0))
-        .slice(0, limit);
-    },
-    [myProducts]
-  );
-
-  /**
-   * Lấy sản phẩm bán chạy nhất của tôi
-   */
-  const getMyBestSellingProducts = useCallback(
-    (limit: number = 10) => {
-      return [...myProducts]
-        .sort((a, b) => b.reviews.length - a.reviews.length)
-        .slice(0, limit);
-    },
-    [myProducts]
-  );
-
-  /**
-   * Lấy sản phẩm mới nhất của tôi
-   */
-  const getMyLatestProducts = useCallback(
-    (limit: number = 10) => {
-      return [...myProducts]
-        .sort(
-          (a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        )
-        .slice(0, limit);
-    },
-    [myProducts]
-  );
-
-  // === ADMIN QUERY FUNCTIONS ===
-
-  /**
-   * Lấy tất cả sản phẩm cho admin
-   */
-  const getAllProductsAdmin = useCallback(
-    async (filters?: ProductFilters) => {
-      return await fetchAllProductsAdmin(filters);
-    },
-    [fetchAllProductsAdmin]
-  );
-
-  /**
-   * Lấy thống kê sản phẩm cho admin
-   */
-  const getAdminProductStats = useCallback(
-    async (distributorId?: string) => {
-      return await fetchAdminProductStats(distributorId);
-    },
-    [fetchAdminProductStats]
-  );
-
-  /**
-   * Lấy sản phẩm theo distributor (Admin view)
-   */
-  const getProductsByDistributorAdmin = useCallback(
-    (distributorId: string) => {
-      return allProductsAdmin.filter(
-        (product) => product.distributor?.distributor_id === distributorId
-      );
-    },
-    [allProductsAdmin]
-  );
-
-  /**
-   * Lấy sản phẩm theo trạng thái (Admin view)
-   */
-  const getProductsByStatusAdmin = useCallback(
-    (status: "active" | "inactive") => {
-      return allProductsAdmin.filter((product) =>
-        status === "active" ? product.is_active : !product.is_active
-      );
-    },
-    [allProductsAdmin]
-  );
-
-  /**
-   * Lấy top distributors theo số lượng sản phẩm
-   */
-  const getTopDistributors = useCallback(
-    (limit: number = 10) => {
-      const distributorMap = new Map<
-        string,
-        {
-          distributor: any;
-          productCount: number;
-          activeCount: number;
-        }
-      >();
-
-      allProductsAdmin.forEach((product) => {
-        if (product.distributor) {
-          const key = product.distributor.distributor_id;
-          const current = distributorMap.get(key) || {
-            distributor: product.distributor,
-            productCount: 0,
-            activeCount: 0,
-          };
-
-          current.productCount += 1;
-          if (product.is_active) {
-            current.activeCount += 1;
-          }
-
-          distributorMap.set(key, current);
-        }
-      });
-
-      return Array.from(distributorMap.values())
-        .sort((a, b) => b.productCount - a.productCount)
-        .slice(0, limit);
-    },
-    [allProductsAdmin]
-  );
-
-  /**
-   * Lấy top categories theo số lượng sản phẩm
-   */
-  const getTopCategories = useCallback(
-    (limit: number = 10) => {
-      const categoryMap = new Map<
-        string,
-        {
-          category: any;
-          productCount: number;
-        }
-      >();
-
-      allProductsAdmin.forEach((product) => {
-        product.categories.forEach((category) => {
-          const key = category.category_id;
-          const current = categoryMap.get(key) || {
-            category,
-            productCount: 0,
-          };
-
-          current.productCount += 1;
-          categoryMap.set(key, current);
-        });
-      });
-
-      return Array.from(categoryMap.values())
-        .sort((a, b) => b.productCount - a.productCount)
-        .slice(0, limit);
-    },
-    [allProductsAdmin]
-  );
-
-  /**
-   * Lấy top manufacturers theo số lượng sản phẩm
-   */
-  const getTopManufacturers = useCallback(
-    (limit: number = 10) => {
-      const manufacturerMap = new Map<
-        string,
-        {
-          manufacturer: any;
-          productCount: number;
-        }
-      >();
-
-      allProductsAdmin.forEach((product) => {
-        if (product.manufacturer) {
-          const key = product.manufacturer.id;
-          const current = manufacturerMap.get(key) || {
-            manufacturer: product.manufacturer,
-            productCount: 0,
-          };
-
-          current.productCount += 1;
-          manufacturerMap.set(key, current);
-        }
-      });
-
-      return Array.from(manufacturerMap.values())
-        .sort((a, b) => b.productCount - a.productCount)
-        .slice(0, limit);
-    },
-    [allProductsAdmin]
-  );
-
-  // === ANALYTICS FUNCTIONS ===
-
-  /**
-   * Lấy thống kê chi tiết của distributor
-   */
-  const getDetailedStats = useCallback(() => {
-    const totalProducts = myProducts.length;
-    const activeProducts = myProducts.filter((p) => p.is_active).length;
-    const inactiveProducts = totalProducts - activeProducts;
-    const totalReviews = myProducts.reduce(
-      (sum, p) => sum + p.reviews.length,
-      0
-    );
-    const avgRating =
-      myProducts.reduce((sum, p) => sum + (p.avg_rating || 0), 0) /
-      totalProducts;
-    const avgPrice =
-      myProducts.reduce((sum, p) => sum + p.unit_product_price, 0) /
-      totalProducts;
-
-    // Sản phẩm có rating cao nhất
-    const topRatedProduct = myProducts.reduce(
-      (max, p) => ((p.avg_rating || 0) > (max.avg_rating || 0) ? p : max),
-      myProducts[0]
-    );
-
-    // Sản phẩm có nhiều review nhất
-    const mostReviewedProduct = myProducts.reduce(
-      (max, p) => (p.reviews.length > max.reviews.length ? p : max),
-      myProducts[0]
-    );
-
-    return {
-      totalProducts,
-      activeProducts,
-      inactiveProducts,
-      totalReviews,
-      avgRating: isNaN(avgRating) ? 0 : avgRating,
-      avgPrice: isNaN(avgPrice) ? 0 : avgPrice,
-      topRatedProduct,
-      mostReviewedProduct,
-    };
-  }, [myProducts]);
-
-  /**
-   * Lấy thống kê theo thời gian
-   */
-  const getTimeBasedStats = useCallback(() => {
-    const now = new Date();
-    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-    const productsThisWeek = myProducts.filter(
-      (p) => new Date(p.created_at) >= oneWeekAgo
-    ).length;
-
-    const productsThisMonth = myProducts.filter(
-      (p) => new Date(p.created_at) >= oneMonthAgo
-    ).length;
-
-    return {
-      productsThisWeek,
-      productsThisMonth,
-    };
-  }, [myProducts]);
-
-  // === SELECTION FUNCTIONS ===
-
-  /**
-   * Lấy sản phẩm được chọn
-   */
-  const getSelectedProducts = useCallback(() => {
-    return myProducts.filter((product) =>
-      selectedProducts.includes(product.product_id)
-    );
-  }, [myProducts, selectedProducts]);
-
-  /**
-   * Lấy số lượng sản phẩm được chọn
+   * Get selected count
    */
   const getSelectedCount = useCallback(() => {
     return selectedProducts.length;
   }, [selectedProducts]);
 
+  /**
+   * Check if all products are selected
+   */
+  const isAllSelected = useCallback(() => {
+    return myProducts.length > 0 && selectedProducts.length === myProducts.length;
+  }, [myProducts, selectedProducts]);
+
+  /**
+   * Check if selection is indeterminate
+   */
+  const isIndeterminate = useCallback(() => {
+    return selectedProducts.length > 0 && selectedProducts.length < myProducts.length;
+  }, [myProducts, selectedProducts]);
+
+  // === MODAL MANAGEMENT ===
+
+  /**
+   * Open add product modal
+   */
+  const openAddModal = useCallback(() => {
+    setAddModalOpen(true);
+  }, [setAddModalOpen]);
+
+  /**
+   * Open edit product modal
+   */
+  const openEditModal = useCallback(() => {
+    setEditModalOpen(true);
+  }, [setEditModalOpen]);
+
+  /**
+   * Open delete product modal
+   */
+  const openDeleteModal = useCallback((productId: string) => {
+    const product = myProducts.find(p => p.product_id === productId);
+    if (product) {
+      setSelectedProduct(product);
+      setDeleteModalOpen(true);
+    }
+  }, [myProducts, setSelectedProduct, setDeleteModalOpen]);
+
+  /**
+   * Close all modals
+   */
+  const closeModals = useCallback(() => {
+    setAddModalOpen(false);
+    setEditModalOpen(false);
+    setDeleteModalOpen(false);
+    setSelectedProduct(null);
+  }, [setAddModalOpen, setEditModalOpen, setDeleteModalOpen, setSelectedProduct]);
+
   // === AUTO-LOAD DATA ===
   useEffect(() => {
-    // Auto load my products khi component mount
+    // Auto load data when component mounts
     if (myProducts.length === 0 && !myProductsLoading) {
       fetchMyProducts();
       fetchMyProductStats();
     }
-  }, [
-    myProducts.length,
-    myProductsLoading,
-    fetchMyProducts,
-    fetchMyProductStats,
-  ]);
+  }, [myProducts.length, myProductsLoading, fetchMyProducts, fetchMyProductStats]);
 
   return {
-    // === INHERIT FROM COMMON ===
-    ...common,
 
-    // === MANAGEMENT DATA ===
+    // === DATA STATES ===
     myProducts,
     myProductsLoading,
     myProductStats,
     selectedProducts,
     productCounts,
+    pagination,
+    filters,
 
-    // === ADMIN DATA ===
-    allProductsAdmin,
-    adminProductStats,
-    statsDistributorId,
+    // === LOADING STATES ===
+    productsLoading: myProductsLoading,
+    batchOperationLoading,
+    productFormLoading,
 
-    // === DISTRIBUTOR QUERY FUNCTIONS ===
+    // === FORM STATES ===
+    productFormData,
+    productFormErrors,
+    
+    // === MODAL STATES ===
+    addProductModal,
+    editProductModal,
+    deleteProductModal,
+    productDetailModal,
+
+    // === QUERY FUNCTIONS ===
     getMyProducts,
     getMyProductStats,
-    getMyProductsByStatus,
-    getMyProductsByCategory,
-    getMyProductsByManufacturer,
-    searchMyProducts,
-    getMyTopRatedProducts,
-    getMyBestSellingProducts,
-    getMyLatestProducts,
 
-    // === ADMIN QUERY FUNCTIONS ===
-    getAllProductsAdmin,
-    getAdminProductStats,
-    getProductsByDistributorAdmin,
-    getProductsByStatusAdmin,
-    getTopDistributors,
-    getTopCategories,
-    getTopManufacturers,
-
-    // === ANALYTICS FUNCTIONS ===
-    getDetailedStats,
-    getTimeBasedStats,
+    // === FILTER FUNCTIONS ===
+    updateProductFilters,
+    resetProductFilters,
+    changePage,
+    changeLimit,
+    sortProducts,
 
     // === SELECTION FUNCTIONS ===
-    getSelectedProducts,
+    toggleProductSelection,
+    toggleAllProductsSelection,
+    clearSelections,
     getSelectedCount,
+    isAllSelected,
+    isIndeterminate,
+
+    // === MANAGEMENT FUNCTIONS ===
+    createProduct,
+    updateProduct,
+    deleteProduct,
+    toggleProductStatus,
+    batchToggleStatus,
+    batchDeleteProducts,
+
+    // === MODAL FUNCTIONS ===
+    openAddModal,
+    openEditModal,
+    openDeleteModal,
+    closeModals,
+
+    // === FORM FUNCTIONS ===
+    updateProductForm,
+    setProductForEditing,
+    resetProductForm,
   };
 };

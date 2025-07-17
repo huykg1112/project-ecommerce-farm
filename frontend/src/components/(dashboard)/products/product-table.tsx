@@ -1,159 +1,337 @@
-// "use client";
+"use client";
 
-// import { Badge } from "@/components/ui/badge";
-// import { useProducts } from "@/hooks/use-products";
-// import { Product } from "@/lib_dashboard/types/product";
-// import { useState } from "react";
-// import DataTable, { TableColumn } from "react-data-table-component";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { formatCurrency } from "@/lib/utils";
+import { Product } from "@/lib_dashboard/types/product";
+import {
+  Edit,
+  Eye,
+  MoreHorizontal,
+  Trash2,
+  ToggleLeft,
+  ToggleRight,
+} from "lucide-react";
+import Image from "next/image";
+import { useCallback, useMemo } from "react";
 
-// interface ProductTableProps {
-//   products: Product[];
-//   loading: boolean;
-// }
+interface ProductTableProps {
+  products: Product[];
+  selectedProducts: string[];
+  onSelectProduct: (productId: string) => void;
+  onSelectAll: (checked: boolean) => void;
+  onToggleStatus: (productId: string) => void;
+  onViewDetails: (productId: string) => void;
+  onEditProduct: (productId: string) => void;
+  onDeleteProduct: (productId: string) => void;
+  loading: boolean;
+}
 
-// export function ProductTable({ products, loading }: ProductTableProps) {
-//   const {
-//     selectedProducts,
-//     toggleProductSelection,
-//     selectAllProducts,
-//     clearSelection,
-//     openEditModal,
-//     openLockModal,
-//     deleteProduct,
-//   } = useProducts();
+export function ProductTable({
+  products,
+  selectedProducts,
+  onSelectProduct,
+  onSelectAll,
+  onToggleStatus,
+  onViewDetails,
+  onEditProduct,
+  onDeleteProduct,
+  loading,
+}: ProductTableProps) {
+  // Check if all products are selected
+  const isAllSelected = useMemo(() => {
+    return products.length > 0 && selectedProducts.length === products.length;
+  }, [products.length, selectedProducts.length]);
 
-//   const [sortField, setSortField] = useState<keyof Product>("created_at");
-//   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  // Check if selection is indeterminate
+  const isIndeterminate = useMemo(() => {
+    return selectedProducts.length > 0 && selectedProducts.length < products.length;
+  }, [products.length, selectedProducts.length]);
 
-//   const handleSort = (field: keyof Product) => {
-//     if (sortField === field) {
-//       setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-//     } else {
-//       setSortField(field);
-//       setSortDirection("asc");
-//     }
-//   };
+  const handleSelectAll = useCallback(
+    (checked: boolean) => {
+      onSelectAll(checked);
+    },
+    [onSelectAll]
+  );
 
-//   const handleSelectAll = () => {
-//     if (selectedProducts.length === products.length) {
-//       clearSelection();
-//     } else {
-//       selectAllProducts();
-//     }
-//   };
+  const handleSelectProduct = useCallback(
+    (productId: string) => {
+      onSelectProduct(productId);
+    },
+    [onSelectProduct]
+  );
 
-//   const handleDelete = async (productId: string) => {
-//     if (confirm("Bạn có chắc chắn muốn xóa sản phẩm này?")) {
-//       await deleteProduct(productId);
-//     }
-//   };
+  const getStatusBadge = useCallback((isActive: boolean) => {
+    return (
+      <Badge
+        variant={isActive ? "default" : "secondary"}
+        className={`${
+          isActive
+            ? "bg-green-100 text-green-800 hover:bg-green-200"
+            : "bg-red-100 text-red-800 hover:bg-red-200"
+        }`}
+      >
+        {isActive ? "Hoạt động" : "Tạm dừng"}
+      </Badge>
+    );
+  }, []);
 
-//   const getStatusBadge = (isActive: boolean) => {
-//     return (
-//       <Badge
-//         variant={isActive ? "default" : "secondary"}
-//         className="font-medium"
-//       >
-//         {isActive ? "Hoạt động" : "Đã khóa"}
-//       </Badge>
-//     );
-//   };
+  const getPrimaryImage = useCallback((product: Product) => {
+    const primaryImage = product.images?.find((img) => img.is_primary);
+    return primaryImage?.image_url || "/placeholder.svg";
+  }, []);
 
-//   const columns: TableColumn<Product>[] = [
-//     {
-//       name: "Hình ảnh",
-//       selector: (row) =>
-//         row.images.find((img) => img.is_primary)?.image_url || "",
-//       cell: (row) => (
-//         <img
-//           src={
-//             row.images.find((img) => img.is_primary)?.image_url ||
-//             "/placeholder.svg"
-//           }
-//           alt={row.product_name}
-//           className="h-10 w-10 rounded-lg"
-//         />
-//       ),
-//     },
-//     {
-//       name: "Tên sản phẩm",
-//       selector: (row) => row.product_name,
-//       sortable: true,
-//     },
-//     {
-//       name: "Giá",
-//       selector: (row) => row.unit_product_price,
-//       sortable: true,
-//       cell: (row) => <span>{row.unit_product_price.toLocaleString()} VND</span>,
-//     },
-//     {
-//       name: "Danh mục",
-//       selector: (row) =>
-//         row.categories.map((cat) => cat.category_name).join(", "),
-//       cell: (row) => (
-//         <div className="flex flex-wrap gap-1">
-//           {row.categories.map((cat) => (
-//             <span key={cat.category_id} className="badge">
-//               {cat.category_name}
-//             </span>
-//           ))}
-//         </div>
-//       ),
-//     },
-//     {
-//       name: "Nhà phân phối",
-//       selector: (row) => row.distributor?.invenstory?.name || "",
-//     },
-//     {
-//       name: "Trạng thái",
-//       selector: (row) => row.is_active,
-//       cell: (row) => (
-//         <span className={row.is_active ? "text-green-600" : "text-red-600"}>
-//           {row.is_active ? "Hoạt động" : "Không hoạt động"}
-//         </span>
-//       ),
-//     },
-//   ];
+  const getImageCount = useCallback((product: Product) => {
+    return product.images?.length || 0;
+  }, []);
 
-//   const expandableRowsComponent = ({ data }: { data: Product }) => (
-//     <div className="p-4">
-//       <p>
-//         <strong>Mô tả:</strong> {data.description || "Không có mô tả"}
-//       </p>
-//       <p>
-//         <strong>Hướng dẫn sử dụng:</strong>{" "}
-//         {data.usage_instructions || "Không có hướng dẫn"}
-//       </p>
-//     </div>
-//   );
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-[#44703d]">📦 Danh sách sản phẩm</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <div key={index} className="flex items-center space-x-4">
+                <Skeleton className="h-12 w-12 rounded" />
+                <div className="space-y-2 flex-1">
+                  <Skeleton className="h-4 w-[200px]" />
+                  <Skeleton className="h-4 w-[150px]" />
+                </div>
+                <Skeleton className="h-8 w-[100px]" />
+                <Skeleton className="h-8 w-[80px]" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
-//   if (loading) {
-//     return (
-//       <div className="rounded-md border">
-//         <DataTable
-//           columns={columns}
-//           data={Array.from({ length: 5 })}
-//           progressPending={true}
-//           pagination
-//           paginationPerPage={10}
-//           paginationRowsPerPageOptions={[10, 20, 30]}
-//           expandableRows
-//           expandableRowsComponent={expandableRowsComponent}
-//         />
-//       </div>
-//     );
-//   }
+  if (products.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-[#44703d]">📦 Danh sách sản phẩm</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <p className="text-gray-500">Không có sản phẩm nào được tìm thấy</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
-//   return (
-//     <DataTable
-//       columns={columns}
-//       data={products}
-//       progressPending={loading}
-//       pagination
-//       paginationPerPage={10}
-//       paginationRowsPerPageOptions={[10, 20, 30]}
-//       expandableRows
-//       expandableRowsComponent={expandableRowsComponent}
-//     />
-//   );
-// }
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-[#44703d] flex items-center justify-between">
+          📦 Danh sách sản phẩm
+          <span className="text-sm font-normal text-gray-500">
+            {products.length} sản phẩm
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={isAllSelected}
+                    ref={(el) => {
+                      if (el) el.indeterminate = isIndeterminate;
+                    }}
+                    onCheckedChange={handleSelectAll}
+                  />
+                </TableHead>
+                <TableHead className="w-20">Hình ảnh</TableHead>
+                <TableHead>Tên sản phẩm</TableHead>
+                <TableHead>Giá</TableHead>
+                <TableHead>Danh mục</TableHead>
+                <TableHead>Trạng thái</TableHead>
+                <TableHead>Đánh giá</TableHead>
+                <TableHead>Ngày tạo</TableHead>
+                <TableHead className="w-12">Thao tác</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {products.map((product) => (
+                <TableRow
+                  key={product.product_id}
+                  className={`${
+                    selectedProducts.includes(product.product_id)
+                      ? "bg-blue-50"
+                      : ""
+                  }`}
+                >
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedProducts.includes(product.product_id)}
+                      onCheckedChange={() => handleSelectProduct(product.product_id)}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <div className="relative">
+                      <Image
+                        src={getPrimaryImage(product)}
+                        alt={product.product_name}
+                        width={48}
+                        height={48}
+                        className="rounded-lg object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = "/placeholder.svg";
+                        }}
+                      />
+                      {getImageCount(product) > 1 && (
+                        <Badge
+                          variant="secondary"
+                          className="absolute -top-2 -right-2 text-xs px-1"
+                        >
+                          +{getImageCount(product) - 1}
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      <p className="font-medium text-gray-900">
+                        {product.product_name}
+                      </p>
+                      {product.description && (
+                        <p className="text-sm text-gray-500 line-clamp-2">
+                          {product.description.substring(0, 100)}
+                          {product.description.length > 100 && "..."}
+                        </p>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-medium text-blue-600">
+                      {formatCurrency(product.unit_product_price)}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      {product.categories?.slice(0, 2).map((category) => (
+                        <Badge
+                          key={category.category_id}
+                          variant="outline"
+                          className="text-xs"
+                        >
+                          {category.category_name}
+                        </Badge>
+                      ))}
+                      {product.categories?.length > 2 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{product.categories.length - 2}
+                        </Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>{getStatusBadge(product.is_active)}</TableCell>
+                  <TableCell>
+                    <div className="space-y-1">
+                      {product.avg_rating ? (
+                        <>
+                          <div className="flex items-center space-x-1">
+                            <span className="text-yellow-500">★</span>
+                            <span className="text-sm font-medium">
+                              {product.avg_rating.toFixed(1)}
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500">
+                            {product.reviews?.length || 0} đánh giá
+                          </p>
+                        </>
+                      ) : (
+                        <span className="text-sm text-gray-400">
+                          Chưa có đánh giá
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm text-gray-500">
+                      {new Date(product.created_at).toLocaleDateString("vi-VN")}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => onViewDetails(product.product_id)}
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          Xem chi tiết
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => onEditProduct(product.product_id)}
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Chỉnh sửa
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => onToggleStatus(product.product_id)}
+                        >
+                          {product.is_active ? (
+                            <>
+                              <ToggleLeft className="h-4 w-4 mr-2" />
+                              Tạm dừng
+                            </>
+                          ) : (
+                            <>
+                              <ToggleRight className="h-4 w-4 mr-2" />
+                              Kích hoạt
+                            </>
+                          )}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => onDeleteProduct(product.product_id)}
+                          className="text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Xóa
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
