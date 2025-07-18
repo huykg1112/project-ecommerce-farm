@@ -24,7 +24,7 @@ export const customStyles = {
     style: {
       color: "#44703d", // Consistent text color
       fontWeight: "700", // Bold font
-      fontSize: "16px", // Larger text
+      fontSize: "18px", // Larger text
       padding: "12px", // Extra padding for better spacing
     },
   },
@@ -35,7 +35,8 @@ export const customStyles = {
         transition: "background-color 0.2s",
       },
       color: "#44703d",
-      fontSize: "14px",
+      fontSize: "16px",
+      padding: "20px", // Consistent padding
     },
   },
   pagination: {

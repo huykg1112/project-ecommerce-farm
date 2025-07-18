@@ -15,7 +15,7 @@ import { Filter, RotateCcw } from "lucide-react";
 import { useCallback } from "react";
 
 interface BatchProductFiltersProps {
-  filters: BatchProductFilters;
+  filters: Partial<BatchProductFilters>;
   onUpdateFilters: (filters: Partial<BatchProductFilters>) => void;
   onResetFilters: () => void;
   loading?: boolean;
@@ -29,14 +29,14 @@ export function BatchProductFilters({
 }: BatchProductFiltersProps) {
   const handleInputChange = useCallback(
     (field: keyof BatchProductFilters, value: any) => {
-      onUpdateFilters({ [field]: value, page: 1 });
+      onUpdateFilters({ [field]: value });
     },
     [onUpdateFilters]
   );
 
   const handleDateChange = useCallback(
     (field: "from_date" | "to_date", value: string) => {
-      onUpdateFilters({ [field]: value, page: 1 });
+      onUpdateFilters({ [field]: value });
     },
     [onUpdateFilters]
   );
@@ -81,18 +81,6 @@ export function BatchProductFilters({
             placeholder="Tên sản phẩm, số lô..."
             value={filters.search || ""}
             onChange={(e) => handleInputChange("search", e.target.value)}
-            disabled={loading}
-          />
-        </div>
-
-        {/* Batch Number */}
-        <div className="space-y-2">
-          <Label htmlFor="batch_number">Số lô</Label>
-          <Input
-            id="batch_number"
-            placeholder="Nhập số lô..."
-            value={filters.batch_number || ""}
-            onChange={(e) => handleInputChange("batch_number", e.target.value)}
             disabled={loading}
           />
         </div>
@@ -142,7 +130,7 @@ export function BatchProductFilters({
               <SelectValue placeholder="Chọn số ngày" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Tất cả</SelectItem>
+              <SelectItem value="0">Tất cả</SelectItem>
               <SelectItem value="7">7 ngày</SelectItem>
               <SelectItem value="15">15 ngày</SelectItem>
               <SelectItem value="30">30 ngày</SelectItem>
@@ -194,22 +182,31 @@ export function BatchProductFilters({
           />
         </div>
 
-        {/* Sort By */}
+        {/* Stock Quantity Threshold */}
         <div className="space-y-2">
-          <Label htmlFor="sort_by">Sắp xếp theo</Label>
+          <Label htmlFor="stock_quantity_threshold">Số lượng tồn kho</Label>
           <Select
-            value={filters.sort_by || "created_at"}
-            onValueChange={(value) => handleInputChange("sort_by", value)}
+            value={filters.stock_quantity_threshold?.toString() || "0"}
+            onValueChange={(value) =>
+              handleInputChange(
+                "stock_quantity_threshold",
+                value ? parseInt(value) : undefined
+              )
+            }
           >
             <SelectTrigger>
-              <SelectValue placeholder="Chọn cách sắp xếp" />
+              <SelectValue placeholder="Chọn số lượng" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="created_at">Ngày tạo</SelectItem>
-              <SelectItem value="batch_number">Số lô</SelectItem>
-              <SelectItem value="quantity">Số lượng</SelectItem>
-              <SelectItem value="expiry_date">Ngày hết hạn</SelectItem>
-              <SelectItem value="manufactured_date">Ngày sản xuất</SelectItem>
+              <SelectItem value="999999">Tất cả</SelectItem>
+              <SelectItem value="5">5</SelectItem>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="20">20</SelectItem>
+              <SelectItem value="40">40</SelectItem>
+              <SelectItem value="80">80</SelectItem>
+              <SelectItem value="100">100</SelectItem>
+              <SelectItem value="200">200</SelectItem>
+              <SelectItem value="500">500</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -218,24 +215,6 @@ export function BatchProductFilters({
       <div className="flex items-center justify-between pt-4 border-t border-gray-200">
         <div className="text-sm text-gray-500">
           {isFiltered ? "Đang áp dụng bộ lọc" : "Không có bộ lọc nào"}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-500">Thứ tự:</span>
-          <Select
-            value={filters.sort_order || "desc"}
-            onValueChange={(value: "asc" | "desc") =>
-              handleInputChange("sort_order", value)
-            }
-          >
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="desc">Giảm dần</SelectItem>
-              <SelectItem value="asc">Tăng dần</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
     </div>

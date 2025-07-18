@@ -573,12 +573,22 @@ export const createProductAtom = atom(
 // Update product
 export const updateProductAtom = atom(
   null,
-  async (get, set, id: string, data: ProductFormData) => {
+  async (
+    get,
+    set,
+    id: string,
+    data: ProductFormData,
+    files?: File[] | null | undefined
+  ) => {
     set(productFormLoadingAtom, true);
     set(productFormErrorsAtom, {});
 
     try {
-      const product = await productServiceManagement.updateProduct(id, data);
+      const product = await productServiceManagement.updateProduct(
+        id,
+        data,
+        files
+      );
 
       // Update my products list
       const myProducts = get(myProductsAtom);

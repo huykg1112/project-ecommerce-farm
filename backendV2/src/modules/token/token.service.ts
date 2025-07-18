@@ -66,7 +66,7 @@ export class TokenService {
   ): Promise<Token> {
     const token = this.tokenRepository.create({
       access_token,
-      access_token_expires_at: new Date(Date.now() + 1 * 60 * 60 * 1000), // 1 giờ
+      access_token_expires_at: new Date(Date.now() + 5 * 60 * 60 * 1000), // 5 giờ
       refresh_token,
       refresh_token_expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 ngày
       user: { user_id: user_id },

@@ -4,17 +4,20 @@ import {
   IsInt,
   IsOptional,
   IsString,
-  IsUUID,
   MaxLength,
   Min,
 } from 'class-validator';
 
 export class UpdateBatchProductDto {
-  @IsUUID()
-  batch_id: string;
-
-  @IsUUID()
+  @IsString()
   product_id: string;
+
+  @IsOptional()
+  @IsString()
+  product_type_id?: string;
+
+  @IsOptional()
+  promotion_ids?: string[];
 
   @IsString()
   @IsOptional()
@@ -35,6 +38,10 @@ export class UpdateBatchProductDto {
   @IsInt()
   @IsOptional()
   low_stock_threshold?: number;
+
+  @IsOptional()
+  @Min(0) // Đảm bảo giá trị >= 0
+  unit_product_price?: number; // Sửa kiểu dữ liệu thành number
 
   @IsBoolean()
   @IsOptional()

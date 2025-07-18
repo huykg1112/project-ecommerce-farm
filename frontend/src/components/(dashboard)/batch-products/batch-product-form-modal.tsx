@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import {
   BatchProduct,
   BatchProductFormData,
@@ -68,7 +68,6 @@ export function BatchProductFormModal({
     if (isEditMode && initialData) {
       onFormDataChange({
         product_id: initialData.product.product_id,
-        invenstory_id: initialData.invenstory?.invenstory_id || "",
         batch_number: initialData.batch_number,
         quantity: initialData.quantity,
         manufactured_date: initialData.manufactured_date
@@ -103,16 +102,16 @@ export function BatchProductFormModal({
       newErrors.product_id = "Vui lòng chọn sản phẩm";
     }
 
-    if (!formData.invenstory_id) {
-      newErrors.invenstory_id = "Vui lòng chọn kho";
-    }
-
     if (!formData.batch_number.trim()) {
       newErrors.batch_number = "Vui lòng nhập số lô";
     }
 
     if (formData.quantity <= 0) {
       newErrors.quantity = "Số lượng phải lớn hơn 0";
+    }
+
+    if (formData.unit_product_price <= 0) {
+      newErrors.unit_product_price = "Giá sản phẩm phải lớn hơn 0";
     }
 
     if (!formData.expiry_date) {
@@ -228,7 +227,8 @@ export function BatchProductFormModal({
               <Select
                 value={formData.product_id}
                 onValueChange={(value) => handleProdutChange(value)}
-                disabled={loading}
+                disabled={isEditMode || loading}
+
               >
                 <SelectTrigger
                   className={cn(errors.product_id && "border-red-500")}
@@ -360,6 +360,38 @@ export function BatchProductFormModal({
               {errors.low_stock_threshold && (
                 <p className="text-sm text-red-500">
                   {errors.low_stock_threshold}
+                </p>
+              )}
+            </div>
+
+            {/* Unit Product Price */}
+            <div className="space-y-2">
+              <Label htmlFor="unit_product_price">
+                Giá sản phẩm (VND) <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="unit_product_price"
+                type="number"
+                value={formData.unit_product_price || ""}
+                onChange={(e) =>
+                  handleInputChange(
+                    "unit_product_price",
+                    parseFloat(e.target.value) || 0
+                  )
+                }
+                placeholder="0"
+                min="0"
+                step="1000"
+                className={errors.unit_product_price ? "border-red-500" : ""}
+              />
+              {formData.unit_product_price > 0 && (
+                <p className="text-sm text-gray-500">
+                  {formatCurrency(formData.unit_product_price)}
+                </p>
+              )}
+              {errors.unit_product_price && (
+                <p className="text-sm text-red-500">
+                  {errors.unit_product_price}
                 </p>
               )}
             </div>

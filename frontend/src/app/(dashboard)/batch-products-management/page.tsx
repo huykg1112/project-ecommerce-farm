@@ -1,15 +1,11 @@
 "use client";
 
+import { BatchProductFilters } from "@/components/(dashboard)/batch-products/batch-product-filters";
 import { BatchProductFormModal } from "@/components/(dashboard)/batch-products/batch-product-form-modal";
+import { BatchProductStatisticsCards } from "@/components/(dashboard)/batch-products/batch-product-statistics-cards";
 import { BatchProductTable } from "@/components/(dashboard)/batch-products/batch-product-table";
+import { DeleteModal } from "@/components/common/delete-modal";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { showToast } from "@/lib/toast-provider";
 import { batchProductService } from "@/lib_dashboard/services/batch-product-service";
 import { productServiceManagement } from "@/lib_dashboard/services/product-service-management";
@@ -17,7 +13,7 @@ import { productTypeService } from "@/lib_dashboard/services/product-type-servic
 import { promotionService } from "@/lib_dashboard/services/promotio-service-management";
 import {
   BatchProduct,
-  BatchProductFilters,
+  BatchProductFilters as BatchProductFiltersType,
   BatchProductFormData,
   BatchProductStats,
   ProductType,
@@ -31,6 +27,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 export default function BatchProductsManagementPage() {
   // State
   const [batchProducts, setBatchProducts] = useState<BatchProduct[]>([]);
+  const [dataDatchProductsFiltered, setDataDatchProductsFiltered] = useState<
+    BatchProduct[]
+  >([]);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 10,
@@ -41,26 +40,21 @@ export default function BatchProductsManagementPage() {
     useState<boolean>(false);
   const [batchOperationLoading, setBatchOperationLoading] =
     useState<boolean>(false);
-  const [filters, setFilters] = useState<BatchProductFilters>({
+  const [filters, setFilters] = useState<Partial<BatchProductFiltersType>>({
     search: "",
     product_id: "",
     is_active: undefined,
-    expiring_soon_days: undefined,
+    expiring_soon_days: 999999,
     low_stock: undefined,
     batch_number: "",
     from_date: "",
     to_date: "",
-    page: 1,
-    limit: 10,
-    sort_by: "created_at",
-    sort_order: "desc",
   });
   const [selectedBatchProductIds, setSelectedBatchProductIds] = useState<
     string[]
   >([]);
   const [formData, setFormData] = useState<BatchProductFormData>({
     product_id: "",
-    invenstory_id: "",
     batch_number: "",
     quantity: 0,
     manufactured_date: "",
@@ -146,17 +140,17 @@ export default function BatchProductsManagementPage() {
       const promotionsResponse = await promotionService.getPromotions(); // Replace with actual promotion service if available
       setPromotions(promotionsResponse.filter((p: Promotion) => p.is_active));
 
-      console.log(
-        "data",
-        productsResponse,
-        productTypesResponse,
-        promotionsResponse
-      );
+      // console.log(
+      //   "data",
+      //   productsResponse,
+      //   productTypesResponse,
+      //   promotionsResponse
+      // );
     } catch (error) {
       showToast.error("Lỗi khi lấy dữ liệu dropdown");
     }
   }, []);
-  console.log("batchProducts", batchProducts);
+  // console.log("batchProducts", batchProducts);
 
   // Create batch product
   const handleCreateBatchProduct = useCallback(
@@ -183,7 +177,6 @@ export default function BatchProductsManagementPage() {
         setIsCreateModalOpen(false);
         setFormData({
           product_id: "",
-          invenstory_id: "",
           batch_number: "",
           quantity: 0,
           manufactured_date: "",
@@ -194,10 +187,10 @@ export default function BatchProductsManagementPage() {
           product_type_id: "",
           promotion_ids: [],
         });
-        showToast.success("Tạo lô sản phẩm thành công!");
+        // showToast.success("Tạo lô sản phẩm thành công!");
         return true;
       } catch (error) {
-        showToast.error("Lỗi khi tạo lô sản phẩm");
+        // showToast.error("Lỗi khi tạo lô sản phẩm");
         return false;
       } finally {
         setBatchOperationLoading(false);
@@ -232,10 +225,10 @@ export default function BatchProductsManagementPage() {
         });
         setIsEditModalOpen(false);
         setSelectedBatchProductForDelete(null);
-        showToast.success("Cập nhật lô sản phẩm thành công!");
+        // showToast.success("Cập nhật lô sản phẩm thành công!");
         return true;
       } catch (error) {
-        showToast.error("Lỗi khi cập nhật lô sản phẩm");
+        // showToast.error("Lỗi khi cập nhật lô sản phẩm");
         return false;
       } finally {
         setBatchOperationLoading(false);
@@ -270,10 +263,10 @@ export default function BatchProductsManagementPage() {
       }));
       setIsDeleteModalOpen(false);
       setSelectedBatchProductForDelete(null);
-      showToast.success("Xóa lô sản phẩm thành công!");
+      // showToast.success("Xóa lô sản phẩm thành công!");
       return true;
     } catch (error) {
-      showToast.error("Lỗi khi xóa lô sản phẩm");
+      // showToast.error("Lỗi khi xóa lô sản phẩm");
       return false;
     } finally {
       setBatchOperationLoading(false);
@@ -321,90 +314,49 @@ export default function BatchProductsManagementPage() {
 
   // Filter and sort batch products
   const filteredBatchProducts = useMemo(() => {
-    const now = new Date();
-    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    let filtered = batchProducts;
+    let filtered: BatchProduct[] = batchProducts || [];
 
-    // Apply filters
+    // Filter by search (product name or batch number)
     if (filters.search && filters.search.trim()) {
-      const searchTerm = filters.search.toLowerCase().trim();
       filtered = filtered.filter(
         (batch) =>
-          batch.batch_number.toLowerCase().includes(searchTerm) ||
-          batch.product?.product_name.toLowerCase().includes(searchTerm)
+          batch.product.product_name
+            .toLowerCase()
+            .includes(filters.search!.toLowerCase()) ||
+          batch.batch_number
+            .toLowerCase()
+            .includes(filters.search!.toLowerCase())
       );
     }
 
-    if (filters.product_id) {
+    // Filter by stock quantity thresholds
+    if (filters.stock_quantity_threshold !== undefined) {
       filtered = filtered.filter(
-        (batch) => batch.product.product_id === filters.product_id
+        (batch) => batch.quantity <= filters.stock_quantity_threshold!
       );
     }
 
-    if (filters.is_active !== undefined) {
-      filtered = filtered.filter(
-        (batch) => batch.is_active === filters.is_active
-      );
-    }
-
-    if (filters.expiring_soon_days) {
-      filtered = filtered.filter(
-        (batch) =>
-          batch.is_active && new Date(batch.expiry_date) <= sevenDaysFromNow
-      );
-    }
-
-    if (filters.low_stock) {
-      filtered = filtered.filter(
-        (batch) =>
-          batch.is_active && batch.quantity <= batch.low_stock_threshold
-      );
-    }
-
-    if (filters.batch_number) {
-      filtered = filtered.filter((batch) =>
-        batch.batch_number.toLowerCase().includes(filters?.batch_number)
-      );
-    }
-
+    // Filter by expiry date range
     if (filters.from_date) {
       filtered = filtered.filter(
         (batch) =>
-          new Date(batch.manufactured_date) >=
-          new Date(filters?.from_date || "")
+          new Date(batch.expiry_date) >= new Date(filters.from_date || "")
       );
     }
 
     if (filters.to_date) {
       filtered = filtered.filter(
         (batch) =>
-          new Date(batch.manufactured_date) <= new Date(filters?.to_date || "")
+          new Date(batch.expiry_date) <= new Date(filters.to_date || "")
       );
-    }
-
-    // Apply sorting
-    if (filters.sort_by) {
-      filtered.sort((a, b) => {
-        const order = filters.sort_order === "asc" ? 1 : -1;
-        if (filters.sort_by === "created_at") {
-          return (
-            (new Date(a?.created_at || "").getTime() -
-              new Date(b?.created_at || "").getTime()) *
-            order
-          );
-        }
-        if (filters.sort_by === "batch_number") {
-          return a.batch_number.localeCompare(b.batch_number) * order;
-        }
-        if (filters.sort_by === "quantity") {
-          return (a.quantity - b.quantity) * order;
-        }
-        return 0;
-      });
     }
 
     return filtered;
   }, [batchProducts, filters]);
+
+  useEffect(() => {
+    setDataDatchProductsFiltered(filteredBatchProducts);
+  }, [filteredBatchProducts]);
 
   // Selected batch products
   const selectedBatchProducts = useMemo(() => {
@@ -536,22 +488,6 @@ export default function BatchProductsManagementPage() {
     }
   }, [selectedBatchProducts, handleBatchToggleStatus]);
 
-  // Handle sort
-  const handleSort = useCallback(
-    (column: string) => {
-      const newOrder =
-        filters.sort_by === column && filters.sort_order === "desc"
-          ? "asc"
-          : "desc";
-      setFilters((prev) => ({
-        ...prev,
-        sort_by: column,
-        sort_order: newOrder,
-      }));
-    },
-    [filters.sort_by, filters.sort_order]
-  );
-
   // Handle export
   const handleExport = useCallback(() => {
     showToast.info("Chức năng xuất dữ liệu sẽ được phát triển");
@@ -561,7 +497,6 @@ export default function BatchProductsManagementPage() {
   const handleCreateBatchProductClick = useCallback(() => {
     setFormData({
       product_id: "",
-      invenstory_id: "",
       batch_number: "",
       quantity: 0,
       manufactured_date: "",
@@ -576,32 +511,6 @@ export default function BatchProductsManagementPage() {
   }, []);
 
   // Quick filter functions
-  const handleQuickFilterExpiringSoon = useCallback(() => {
-    setFilters((prev) => ({ ...prev, expiring_soon_days: 7, is_active: true }));
-  }, []);
-
-  const handleQuickFilterLowStock = useCallback(() => {
-    setFilters((prev) => ({ ...prev, low_stock: true, is_active: true }));
-  }, []);
-
-  const handleQuickFilterActive = useCallback(() => {
-    setFilters((prev) => ({ ...prev, is_active: true }));
-  }, []);
-
-  const handleQuickFilterInactive = useCallback(() => {
-    setFilters((prev) => ({ ...prev, is_active: false }));
-  }, []);
-
-  // Change page
-  const changePage = useCallback((page: number) => {
-    setFilters((prev) => ({ ...prev, page }));
-  }, []);
-
-  // Change limit
-  const changeLimit = useCallback((limit: number) => {
-    setFilters((prev) => ({ ...prev, limit, page: 1 }));
-  }, []);
-
   // Update form data
   const updateFormData = useCallback(
     (updates: Partial<BatchProductFormData>) => {
@@ -638,22 +547,11 @@ export default function BatchProductsManagementPage() {
       search: "",
       product_id: "",
       is_active: undefined,
-      expiring_soon_days: undefined,
-      low_stock: undefined,
-      batch_number: "",
       from_date: "",
       to_date: "",
-      page: 1,
-      limit: 10,
-      sort_by: "created_at",
-      sort_order: "desc",
     });
-    setSelectedBatchProductIds([]);
-    setSelectedBatchProductForDelete(null);
-    setIsCreateModalOpen(false);
-    setIsEditModalOpen(false);
-    setIsDeleteModalOpen(false);
-  }, []);
+    setDataDatchProductsFiltered(batchProducts);
+  }, [batchProducts]);
 
   // Initial load
   useEffect(() => {
@@ -662,7 +560,7 @@ export default function BatchProductsManagementPage() {
   }, [loadBatchProducts, loadFormDropdownData]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 gap-5">
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -690,130 +588,29 @@ export default function BatchProductsManagementPage() {
         </div>
       </div>
 
-      {/* Quick Filters */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-lg border border-gray-200">
-        <div className="flex items-center space-x-3">
-          <span className="text-sm font-medium text-gray-700">
-            Bộ lọc nhanh:
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleQuickFilterExpiringSoon}
-            className="flex items-center gap-2"
-          >
-            <Calendar className="h-4 w-4" />
-            Sắp hết hạn ({batchProductStats.expiringSoonBatches})
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleQuickFilterLowStock}
-            className="flex items-center gap-2"
-          >
-            <TrendingDown className="h-4 w-4" />
-            Sắp hết hàng ({batchProductStats.lowStockBatches})
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleQuickFilterActive}>
-            Đang hoạt động ({batchProductCounts.active})
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleQuickFilterInactive}
-          >
-            Không hoạt động ({batchProductCounts.inactive})
-          </Button>
-        </div>
-        <div className="flex items-center space-x-3">
-          <span className="text-sm text-gray-500">
-            Hiển thị {paginatedBatchProducts.length} /{" "}
-            {filteredPagination.total} lô sản phẩm
-          </span>
-          <Select
-            value={filters.limit?.toString() || "10"}
-            onValueChange={(value) => changeLimit(parseInt(value))}
-          >
-            <SelectTrigger className="w-24">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="10">10</SelectItem>
-              <SelectItem value="25">25</SelectItem>
-              <SelectItem value="50">50</SelectItem>
-              <SelectItem value="100">100</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      {/* Statistics Cards */}
+      <BatchProductStatisticsCards
+        batchProducts={dataDatchProductsFiltered}
+        loading={batchProductsLoading}
+      />
 
-      {/* Filters */}
-      {/* <BatchProductFiltersComponent
+      <BatchProductFilters
         filters={filters}
-        onUpdateFilters={(updates) =>
-          setFilters((prev) => ({ ...prev, ...updates }))
-        }
+        onUpdateFilters={setFilters}
         onResetFilters={handleResetFilters}
         loading={batchProductsLoading}
-      /> */}
+      />
 
       {/* Table */}
       <BatchProductTable
-        batchProducts={paginatedBatchProducts}
+        batchProducts={dataDatchProductsFiltered}
         selectedIds={selectedBatchProductIds}
         loading={batchProductsLoading}
         onToggleSelection={toggleBatchProductSelection}
         onToggleAllSelection={toggleAllBatchProductsSelection}
         onEdit={handleEditBatchProduct}
         onDelete={handleDeleteBatchProductClick}
-        onSort={handleSort}
-        sortBy={filters.sort_by}
-        sortOrder={filters.sort_order}
       />
-
-      {/* Pagination */}
-      <div className="flex items-center justify-between bg-white p-4 rounded-lg border border-gray-200">
-        <div className="text-sm text-gray-700">
-          Hiển thị{" "}
-          <span className="font-medium">
-            {(filteredPagination.page - 1) * filteredPagination.limit + 1}
-          </span>{" "}
-          đến{" "}
-          <span className="font-medium">
-            {Math.min(
-              filteredPagination.page * filteredPagination.limit,
-              filteredPagination.total
-            )}
-          </span>{" "}
-          trong tổng số{" "}
-          <span className="font-medium">{filteredPagination.total}</span> lô sản
-          phẩm
-        </div>
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => changePage(filteredPagination.page - 1)}
-            disabled={filteredPagination.page <= 1 || batchProductsLoading}
-          >
-            Trước
-          </Button>
-          <span className="text-sm text-gray-700">
-            Trang {filteredPagination.page} / {filteredPagination.totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => changePage(filteredPagination.page + 1)}
-            disabled={
-              filteredPagination.page >= filteredPagination.totalPages ||
-              batchProductsLoading
-            }
-          >
-            Sau
-          </Button>
-        </div>
-      </div>
 
       {/* Create Modal */}
       <BatchProductFormModal
@@ -854,21 +651,12 @@ export default function BatchProductsManagementPage() {
       />
 
       {/* Delete Modal */}
-      {/* <DeleteModal
-        isOpen={isDeleteModalOpen}
-        onClose={() => {
-          setIsDeleteModalOpen(false);
-          setSelectedBatchProductForDelete(null);
-        }}
-        onConfirm={confirmDeleteBatchProduct}
+      <DeleteModal
+        open={isDeleteModalOpen}
+        setOpen={setIsDeleteModalOpen}
+        handleConfirm={confirmDeleteBatchProduct}
         title="Xóa lô sản phẩm"
-        description={
-          selectedBatchProductForDelete
-            ? `Bạn có chắc chắn muốn xóa lô "${selectedBatchProductForDelete.batch_number}"? Hành động này không thể hoàn tác.`
-            : ""
-        }
-        loading={batchOperationLoading}
-      /> */}
+      />
     </div>
   );
 }

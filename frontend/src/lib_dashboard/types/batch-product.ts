@@ -35,13 +35,11 @@ export interface BatchProductFilters {
   is_active?: boolean;
   expiring_soon_days?: number;
   low_stock?: boolean;
-  batch_number: string;
+  batch_number?: string;
   from_date?: string;
   to_date?: string;
-  page?: number;
-  limit?: number;
-  sort_by?: string;
-  sort_order?: "asc" | "desc";
+  stock_quantity_threshold?: number; // New property for stock quantity thresholds
+  // New property for expiry date ranges
 }
 
 export interface CreateBatchProductDto {
@@ -94,7 +92,6 @@ export interface BatchOperationResponse {
 
 export interface BatchProductFormData {
   product_id: string;
-  invenstory_id: string;
   batch_number: string;
   quantity: number;
   manufactured_date: string;

@@ -75,7 +75,7 @@ export default function ProductsManagementPage() {
   const [productImages, setProductImages] = useState<File[] | null | undefined>(
     []
   );
-  console.log("Selected productImages:", productImages);
+  // console.log("Selected productImages:", productImages);
 
   // Load data on component mount
   useEffect(() => {
@@ -189,7 +189,7 @@ export default function ProductsManagementPage() {
       await createProduct(productFormData, productImages);
       await getMyProducts();
       await getMyProductStats();
-      setProductImages([]); // Clear images after creation
+      // setProductImages([]); // Clear images after creation
       closeModals();
       return true;
     } catch (error) {
@@ -208,10 +208,14 @@ export default function ProductsManagementPage() {
     if (!selectedProduct?.product_id) return false;
 
     try {
-      await updateProduct(selectedProduct.product_id, productFormData);
+      await updateProduct(
+        selectedProduct.product_id,
+        productFormData,
+        productImages
+      );
       await getMyProducts();
       await getMyProductStats();
-      setProductImages([]); // Clear images after update
+      // setProductImages([]); // Clear images after update
       closeModals();
       return true;
     } catch (error) {
@@ -234,7 +238,7 @@ export default function ProductsManagementPage() {
       await deleteProduct(selectedProduct.product_id);
       await getMyProducts();
       await getMyProductStats();
-      setProductImages([]); // Clear images after deletion
+      // setProductImages([]); // Clear images after deletion
       closeModals();
       return true;
     } catch (error) {
@@ -320,7 +324,7 @@ export default function ProductsManagementPage() {
     openAddModal();
   }, [resetProductForm, openAddModal]);
 
-  console.log("myProducts:", myProducts);
+  // console.log("myProducts:", myProducts);
 
   const handleProductImagesChange = useCallback(
     (files: File[] | null | undefined) => {

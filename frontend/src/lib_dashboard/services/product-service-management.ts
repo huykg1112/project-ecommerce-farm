@@ -154,10 +154,41 @@ export const productServiceManagement = {
 
   async updateProduct(
     id: string,
-    data: UpdateProductRequest
+    data: UpdateProductRequest,
+    files?: File[] | null | undefined
   ): Promise<Product> {
     try {
-      const response = await axiosInstance.patch(`/products/${id}`, data);
+      console.log("files", files);
+      const formData = new FormData();
+
+      // Thêm dữ liệu JSON vào FormData
+      formData.append("product_name", data.product_name || "");
+      if (data.description) formData.append("description", data.description);
+      if (data.usage_instructions)
+        formData.append("usage_instructions", data.usage_instructions);
+      formData.append("category_ids", JSON.stringify(data.category_ids)); // Chuyển mảng thành chuỗi JSON
+      if (data.unit_product_price)
+        formData.append("unit_product_price", String(data.unit_product_price));
+      if (data.is_active !== undefined)
+        formData.append("is_active", String(data.is_active));
+      if (data.manufacturer_id)
+        formData.append("manufacturer_id", data.manufacturer_id);
+      if (data.ingredient_ids)
+        formData.append("ingredient_ids", JSON.stringify(data.ingredient_ids));
+      if (data.disease_ids)
+        formData.append("disease_ids", JSON.stringify(data.disease_ids));
+
+      if (files && files.length > 0) {
+        files.forEach((file, index) => {
+          formData.append("images", file); // Tên field 'images' phải khớp với FilesInterceptor ở backend
+        });
+      }
+
+      const response = await axiosInstance.patch(`/products/${id}`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data", // Đặt header để gửi FormData
+        },
+      });
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi cập nhật sản phẩm";

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { In, LessThanOrEqual, Repository } from 'typeorm';
 import { ProductType } from '../product-type/entities/product-type.entity';
 import { Product } from '../product/entities/product.entity';
+import { Promotion } from '../promotion/entities/promotion.entity';
 import { CreateBatchProductDto } from './dto/create-batch-product.dto';
 import { UpdateBatchProductDto } from './dto/update-batch-product.dto';
 import { BatchProduct } from './entities/batch-product.entity';
@@ -18,6 +19,9 @@ export class BatchProductService {
 
     @InjectRepository(ProductType)
     private readonly productTypeRepo: Repository<ProductType>,
+
+    @InjectRepository(Promotion)
+    private readonly promotionRepo: Repository<Promotion>,
   ) {}
 
   async create(invenstory_id: string, dto: CreateBatchProductDto) {
@@ -49,6 +53,16 @@ export class BatchProductService {
       batch.product = product;
     }
 
+    if (dto.promotion_ids && dto.promotion_ids.length > 0) {
+      const promotions = await this.promotionRepo.findBy({
+        promotion_id: In(dto.promotion_ids),
+      });
+      if (promotions.length !== dto.promotion_ids.length) {
+        throw new NotFoundException('Some promotions not found');
+      }
+      batch.promotions = promotions;
+    }
+
     return this.batchRepo.save(batch);
   }
   async findAll(invenstory_id: string): Promise<BatchProduct[]> {
@@ -57,7 +71,13 @@ export class BatchProductService {
         is_deleted: false,
         invenstory: { invenstory_id: invenstory_id },
       },
-      relations: ['product', 'invenstory'],
+      relations: [
+        'product',
+        'product.images',
+        'invenstory',
+        'product_types',
+        'promotions',
+      ],
     });
   }
 
@@ -112,26 +132,78 @@ export class BatchProductService {
   async update(id: string, dto: UpdateBatchProductDto) {
     const batch = await this.batchRepo.findOne({
       where: { batch_id: id, is_deleted: false },
+      relations: [
+        'product',
+        'invenstory',
+        'product.images',
+        'product_types',
+        'promotions',
+      ], // Load các liên kết cần thiết
     });
+
     if (!batch) throw new NotFoundException('Batch not found');
-    Object.assign(batch, dto);
+
+    // Cập nhật thông tin cơ bản
+    Object.assign(batch, {
+      batch_number: dto.batch_number || batch.batch_number,
+      quantity: dto.quantity || batch.quantity,
+      manufactured_date: dto.manufactured_date
+        ? new Date(dto.manufactured_date)
+        : batch.manufactured_date,
+      expiry_date: dto.expiry_date
+        ? new Date(dto.expiry_date)
+        : batch.expiry_date,
+      low_stock_threshold: dto.low_stock_threshold || batch.low_stock_threshold,
+      unit_product_price: dto.unit_product_price || batch.unit_product_price,
+      is_active: dto.is_active ?? batch.is_active,
+    });
+
+    // Cập nhật ProductType nếu có
+    if (dto.product_type_id) {
+      const productType = await this.productTypeRepo.findOne({
+        where: { product_type_id: dto.product_type_id },
+      });
+      if (!productType) throw new NotFoundException('Product type not found');
+      batch.product_types = productType;
+    }
+
+    // Cập nhật Product nếu có
+    if (dto.product_id) {
+      const product = await this.productRepo.findOne({
+        where: { product_id: dto.product_id },
+      });
+      if (!product) throw new NotFoundException('Product not found');
+      batch.product = product;
+    }
+
+    // Cập nhật Promotions nếu có
+    if (dto.promotion_ids && dto.promotion_ids.length > 0) {
+      const promotions = await this.promotionRepo.findBy({
+        promotion_id: In(dto.promotion_ids),
+      });
+      if (promotions.length !== dto.promotion_ids.length) {
+        throw new NotFoundException('Some promotions not found');
+      }
+      batch.promotions = promotions;
+    }
+
     return this.batchRepo.save(batch);
   }
 
-  async updateBatchs(updateDatas: Partial<UpdateBatchProductDto[]>) {
-    if (!updateDatas || updateDatas.length === 0) {
-      throw new NotFoundException('No batches to update');
-    }
-    const batchIds = updateDatas.map((data) => data?.batch_id);
-    const batches = await this.batchRepo.findBy({
-      batch_id: In(batchIds),
-      is_deleted: false,
-    });
-    if (batches.length === 0) throw new NotFoundException('Batches not found');
+  // async updateBatchs(updateDatas: Partial<UpdateBatchProductDto[]>) {
+  //   if (!updateDatas || updateDatas.length === 0) {
+  //     throw new NotFoundException('No batches to update');
+  //   }
+  //   const batchIds = updateDatas.map((data) => data?.batch_id);
+  //   const batches = await this.batchRepo.findBy({
+  //     batch_id: In(batchIds),
+  //     is_deleted: false,
+  //   });
+  //   if (batches.length === 0) throw new NotFoundException('Batches not found');
 
-    batches.forEach((batch, index) => Object.assign(batch, updateDatas[index]));
-    return this.batchRepo.save(batches);
-  }
+  //   batches.forEach((batch, index) => Object.assign(batch, updateDatas[index]));
+  //   return this.batchRepo.save(batches);
+  // }
 
   async remove(id: string) {
     const batch = await this.batchRepo.findOne({

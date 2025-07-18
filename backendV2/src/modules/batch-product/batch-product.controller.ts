@@ -40,10 +40,10 @@ export class BatchProductController {
     throw new Error('Invenstory not found for user');
   }
 
-  @Patch()
-  updateMany(@Body() updateBatchDtos: UpdateBatchProductDto[]) {
-    return this.batchService.updateBatchs(updateBatchDtos);
-  }
+  // @Patch()
+  // updateMany(@Body() updateBatchDtos: UpdateBatchProductDto[]) {
+  //   return this.batchService.updateBatchs(updateBatchDtos);
+  // }
 
   @Public()
   @Get('expiring-soon')

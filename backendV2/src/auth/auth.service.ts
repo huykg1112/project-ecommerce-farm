@@ -56,7 +56,7 @@ export class AuthService {
     await this.tokenService.cleanExpiredTokens();
 
     // Tạo access token và refresh token mới
-    const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
+    const accessToken = this.jwtService.sign(payload, { expiresIn: '5h' });
     const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
     const hashedRefreshToken = await this.hashRefreshToken(refreshToken);
 
@@ -112,8 +112,8 @@ export class AuthService {
     });
     matchedToken.access_token = newAccessToken;
     matchedToken.access_token_expires_at = new Date(
-      Date.now() + 1 * 60 * 60 * 1000,
-    ); // 1 giờ
+      Date.now() + 5 * 60 * 60 * 1000,
+    ); // 5 giờ
     await this.tokenService.save(matchedToken);
 
     return { access_token: newAccessToken };
@@ -149,7 +149,7 @@ export class AuthService {
 
       // Tạo token cho user
       const payload = { username: user.username, sub: user.user_id };
-      const accessToken = this.jwtService.sign(payload, { expiresIn: '1h' });
+      const accessToken = this.jwtService.sign(payload, { expiresIn: '5h' });
       const refreshToken = this.jwtService.sign(payload, { expiresIn: '7d' });
       const hashedRefreshToken = await this.hashRefreshToken(refreshToken);
 

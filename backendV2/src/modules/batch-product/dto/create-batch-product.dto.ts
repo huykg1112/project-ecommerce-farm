@@ -18,6 +18,9 @@ export class CreateBatchProductDto {
   @IsOptional()
   product_type_id?: string;
 
+  @IsOptional()
+  promotion_ids?: string[];
+
   @IsString()
   @IsOptional()
   @MaxLength(50)
