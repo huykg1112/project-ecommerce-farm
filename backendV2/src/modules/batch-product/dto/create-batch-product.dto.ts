@@ -18,8 +18,6 @@ export class CreateBatchProductDto {
   @IsOptional()
   product_type_id?: string;
 
-  @IsUUID()
-  @IsOptional()
   @IsString()
   @IsOptional()
   @MaxLength(50)
@@ -39,6 +37,10 @@ export class CreateBatchProductDto {
   @IsInt()
   @IsOptional()
   low_stock_threshold?: number;
+
+  @IsOptional()
+  @Min(0) // Đảm bảo giá trị >= 0
+  unit_product_price?: number; // Sửa kiểu dữ liệu thành number
 
   @IsBoolean()
   @IsOptional()

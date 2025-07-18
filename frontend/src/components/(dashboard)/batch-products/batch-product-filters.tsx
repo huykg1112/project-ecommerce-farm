@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BatchProductFilters } from "@/lib_dashboard/types/batch-product";
+import type { BatchProductFilters } from "@/lib_dashboard/types/batch-product";
 import { Filter, RotateCcw } from "lucide-react";
 import { useCallback } from "react";
 
@@ -41,7 +41,7 @@ export function BatchProductFilters({
     [onUpdateFilters]
   );
 
-  const isFiltered = 
+  const isFiltered =
     filters.search ||
     filters.is_active !== undefined ||
     filters.low_stock ||
@@ -57,7 +57,7 @@ export function BatchProductFilters({
           <Filter className="h-5 w-5 text-gray-500" />
           <h3 className="text-lg font-semibold text-gray-900">Bộ lọc</h3>
         </div>
-        
+
         {isFiltered && (
           <Button
             variant="outline"
@@ -219,7 +219,7 @@ export function BatchProductFilters({
         <div className="text-sm text-gray-500">
           {isFiltered ? "Đang áp dụng bộ lọc" : "Không có bộ lọc nào"}
         </div>
-        
+
         <div className="flex items-center gap-2">
           <span className="text-sm text-gray-500">Thứ tự:</span>
           <Select

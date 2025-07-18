@@ -7,7 +7,6 @@ import {
   BatchProduct,
   BatchProductFilters,
   BatchProductFormData,
-  BatchProductPaginationResponse,
   BatchProductStats,
   ProductType,
 } from "../types/batch-product";
@@ -20,16 +19,6 @@ import { Promotion } from "../types/promotion";
 
 // Main batch products data
 export const batchProductsDataAtom = atom<BatchProduct[]>([]);
-
-// Pagination data
-export const batchProductPaginationAtom = atom<
-  BatchProductPaginationResponse["pagination"]
->({
-  page: 1,
-  limit: 10,
-  total: 0,
-  totalPages: 0,
-});
 
 // Loading states
 export const batchProductsLoadingAtom = atom<boolean>(false);
@@ -102,13 +91,15 @@ export const selectedBatchProductsAtom = atom((get) => {
 export const batchProductFormDataAtom = atom<BatchProductFormData>({
   product_id: "",
   invenstory_id: "",
+
   batch_number: "",
   quantity: 0,
   manufactured_date: "",
   expiry_date: "",
   low_stock_threshold: 10,
+  unit_product_price: 0,
   is_active: true,
-  product_type_ids: [],
+  product_type_id: "",
   promotion_ids: [],
 });
 
@@ -135,9 +126,7 @@ export const getBatchProductsAtom = atom(
         mergedFilters
       );
 
-      set(batchProductsDataAtom, response.data);
-      set(batchProductPaginationAtom, response.pagination);
-
+      set(batchProductsDataAtom, response);
       return response;
     } catch (error) {
       const message =
@@ -197,8 +186,9 @@ export const createBatchProductAtom = atom(
         manufactured_date: "",
         expiry_date: "",
         low_stock_threshold: 10,
+        unit_product_price: 0,
         is_active: true,
-        product_type_ids: [],
+        product_type_id: "",
         promotion_ids: [],
       });
 
@@ -262,13 +252,6 @@ export const deleteBatchProductAtom = atom(
       const currentData = get(batchProductsDataAtom);
       const updatedData = currentData.filter((batch) => batch.batch_id !== id);
       set(batchProductsDataAtom, updatedData);
-
-      // Update pagination
-      const currentPagination = get(batchProductPaginationAtom);
-      set(batchProductPaginationAtom, {
-        ...currentPagination,
-        total: currentPagination.total - 1,
-      });
 
       // Clear selection if deleted
       const selectedIds = get(selectedBatchProductIdsAtom);
@@ -389,8 +372,9 @@ export const resetFormDataAtom = atom(null, (get, set) => {
     manufactured_date: "",
     expiry_date: "",
     low_stock_threshold: 10,
+    unit_product_price: 0,
     is_active: true,
-    product_type_ids: [],
+    product_type_id: "",
     promotion_ids: [],
   });
 });

@@ -28,7 +28,8 @@ import {
 } from "@/lib_dashboard/types/batch-product";
 import { Product } from "@/lib_dashboard/types/product";
 import { Promotion } from "@/lib_dashboard/types/promotion";
-import { CalendarIcon, Package, Percent, Tag, Warehouse } from "lucide-react";
+import { CalendarIcon, Package, Percent, Tag } from "lucide-react";
+import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 interface BatchProductFormModalProps {
@@ -43,7 +44,6 @@ interface BatchProductFormModalProps {
   products: Product[];
   productTypes: ProductType[];
   promotions: Promotion[];
-  warehouses: Array<{ id: string; name: string }>;
 }
 
 export function BatchProductFormModal({
@@ -57,7 +57,6 @@ export function BatchProductFormModal({
   products,
   productTypes,
   promotions,
-  warehouses,
 }: BatchProductFormModalProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -80,8 +79,7 @@ export function BatchProductFormModal({
           .split("T")[0],
         low_stock_threshold: initialData.low_stock_threshold,
         is_active: initialData.is_active,
-        product_type_ids:
-          initialData.product_types?.map((pt) => pt.product_type_id) || [],
+        product_type_id: initialData.product_types?.product_type_id || "",
         promotion_ids: initialData.promotions?.map((p) => p.promotion_id) || [],
       });
     }
@@ -153,14 +151,12 @@ export function BatchProductFormModal({
   // Handle product type selection
   const handleProductTypeToggle = useCallback(
     (productTypeId: string, checked: boolean) => {
-      const currentIds = formData.product_type_ids;
-      const newIds = checked
-        ? [...currentIds, productTypeId]
-        : currentIds.filter((id) => id !== productTypeId);
+      const currentId = formData.product_type_id;
+      const newId = checked ? productTypeId : "";
 
-      onFormDataChange({ product_type_ids: newIds });
+      onFormDataChange({ product_type_id: newId });
     },
-    [formData.product_type_ids, onFormDataChange]
+    [formData.product_type_id, onFormDataChange]
   );
 
   // Handle promotion selection
@@ -174,6 +170,18 @@ export function BatchProductFormModal({
       onFormDataChange({ promotion_ids: newIds });
     },
     [formData.promotion_ids, onFormDataChange]
+  );
+
+  const handleProdutChange = useCallback(
+    (productId: string) => {
+      onFormDataChange({ product_id: productId });
+
+      // Clear errors related to product selection
+      if (errors.product_id) {
+        setErrors((prev) => ({ ...prev, product_id: "" }));
+      }
+    },
+    [onFormDataChange, errors]
   );
 
   // Handle input changes
@@ -219,9 +227,7 @@ export function BatchProductFormModal({
               </Label>
               <Select
                 value={formData.product_id}
-                onValueChange={(value) =>
-                  handleInputChange("product_id", value)
-                }
+                onValueChange={(value) => handleProdutChange(value)}
                 disabled={loading}
               >
                 <SelectTrigger
@@ -235,7 +241,15 @@ export function BatchProductFormModal({
                       key={product.product_id}
                       value={product.product_id}
                     >
-                      {product.product_name}
+                      <div className="flex items-center gap-2">
+                        <Image
+                          src={product.images[0]?.image_url}
+                          alt={product.images[0]?.image_url}
+                          width={16}
+                          height={16}
+                        />
+                        {product.product_name}
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -246,7 +260,7 @@ export function BatchProductFormModal({
             </div>
 
             {/* Warehouse Selection */}
-            <div className="space-y-2">
+            {/* <div className="space-y-2">
               <Label htmlFor="invenstory_id">
                 Kho <span className="text-red-500">*</span>
               </Label>
@@ -260,14 +274,17 @@ export function BatchProductFormModal({
                 <SelectTrigger
                   className={cn(errors.invenstory_id && "border-red-500")}
                 >
-                  <SelectValue placeholder="Chọn kho..." />
+                  <SelectValue placeholder="Chọn sản phẩm..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {warehouses.map((warehouse) => (
-                    <SelectItem key={warehouse.id} value={warehouse.id}>
+                  {products.map((product) => (
+                    <SelectItem
+                      key={product.product_id}
+                      value={product.product_id}
+                    >
                       <div className="flex items-center gap-2">
                         <Warehouse className="h-4 w-4" />
-                        {warehouse.name}
+                        {product.product_name}
                       </div>
                     </SelectItem>
                   ))}
@@ -276,7 +293,7 @@ export function BatchProductFormModal({
               {errors.invenstory_id && (
                 <p className="text-sm text-red-500">{errors.invenstory_id}</p>
               )}
-            </div>
+            </div> */}
 
             {/* Batch Number */}
             <div className="space-y-2">
@@ -418,9 +435,9 @@ export function BatchProductFormModal({
                   >
                     <Checkbox
                       id={`product_type_${productType.product_type_id}`}
-                      checked={formData.product_type_ids.includes(
-                        productType.product_type_id
-                      )}
+                      checked={
+                        formData.product_type_id === productType.product_type_id
+                      }
                       onCheckedChange={(checked) =>
                         handleProductTypeToggle(
                           productType.product_type_id,

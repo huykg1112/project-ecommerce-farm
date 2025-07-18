@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, LessThanOrEqual, Repository } from 'typeorm';
 import { ProductType } from '../product-type/entities/product-type.entity';
+import { Product } from '../product/entities/product.entity';
 import { CreateBatchProductDto } from './dto/create-batch-product.dto';
 import { UpdateBatchProductDto } from './dto/update-batch-product.dto';
 import { BatchProduct } from './entities/batch-product.entity';
@@ -12,6 +13,9 @@ export class BatchProductService {
     @InjectRepository(BatchProduct)
     private readonly batchRepo: Repository<BatchProduct>,
 
+    @InjectRepository(Product)
+    private readonly productRepo: Repository<Product>,
+
     @InjectRepository(ProductType)
     private readonly productTypeRepo: Repository<ProductType>,
   ) {}
@@ -20,7 +24,14 @@ export class BatchProductService {
     //tạo liên kết với loại sản phẩm
     let batch = this.batchRepo.create({
       invenstory: { invenstory_id },
-      ...dto,
+      unit_product_price: dto.unit_product_price,
+      batch_number: dto.batch_number,
+      quantity: dto.quantity,
+      manufactured_date: dto.manufactured_date
+        ? new Date(dto.manufactured_date)
+        : undefined,
+      expiry_date: new Date(dto.expiry_date),
+      low_stock_threshold: dto.low_stock_threshold,
     });
 
     if (dto.product_type_id) {
@@ -28,7 +39,14 @@ export class BatchProductService {
         where: { product_type_id: dto.product_type_id },
       });
       if (!productType) throw new NotFoundException('Product type not found');
-      batch.product_types = [productType];
+      batch.product_types = productType;
+    }
+    if (dto.product_id) {
+      const product = await this.productRepo.findOne({
+        where: { product_id: dto.product_id },
+      });
+      if (!product) throw new NotFoundException('Product not found');
+      batch.product = product;
     }
 
     return this.batchRepo.save(batch);

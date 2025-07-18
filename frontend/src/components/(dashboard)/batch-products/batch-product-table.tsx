@@ -277,19 +277,16 @@ export function BatchProductTable({
                       {formatCurrency(batchProduct.product.unit_product_price)}
                     </p>
                     {/* Product Types */}
-                    {batchProduct.product_types &&
-                      batchProduct.product_types.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1">
-                          {batchProduct.product_types.map((type) => (
-                            <span
-                              key={type.product_type_id}
-                              className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800"
-                            >
-                              {type.type_name}
-                            </span>
-                          ))}
-                        </div>
-                      )}
+                    {batchProduct.product_types && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        <span
+                          key={batchProduct.product_types.product_type_id}
+                          className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800"
+                        >
+                          {batchProduct.product_types.type_name}
+                        </span>
+                      </div>
+                    )}
                     {/* Promotions */}
                     {batchProduct.promotions &&
                       batchProduct.promotions.length > 0 && (

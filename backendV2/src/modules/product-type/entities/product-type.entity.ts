@@ -1,10 +1,4 @@
-import {
-  Column,
-  Entity,
-  JoinTable,
-  ManyToMany,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
 import { BatchProduct } from '../../batch-product/entities/batch-product.entity';
 
 @Entity('product_type')
@@ -27,10 +21,6 @@ export class ProductType {
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   updated_at!: Date;
 
-  @ManyToMany(
-    () => BatchProduct,
-    (batch_product) => batch_product.product_types,
-  )
-  @JoinTable({ name: 'batch_product_type' }) // Bảng trung gian
+  @OneToMany(() => BatchProduct, (batch_product) => batch_product.product_types)
   batch_products: BatchProduct[];
 }

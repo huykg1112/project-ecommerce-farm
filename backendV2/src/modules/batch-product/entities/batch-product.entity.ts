@@ -42,6 +42,9 @@ export class BatchProduct {
   @Column({ type: 'int', default: 10, nullable: true })
   low_stock_threshold!: number;
 
+  @Column({ type: 'float', nullable: false, default: 0 })
+  unit_product_price!: number;
+
   @Column({ type: 'boolean', default: true, nullable: true })
   is_active!: boolean;
 
@@ -54,10 +57,10 @@ export class BatchProduct {
   @Column({ type: 'boolean', default: false, nullable: false })
   is_deleted!: boolean;
 
-  @ManyToMany(() => ProductType, (productType) => productType.batch_products, {
+  @ManyToOne(() => ProductType, (productType) => productType.batch_products, {
     nullable: true,
   })
-  product_types: ProductType[];
+  product_types: ProductType;
 
   @OneToMany(() => OrderDetail, (orderItem) => orderItem.batch_product, {
     nullable: true,

@@ -4,8 +4,6 @@ import {
   BatchOperationResponse,
   BatchProduct,
   BatchProductFilters,
-  BatchProductPaginationResponse,
-  BatchProductStats,
   BatchToggleStatusRequest,
   CreateBatchProductDto,
   UpdateBatchProductDto,
@@ -17,7 +15,7 @@ export const batchProductService = {
 
   async getBatchProducts(
     filters?: BatchProductFilters
-  ): Promise<BatchProductPaginationResponse> {
+  ): Promise<BatchProduct[]> {
     try {
       const response = await axiosInstance.get("/batch-product");
       return response.data;

@@ -16,6 +16,7 @@ export interface BatchProduct {
   manufactured_date: Date;
   expiry_date: Date;
   low_stock_threshold: number;
+  unit_product_price: number;
   is_active: boolean;
   created_at?: Date;
   updated_at?: Date;
@@ -23,7 +24,7 @@ export interface BatchProduct {
     invenstory_id: string;
     warehouse_name: string;
   };
-  product_types?: ProductType[];
+  product_types?: ProductType;
   promotions?: Promotion[];
 }
 
@@ -41,16 +42,6 @@ export interface BatchProductFilters {
   limit?: number;
   sort_by?: string;
   sort_order?: "asc" | "desc";
-}
-
-export interface BatchProductPaginationResponse {
-  data: BatchProduct[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
 }
 
 export interface CreateBatchProductDto {
@@ -74,6 +65,7 @@ export interface UpdateBatchProductDto {
   manufactured_date?: string;
   expiry_date: string;
   low_stock_threshold?: number;
+  unit_product_price?: number;
   is_active?: boolean;
   product_type_ids?: string[];
   promotion_ids?: string[];
@@ -108,7 +100,8 @@ export interface BatchProductFormData {
   manufactured_date: string;
   expiry_date: string;
   low_stock_threshold: number;
+  unit_product_price: number;
   is_active: boolean;
-  product_type_ids: string[];
+  product_type_id: string;
   promotion_ids: string[];
 }

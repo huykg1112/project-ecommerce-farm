@@ -66,8 +66,9 @@ export default function BatchProductsManagementPage() {
     manufactured_date: "",
     expiry_date: "",
     low_stock_threshold: 10,
+    unit_product_price: 0,
     is_active: true,
-    product_type_ids: [],
+    product_type_id: "",
     promotion_ids: [],
   });
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
@@ -97,7 +98,7 @@ export default function BatchProductsManagementPage() {
     setBatchProductsLoading(true);
     try {
       const response = await batchProductService.getBatchProducts();
-      const data = response.data;
+      const data = response;
       setBatchProducts(data);
       setPagination({
         page: 1,
@@ -188,8 +189,9 @@ export default function BatchProductsManagementPage() {
           manufactured_date: "",
           expiry_date: "",
           low_stock_threshold: 10,
+          unit_product_price: 0,
           is_active: true,
-          product_type_ids: [],
+          product_type_id: "",
           promotion_ids: [],
         });
         showToast.success("Tạo lô sản phẩm thành công!");
@@ -321,7 +323,7 @@ export default function BatchProductsManagementPage() {
   const filteredBatchProducts = useMemo(() => {
     const now = new Date();
     const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    let filtered = [...batchProducts];
+    let filtered = batchProducts;
 
     // Apply filters
     if (filters.search && filters.search.trim()) {
@@ -565,8 +567,9 @@ export default function BatchProductsManagementPage() {
       manufactured_date: "",
       expiry_date: "",
       low_stock_threshold: 10,
+      unit_product_price: 0,
       is_active: true,
-      product_type_ids: [],
+      product_type_id: "",
       promotion_ids: [],
     });
     setIsCreateModalOpen(true);
@@ -823,7 +826,6 @@ export default function BatchProductsManagementPage() {
         products={products}
         productTypes={productTypes}
         promotions={promotions}
-        warehouses={warehouses}
       />
 
       {/* Edit Modal */}
@@ -849,7 +851,6 @@ export default function BatchProductsManagementPage() {
         products={products}
         productTypes={productTypes}
         promotions={promotions}
-        warehouses={warehouses}
       />
 
       {/* Delete Modal */}

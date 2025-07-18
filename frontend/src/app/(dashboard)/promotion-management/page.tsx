@@ -268,13 +268,13 @@ export default function PromotionManagementPage() {
   return (
     <section className="p-4 md:p-6 gap-4 flex flex-col">
       <header className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
-        <h1 className="text-2xl font-bold text-[#44703d]">Quản lý Voucher</h1>
+        <h1 className="text-2xl font-bold text-[#44703d]">Quản lý giảm giá</h1>
         <Button
           className="bg-[#90c577] hover:bg-[#74a65d] text-white"
           onClick={handleOpenModalCreate}
         >
           <Plus className="h-4 w-4 mr-2" />
-          Thêm voucher
+          Thêm giảm giá
         </Button>
       </header>
 
@@ -283,7 +283,7 @@ export default function PromotionManagementPage() {
         <Card className="card-agricultural">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-semibold text-[#44703d]">
-              Tổng voucher
+              Tổng giảm giá
             </CardTitle>
             <Ticket className="h-5 w-5 text-[#74a65d]" />
           </CardHeader>
@@ -291,7 +291,7 @@ export default function PromotionManagementPage() {
             <div className="text-2xl font-bold text-[#44703d]">
               {stats.totalVouchers}
             </div>
-            <p className="text-xs text-[#74a65d]">Tất cả voucher</p>
+            <p className="text-xs text-[#74a65d]">Tất cả giảm giá</p>
           </CardContent>
         </Card>
 
@@ -306,7 +306,7 @@ export default function PromotionManagementPage() {
             <div className="text-2xl font-bold text-[#44703d]">
               {stats.activeVouchers}
             </div>
-            <p className="text-xs text-[#74a65d]">Voucher có thể sử dụng</p>
+            <p className="text-xs text-[#74a65d]">Giảm giá có thể sử dụng</p>
           </CardContent>
         </Card>
 
@@ -321,7 +321,7 @@ export default function PromotionManagementPage() {
             <div className="text-2xl font-bold text-[#44703d]">
               {stats.inactiveVouchers}
             </div>
-            <p className="text-xs text-[#74a65d]">Voucher không hoạt động</p>
+            <p className="text-xs text-[#74a65d]">Giảm giá không hoạt động</p>
           </CardContent>
         </Card>
 

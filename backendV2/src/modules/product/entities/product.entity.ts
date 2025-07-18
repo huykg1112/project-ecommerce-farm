@@ -8,6 +8,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { BatchProduct } from '../../batch-product/entities/batch-product.entity';
 import { Category } from '../../category/entities/category.entity';
 import { Manufacturer } from '../../manufacturer/entities/manufacturer.entity';
 import { ProductIngredient } from '../../product-ingredient/entities/product-ingredient.entity';
@@ -71,6 +72,9 @@ export class Product {
 
   @OneToMany(() => ProductDisease, (pd) => pd.product, { nullable: true })
   productDiseases: ProductDisease[];
+
+  @OneToMany(() => BatchProduct, (batch) => batch.product, { nullable: true })
+  batches: BatchProduct[];
 
   @ManyToOne(() => Manufacturer, (manufacturer) => manufacturer.products)
   manufacturer!: Manufacturer;
