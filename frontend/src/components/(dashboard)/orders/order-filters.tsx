@@ -17,7 +17,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { OrderStatusEnum, OrderStatusLabels } from "@/lib_dashboard/types/order";
+import type {
+  OrderFilters,
+  OrderStatus,
+  PaymentMethod,
+} from "@/lib_dashboard/types/order";
+import { OrderStatusLabels } from "@/lib_dashboard/types/order";
 import { Calendar, RotateCcw, Search } from "lucide-react";
 import { useCallback, useState } from "react";
 
@@ -72,7 +77,13 @@ export function OrderFilters({
     if (min !== amount_min || max !== amount_max) {
       onAmountRangeChange({ min, max });
     }
-  }, [localAmountMin, localAmountMax, amount_min, amount_max, onAmountRangeChange]);
+  }, [
+    localAmountMin,
+    localAmountMax,
+    amount_min,
+    amount_max,
+    onAmountRangeChange,
+  ]);
 
   // Handle date range changes
   const handleDateChange = useCallback(() => {
@@ -177,14 +188,21 @@ export function OrderFilters({
           {/* Payment Method Filter */}
           <div className="space-y-2">
             <Label htmlFor="payment-method">Phương thức thanh toán</Label>
-            <Select value={payment_method || "all"} onValueChange={onPaymentMethodChange}>
+            <Select
+              value={payment_method || "all"}
+              onValueChange={onPaymentMethodChange}
+            >
               <SelectTrigger className="border-[#74a65d]/30 focus:ring-[#90c577]">
                 <SelectValue placeholder="Chọn phương thức" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả phương thức</SelectItem>
-                <SelectItem value="COD">COD - Thanh toán khi nhận hàng</SelectItem>
-                <SelectItem value="VNPAY">VNPay - Thanh toán trực tuyến</SelectItem>
+                <SelectItem value="COD">
+                  COD - Thanh toán khi nhận hàng
+                </SelectItem>
+                <SelectItem value="VNPAY">
+                  VNPay - Thanh toán trực tuyến
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -259,6 +277,162 @@ export function OrderFilters({
             <Button
               variant="outline"
               onClick={handleReset}
+              className="w-full border-[#74a65d]/30 text-[#44703d] hover:bg-[#accc8b]/20"
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Đặt lại
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+export function OrderFiltersComponent({
+  filters,
+  onFilterChange,
+  onResetFilters,
+  orderStatuses,
+  paymentMethods,
+}: {
+  filters: OrderFilters;
+  onFilterChange: (filters: OrderFilters) => void;
+  onResetFilters: () => void;
+  orderStatuses: OrderStatus[];
+  paymentMethods: PaymentMethod[];
+}) {
+  const handleSearchChange = (search: string) => {
+    onFilterChange({ ...filters, search });
+  };
+
+  const handleStatusChange = (status: string) => {
+    onFilterChange({ ...filters, status });
+  };
+
+  const handlePaymentMethodChange = (payment_method: string) => {
+    onFilterChange({ ...filters, payment_method });
+  };
+
+  //thay đổi ngày bắt đầu
+  const handleDateRangeChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { value, id } = e.target;
+      if (id === "date-from") {
+        onFilterChange({ ...filters, date_from: value });
+      } else if (id === "date-to") {
+        onFilterChange({ ...filters, date_to: value });
+      }
+    },
+    [filters, onFilterChange]
+  );
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-[#44703d]">🔍 Bộ lọc đơn hàng</CardTitle>
+        <CardDescription>
+          Tìm kiếm và lọc đơn hàng theo các tiêu chí khác nhau
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 items-center gap-4">
+          {/* Search Input */}
+          <div className="space-y-2">
+            <Label htmlFor="search">Tìm kiếm</Label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#74a65d]" />
+              <Input
+                id="search"
+                placeholder="Mã đơn hàng, khách hàng..."
+                value={filters.search}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="pl-10 border-[#74a65d]/30 focus-visible:ring-[#90c577]"
+              />
+            </div>
+          </div>
+
+          {/* Status Filter */}
+          <div className="space-y-2">
+            <Label htmlFor="status">Trạng thái</Label>
+            <Select
+              value={filters.status || "all"}
+              onValueChange={handleStatusChange}
+            >
+              <SelectTrigger className="border-[#74a65d]/30 focus:ring-[#90c577]">
+                <SelectValue placeholder="Chọn trạng thái" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                {orderStatuses.map((status) => (
+                  <SelectItem key={status.status_id} value={status.status_name}>
+                    {status.status_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Payment Method Filter */}
+          <div className="space-y-2">
+            <Label htmlFor="payment-method">Phương thức thanh toán</Label>
+            <Select
+              value={filters.payment_method || "all"}
+              onValueChange={handlePaymentMethodChange}
+            >
+              <SelectTrigger className="border-[#74a65d]/30 focus:ring-[#90c577]">
+                <SelectValue placeholder="Chọn phương thức" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tất cả phương thức</SelectItem>
+                {paymentMethods.map((method) => (
+                  <SelectItem
+                    key={method.payment_method_id}
+                    value={method.method_name}
+                  >
+                    {method.method_name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Date From */}
+          <div className="space-y-2">
+            <Label htmlFor="date-from">Từ ngày</Label>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#74a65d]" />
+              <Input
+                id="date-from"
+                type="date"
+                value={filters.date_from}
+                onChange={(e) => handleDateRangeChange(e)}
+                className="pl-10 border-[#74a65d]/30 focus-visible:ring-[#90c577]"
+              />
+            </div>
+          </div>
+
+          {/* Date To */}
+          <div className="space-y-2">
+            <Label htmlFor="date-to">Đến ngày</Label>
+            <div className="relative">
+              <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#74a65d]" />
+              <Input
+                id="date-to"
+                type="date"
+                value={filters.date_to}
+                onChange={(e) => handleDateRangeChange(e)}
+                className="pl-10 border-[#74a65d]/30 focus-visible:ring-[#90c577]"
+              />
+            </div>
+          </div>
+
+          {/* Reset Button */}
+          <div className="space-y-2">
+            <Label>&nbsp;</Label>
+            <Button
+              variant="outline"
+              onClick={onResetFilters}
               className="w-full border-[#74a65d]/30 text-[#44703d] hover:bg-[#accc8b]/20"
             >
               <RotateCcw className="h-4 w-4 mr-2" />

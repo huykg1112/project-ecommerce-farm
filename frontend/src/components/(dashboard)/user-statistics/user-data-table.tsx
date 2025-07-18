@@ -210,6 +210,11 @@ export const UserDataTable = memo<UserDataTableProps>(
           <DataTable
             columns={columns as TableColumn<User>[]}
             data={filteredUsers}
+            highlightOnHover
+            pointerOnHover
+            responsive
+            fixedHeader
+            fixedHeaderScrollHeight="600px"
             pagination
             paginationPerPage={itemsPerPage}
             paginationRowsPerPageOptions={[5, 10, 20, 50]}

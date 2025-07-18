@@ -1,26 +1,26 @@
 import { showToast } from "@/lib/toast-provider";
+import { getCookie } from "@/lib/utils";
+import { OrderStatus } from "@/types/entities";
 import axios from "axios";
 import {
   BatchOperationResponse,
   BatchUpdateStatusRequest,
   Order,
-  OrderFilters,
-  OrderPaginationResponse,
-  OrderStatsResponse,
-  OrderStatus,
+  PaymentMethod,
   UpdateOrderStatusRequest,
   UpdateOrderStatusResponse,
 } from "../types/order";
 import { axiosInstance } from "./axios-instance";
 
+const userId = getCookie("user_id");
+
 export const orderServiceManagement = {
   // === CRUD Operations ===
 
-  async getAllOrders(filters?: OrderFilters): Promise<Order[]> {
+  // chỉ dùng cho admin, hoặc distributor lấy tất cả đơn hàng
+  async getAllOrders(): Promise<Order[]> {
     try {
-      const response = await axiosInstance.get("/order", {
-        params: filters,
-      });
+      const response = await axiosInstance.get("/order");
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi lấy danh sách đơn hàng";
@@ -31,6 +31,7 @@ export const orderServiceManagement = {
       throw error;
     }
   },
+  // async getAllMyOrders(userId: string): Promise<Order[]> {}
 
   async getOrderById(id: string): Promise<Order> {
     try {
@@ -46,7 +47,8 @@ export const orderServiceManagement = {
     }
   },
 
-  async getOrdersByUser(userId: string): Promise<Order[]> {
+  // dùng cho role client để lấy đơn hàng của người dùng
+  async getOrdersByUser(): Promise<Order[]> {
     try {
       const response = await axiosInstance.get(`/order/my-orders`, {
         params: { user_id: userId },
@@ -54,22 +56,6 @@ export const orderServiceManagement = {
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi lấy danh sách đơn hàng của người dùng";
-      if (axios.isAxiosError(error) && error.response?.data?.message) {
-        msg = error.response.data.message;
-      }
-      showToast.error(msg);
-      throw error;
-    }
-  },
-
-  async getOrdersByDistributor(distributorId: string): Promise<Order[]> {
-    try {
-      const response = await axiosInstance.get(`/order/distributor-orders`, {
-        params: { distributor_id: distributorId },
-      });
-      return response.data;
-    } catch (error) {
-      let msg = "Lỗi khi lấy danh sách đơn hàng của nhà phân phối";
       if (axios.isAxiosError(error) && error.response?.data?.message) {
         msg = error.response.data.message;
       }
@@ -94,6 +80,23 @@ export const orderServiceManagement = {
     }
   },
 
+  // === Payment Methods Operations ===
+
+  async getPaymentMethods(): Promise<PaymentMethod[]> {
+    try {
+      const response = await axiosInstance.get("/payment-method");
+      console.log("Payment Methods:", response.data);
+      return response.data.data;
+    } catch (error) {
+      let msg = "Lỗi khi lấy danh sách phương thức thanh toán";
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        msg = error.response.data.message;
+      }
+      showToast.error(msg);
+      throw error;
+    }
+  },
+
   // === Status Management ===
 
   async updateOrderStatus(
@@ -101,7 +104,10 @@ export const orderServiceManagement = {
     data: UpdateOrderStatusRequest
   ): Promise<UpdateOrderStatusResponse> {
     try {
-      const response = await axiosInstance.patch(`/order/${orderId}/status`, data);
+      const response = await axiosInstance.patch(
+        `/order/${orderId}/status`,
+        data
+      );
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi cập nhật trạng thái đơn hàng";
@@ -113,9 +119,14 @@ export const orderServiceManagement = {
     }
   },
 
-  async confirmOrder(orderId: string, notes?: string): Promise<UpdateOrderStatusResponse> {
+  async confirmOrder(
+    orderId: string,
+    notes?: string
+  ): Promise<UpdateOrderStatusResponse> {
     try {
-      const response = await axiosInstance.patch(`/order/${orderId}/confirm`, { notes });
+      const response = await axiosInstance.patch(`/order/${orderId}/confirm`, {
+        notes,
+      });
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi xác nhận đơn hàng";
@@ -127,9 +138,14 @@ export const orderServiceManagement = {
     }
   },
 
-  async cancelOrder(orderId: string, notes?: string): Promise<UpdateOrderStatusResponse> {
+  async cancelOrder(
+    orderId: string,
+    notes?: string
+  ): Promise<UpdateOrderStatusResponse> {
     try {
-      const response = await axiosInstance.patch(`/order/${orderId}/cancel`, { notes });
+      const response = await axiosInstance.patch(`/order/${orderId}/cancel`, {
+        notes,
+      });
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi hủy đơn hàng";
@@ -147,7 +163,10 @@ export const orderServiceManagement = {
     request: BatchUpdateStatusRequest
   ): Promise<BatchOperationResponse> {
     try {
-      const response = await axiosInstance.patch("/order/batch-status", request);
+      const response = await axiosInstance.patch(
+        "/order/batch-status",
+        request
+      );
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi cập nhật trạng thái hàng loạt";
@@ -191,47 +210,6 @@ export const orderServiceManagement = {
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi hủy đơn hàng hàng loạt";
-      if (axios.isAxiosError(error) && error.response?.data?.message) {
-        msg = error.response.data.message;
-      }
-      showToast.error(msg);
-      throw error;
-    }
-  },
-
-  // === Statistics ===
-
-  async getOrderStats(
-    distributorId?: string,
-    fromDate?: string,
-    toDate?: string
-  ): Promise<OrderStatsResponse> {
-    try {
-      const response = await axiosInstance.get("/order/statistics", {
-        params: { distributorId, fromDate, toDate },
-      });
-      return response.data;
-    } catch (error) {
-      let msg = "Lỗi khi lấy thống kê đơn hàng";
-      if (axios.isAxiosError(error) && error.response?.data?.message) {
-        msg = error.response.data.message;
-      }
-      showToast.error(msg);
-      throw error;
-    }
-  },
-
-  // === Export ===
-
-  async exportOrders(filters?: OrderFilters): Promise<Blob> {
-    try {
-      const response = await axiosInstance.get("/order/export", {
-        params: filters,
-        responseType: "blob",
-      });
-      return response.data;
-    } catch (error) {
-      let msg = "Lỗi khi xuất dữ liệu đơn hàng";
       if (axios.isAxiosError(error) && error.response?.data?.message) {
         msg = error.response.data.message;
       }

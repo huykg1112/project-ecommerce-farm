@@ -185,6 +185,11 @@ export const DiseaseTable = memo<DiseaseTableProps>(
           columns={columns as TableColumn<DiseaseTableData>[]}
           data={diseases}
           customStyles={customStyles}
+          highlightOnHover
+          pointerOnHover
+          responsive
+          fixedHeader
+          fixedHeaderScrollHeight="600px"
           pagination
           paginationPerPage={itemsPerPage}
           paginationRowsPerPageOptions={[5, 10, 20, 50]}

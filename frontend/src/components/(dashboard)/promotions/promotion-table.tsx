@@ -217,6 +217,11 @@ export const PromotionTable = memo<PromotionTableProps>(
           columns={columns as TableColumn<Promotion>[]}
           data={promotions}
           customStyles={customStyles}
+          highlightOnHover
+          pointerOnHover
+          responsive
+          fixedHeader
+          fixedHeaderScrollHeight="600px"
           pagination
           paginationPerPage={itemsPerPage}
           paginationRowsPerPageOptions={[5, 10, 20, 50]}

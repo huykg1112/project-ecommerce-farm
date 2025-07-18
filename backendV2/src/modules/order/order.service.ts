@@ -142,10 +142,15 @@ export class OrderService {
     return this.orderRepository.find({
       where: { is_deleted: false },
       relations: [
-        'orderStatus',
-        'paymentMethod',
-        'orderDetails',
-        'orderDetails.batchProduct',
+        'status',
+        'payment_method',
+        'order_details',
+        'order_details.batch_product',
+        'order_details.batch_product.product',
+        'order_details.batch_product.product.images',
+        'order_details.batch_product.product_types',
+        'order_details.batch_product.promotions',
+        'order_details.batch_product.invenstory',
       ],
     });
   }
@@ -161,10 +166,15 @@ export class OrderService {
     return this.orderRepository.find({
       where: { user, is_deleted: false },
       relations: [
-        'orderStatus',
-        'paymentMethod',
-        'orderDetails',
-        'orderDetails.batchProduct',
+        'status',
+        'payment_method',
+        'order_details',
+        'order_details.batch_product',
+        'order_details.batch_product.product',
+        'order_details.batch_product.product.images',
+        'order_details.batch_product.product_types',
+        'order_details.batch_product.promotions',
+        'order_details.batch_product.invenstory',
       ],
     });
   }
@@ -180,10 +190,15 @@ export class OrderService {
     return this.orderRepository.find({
       where: { distributor, is_deleted: false },
       relations: [
-        'orderStatus',
-        'paymentMethod',
-        'orderDetails',
-        'orderDetails.batchProduct',
+        'status',
+        'payment_method',
+        'order_details',
+        'order_details.batch_product',
+        'order_details.batch_product.product',
+        'order_details.batch_product.product.images',
+        'order_details.batch_product.product_types',
+        'order_details.batch_product.promotions',
+        'order_details.batch_product.invenstory',
       ],
     });
   }
@@ -192,10 +207,15 @@ export class OrderService {
     const order = await this.orderRepository.findOne({
       where: { order_id: id, user: { user_id: userId }, is_deleted: false },
       relations: [
-        'orderStatus',
-        'paymentMethod',
-        'orderDetails',
-        'orderDetails.batchProduct',
+        'status',
+        'payment_method',
+        'order_details',
+        'order_details.batch_product',
+        'order_details.batch_product.product',
+        'order_details.batch_product.product.images',
+        'order_details.batch_product.product_types',
+        'order_details.batch_product.promotions',
+        'order_details.batch_product.invenstory',
       ],
     });
 
@@ -206,73 +226,78 @@ export class OrderService {
     return order;
   }
 
-  async getOrderStatistics(
-    distributorId?: string,
-    fromDate?: string,
-    toDate?: string,
-  ) {
-    const queryBuilder = this.orderRepository
-      .createQueryBuilder('order')
-      .leftJoin('order.orderDetails', 'orderDetails')
-      .leftJoin('orderDetails.batchProduct', 'batchProduct')
-      .leftJoin('order.orderStatus', 'orderStatus');
+  // async getOrderStatistics(
+  //   distributorId?: string,
+  //   fromDate?: string,
+  //   toDate?: string,
+  // ) {
+  //   const queryBuilder = this.orderRepository
+  //     .createQueryBuilder('order')
+  //     .leftJoin('order.orderDetails', 'orderDetails')
+  //     .leftJoin('orderDetails.batchProduct', 'batchProduct')
+  //     .leftJoin('order.orderStatus', 'orderStatus');
 
-    if (distributorId) {
-      queryBuilder.where('batchProduct.distributorId = :distributorId', {
-        distributorId,
-      });
-    }
-    if (fromDate && toDate) {
-      queryBuilder.andWhere('order.orderDate BETWEEN :fromDate AND :toDate', {
-        fromDate,
-        toDate,
-      });
-    }
+  //   if (distributorId) {
+  //     queryBuilder.where('batchProduct.distributorId = :distributorId', {
+  //       distributorId,
+  //     });
+  //   }
+  //   if (fromDate && toDate) {
+  //     queryBuilder.andWhere('order.orderDate BETWEEN :fromDate AND :toDate', {
+  //       fromDate,
+  //       toDate,
+  //     });
+  //   }
 
-    const totalOrders = await queryBuilder.getCount();
+  //   const totalOrders = await queryBuilder.getCount();
 
-    const totalRevenue = await queryBuilder
-      .select('SUM(order.totalAmount)', 'total')
-      .getRawOne();
+  //   const totalRevenue = await queryBuilder
+  //     .select('SUM(order.totalAmount)', 'total')
+  //     .getRawOne();
 
-    const ordersByStatus = await this.orderRepository
-      .createQueryBuilder('order')
-      .leftJoin('order.orderStatus', 'orderStatus')
-      .leftJoin('order.orderDetails', 'orderDetails')
-      .leftJoin('orderDetails.batchProduct', 'batchProduct')
-      .select('orderStatus.name', 'status')
-      .addSelect('COUNT(order.id)', 'count')
-      .where(
-        distributorId ? 'batchProduct.distributorId = :distributorId' : '1=1',
-        { distributorId },
-      )
-      .andWhere(
-        fromDate && toDate
-          ? 'order.orderDate BETWEEN :fromDate AND :toDate'
-          : '1=1',
-        {
-          fromDate,
-          toDate,
-        },
-      )
-      .groupBy('orderStatus.name')
-      .getRawMany();
+  //   const ordersByStatus = await this.orderRepository
+  //     .createQueryBuilder('order')
+  //     .leftJoin('order.orderStatus', 'orderStatus')
+  //     .leftJoin('order.orderDetails', 'orderDetails')
+  //     .leftJoin('orderDetails.batchProduct', 'batchProduct')
+  //     .select('orderStatus.name', 'status')
+  //     .addSelect('COUNT(order.id)', 'count')
+  //     .where(
+  //       distributorId ? 'batchProduct.distributorId = :distributorId' : '1=1',
+  //       { distributorId },
+  //     )
+  //     .andWhere(
+  //       fromDate && toDate
+  //         ? 'order.orderDate BETWEEN :fromDate AND :toDate'
+  //         : '1=1',
+  //       {
+  //         fromDate,
+  //         toDate,
+  //       },
+  //     )
+  //     .groupBy('orderStatus.name')
+  //     .getRawMany();
 
-    return {
-      totalOrders,
-      totalRevenue: totalRevenue.total || 0,
-      ordersByStatus,
-    };
-  }
+  //   return {
+  //     totalOrders,
+  //     totalRevenue: totalRevenue.total || 0,
+  //     ordersByStatus,
+  //   };
+  // }
 
   async findOne(id: string) {
     const order = await this.orderRepository.findOne({
       where: { order_id: id },
       relations: [
-        'orderStatus',
-        'paymentMethod',
-        'orderDetails',
-        'orderDetails.batchProduct',
+        'status',
+        'payment_method',
+        'order_details',
+        'order_details.batch_product',
+        'order_details.batch_product.product',
+        'order_details.batch_product.product.images',
+        'order_details.batch_product.product_types',
+        'order_details.batch_product.promotions',
+        'order_details.batch_product.invenstory',
       ],
     });
 
@@ -381,10 +406,20 @@ export class OrderService {
   }
 
   // Batch operations
-  async batchUpdateStatus(orderIds: string[], statusId: string, notes?: string) {
+  async batchUpdateStatus(
+    orderIds: string[],
+    statusId: string,
+    notes?: string,
+  ) {
     const orders = await this.orderRepository.find({
       where: { order_id: In(orderIds) },
-      relations: ['status', 'user', 'distributor', 'payment_method', 'order_details'],
+      relations: [
+        'status',
+        'user',
+        'distributor',
+        'payment_method',
+        'order_details',
+      ],
     });
     if (orders.length !== orderIds.length) {
       throw new BadRequestException('Some orders not found');
@@ -417,7 +452,13 @@ export class OrderService {
   async batchConfirmOrders(orderIds: string[], notes?: string) {
     const orders = await this.orderRepository.find({
       where: { order_id: In(orderIds) },
-      relations: ['status', 'user', 'distributor', 'payment_method', 'order_details'],
+      relations: [
+        'status',
+        'user',
+        'distributor',
+        'payment_method',
+        'order_details',
+      ],
     });
     if (orders.length !== orderIds.length) {
       throw new BadRequestException('Some orders not found');
@@ -467,7 +508,13 @@ export class OrderService {
   async batchCancelOrders(orderIds: string[], notes?: string) {
     const orders = await this.orderRepository.find({
       where: { order_id: In(orderIds) },
-      relations: ['status', 'user', 'distributor', 'payment_method', 'order_details'],
+      relations: [
+        'status',
+        'user',
+        'distributor',
+        'payment_method',
+        'order_details',
+      ],
     });
     if (orders.length !== orderIds.length) {
       throw new BadRequestException('Some orders not found');

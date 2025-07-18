@@ -299,6 +299,11 @@ export const UserTable = memo<UserTableProps>(
           columns={columns as TableColumn<User>[]}
           data={users}
           customStyles={customStyles}
+          highlightOnHover
+          pointerOnHover
+          responsive
+          fixedHeader
+          fixedHeaderScrollHeight="600px"
           expandableRows
           expandableRowsComponent={ExpandableRowComponent}
           expandableRowExpanded={(row: User) => expandedRows.has(row.user_id)}

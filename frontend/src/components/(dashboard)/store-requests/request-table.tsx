@@ -209,6 +209,11 @@ export const RequestTable = memo<RequestTableProps>(
           data={requests}
           customStyles={customStyles}
           progressPending={loading}
+          highlightOnHover
+          pointerOnHover
+          responsive
+          fixedHeader
+          fixedHeaderScrollHeight="600px"
           pagination
           paginationPerPage={itemsPerPage}
           paginationRowsPerPageOptions={[5, 10, 20, 50]}

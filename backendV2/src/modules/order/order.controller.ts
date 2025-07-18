@@ -8,8 +8,14 @@ import {
   Patch,
   Post,
   Query,
+  Req,
 } from '@nestjs/common';
-import { BatchCancelOrdersDto, BatchConfirmOrdersDto, BatchUpdateOrderStatusDto } from './dto/batch-order.dto';
+import { Role } from '../../auth/enums/role.enum';
+import {
+  BatchCancelOrdersDto,
+  BatchConfirmOrdersDto,
+  BatchUpdateOrderStatusDto,
+} from './dto/batch-order.dto';
 import { CancelOrderDto, ConfirmOrderDto } from './dto/confirm-order.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
@@ -26,7 +32,13 @@ export class OrderController {
   }
 
   @Get()
-  findAll() {
+  findAll(@Req() req) {
+    // kiểm tra quyền truy cập của người dùng, nếu là đại lý thì lấy theo distributor_id còn nếu admin thì lấy tất cả
+    const isAdmin = req.user.role?.role_name === Role.ADMIN;
+    if (!isAdmin) {
+      const userId = req.user.id;
+      return this.orderService.findOrdersByDistributor(userId);
+    }
     return this.orderService.findAll();
   }
 
@@ -48,19 +60,6 @@ export class OrderController {
     @Query('distributor_id', ParseUUIDPipe) distributorId: string,
   ) {
     return this.orderService.findOrdersByDistributor(distributorId);
-  }
-
-  @Get('statistics')
-  getOrderStatistics(
-    @Query('distributor_id') distributorId?: string,
-    @Query('from_date') fromDate?: string,
-    @Query('to_date') toDate?: string,
-  ) {
-    return this.orderService.getOrderStatistics(
-      distributorId,
-      fromDate,
-      toDate,
-    );
   }
 
   @Get(':id')

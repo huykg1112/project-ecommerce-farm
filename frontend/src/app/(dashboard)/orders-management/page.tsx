@@ -1,353 +1,358 @@
 "use client";
 
-import { OrderBatchActions } from "@/components/(dashboard)/orders/order-batch-actions";
-import { OrderDetailModal } from "@/components/(dashboard)/orders/order-detail-modal";
-import { OrderFilters } from "@/components/(dashboard)/orders/order-filters";
+import { orderServiceManagement } from "@/lib_dashboard/services/order-service-management";
+import {
+  OrderFilters,
+  OrderStatus,
+  PaymentMethod,
+} from "@/lib_dashboard/types/order";
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+// Import the correct Order type
+import { OrderFiltersComponent } from "@/components/(dashboard)/orders/order-filters";
+import { OrderStatisticsCards } from "@/components/(dashboard)/orders/order-statistics-cards";
 import { OrderTable } from "@/components/(dashboard)/orders/order-table";
-import { OrderUpdateStatusModal } from "@/components/(dashboard)/orders/order-update-status-modal";
-import { StatisticsCards } from "@/components/common/statistics-cards";
-import { Button } from "@/components/ui/button";
-import { useOrderManagement } from "@/hooks/use-order-management";
-import { showToast } from "@/lib/toast-provider";
-import { orderDetailModalAtom, updateStatusModalAtom } from "@/lib_dashboard/store/order-store-management";
-import { useAtom } from "jotai";
-import { Download, RefreshCw } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import type {
+  Order as ImportedOrder,
+  Order,
+} from "@/lib_dashboard/types/order";
 
 export default function OrdersManagementPage() {
-  const {
-    // Data states
-    filteredOrders,
-    ordersLoading,
-    orderStats,
-    selectedOrders,
-    orderCounts,
-    filters,
-    selectedOrder,
-
-    // Loading states
-    batchOperationLoading,
-
-    // Selection states
-    isAllSelected,
-    isIndeterminate,
-
-    // Query functions
-    getAllOrders,
-    getOrderStats,
-    getOrderById,
-
-    // Filter functions
-    handleSearchChange,
-    handleStatusChange,
-    handlePaymentMethodChange,
-    handleDateRangeChange,
-    handleAmountRangeChange,
-    resetOrderFilters,
-
-    // Management functions
-    handleConfirmOrder,
-    handleCancelOrder,
-    handleUpdateOrderStatus,
-    handleBatchConfirmOrders,
-    handleBatchCancelOrders,
-    handleBatchUpdateStatus,
-
-    // Selection functions
-    handleToggleOrderSelection,
-    handleToggleAllOrdersSelection,
-    handleClearSelections,
-    getSelectedCount,
-
-    // Utility functions
-    handleExportOrders,
-    handleRefreshData,
-
-    // Status helper functions
-    canConfirmOrder,
-    canCancelOrder,
-    canUpdateOrderStatus,
-    getPendingOrdersCount,
-  } = useOrderManagement();
-
-  // Modal states
-  const [detailModalOpen, setDetailModalOpen] = useAtom(orderDetailModalAtom);
-  const [updateStatusModalOpen, setUpdateStatusModalOpen] = useAtom(updateStatusModalAtom);
-
-  // Action handlers
-  const handleViewDetails = useCallback(
-    async (orderId: string) => {
-      try {
-        await getOrderById(orderId);
-        setDetailModalOpen(true);
-      } catch (error) {
-        showToast.error("Không thể tải thông tin chi tiết đơn hàng");
-      }
-    },
-    [getOrderById, setDetailModalOpen]
+  // State management
+  const [orders, setOrders] = useState<ImportedOrder[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<ImportedOrder[]>([]);
+  const [orderStats, setOrderStats] = useState({
+    total: 0,
+    pending: 0,
+    confirmed: 0,
+    shipping: 0,
+    delivered: 0,
+    completed: 0,
+    cancelled: 0,
+    returned: 0,
+    failed: 0,
+    refunded: 0,
+  });
+  const [filters, setFilters] = useState<OrderFilters>({
+    search: "",
+    status: "",
+    payment_method: "",
+    date_from: "",
+    date_to: "",
+    amount_min: 0,
+    amount_max: 0,
+  });
+  const [selectedOrder, setSelectedOrder] = useState<ImportedOrder | null>(
+    null
   );
+  const [loading, setLoading] = useState(false);
+  const [loadingOperations, setLoadingOperations] = useState(false);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [updateStatusModalOpen, setUpdateStatusModalOpen] = useState(false);
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [orderStatuses, setOrderStatuses] = useState<OrderStatus[]>([]);
+  const [pymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
 
-  const handleConfirmOrderAction = useCallback(
-    async (orderId: string) => {
+  // Fetch orders
+  useEffect(() => {
+    const fetchOrders = async () => {
+      setLoading(true);
       try {
-        await handleConfirmOrder(orderId);
-        showToast.success("Xác nhận đơn hàng thành công!");
+        const data = await orderServiceManagement.getAllOrders();
+        setOrders(data);
+        setFilteredOrders(data);
       } catch (error) {
-        showToast.error("Không thể xác nhận đơn hàng");
+        console.error("Error fetching orders", error);
+      } finally {
+        setLoading(false);
       }
-    },
-    [handleConfirmOrder]
-  );
-
-  const handleCancelOrderAction = useCallback(
-    async (orderId: string) => {
-      try {
-        await handleCancelOrder(orderId);
-        showToast.success("Hủy đơn hàng thành công!");
-      } catch (error) {
-        showToast.error("Không thể hủy đơn hàng");
-      }
-    },
-    [handleCancelOrder]
-  );
-
-  const handleUpdateStatusAction = useCallback(
-    async (orderId: string) => {
-      try {
-        await getOrderById(orderId);
-        setUpdateStatusModalOpen(true);
-      } catch (error) {
-        showToast.error("Không thể tải thông tin đơn hàng");
-      }
-    },
-    [getOrderById, setUpdateStatusModalOpen]
-  );
-
-  const handleUpdateStatusSubmit = useCallback(
-    async (statusId: string, notes?: string) => {
-      if (!selectedOrder) return;
-      
-      try {
-        await handleUpdateOrderStatus(selectedOrder.order_id, { status_id: statusId, notes });
-        showToast.success("Cập nhật trạng thái đơn hàng thành công!");
-      } catch (error) {
-        showToast.error("Không thể cập nhật trạng thái đơn hàng");
-        throw error;
-      }
-    },
-    [selectedOrder, handleUpdateOrderStatus]
-  );
-
-  // Batch action handlers
-  const handleBatchConfirm = useCallback(async () => {
-    try {
-      await handleBatchConfirmOrders(selectedOrders);
-      showToast.success("Xác nhận hàng loạt thành công!");
-    } catch (error) {
-      showToast.error("Không thể xác nhận hàng loạt");
-    }
-  }, [handleBatchConfirmOrders, selectedOrders]);
-
-  const handleBatchCancel = useCallback(async () => {
-    try {
-      await handleBatchCancelOrders(selectedOrders);
-      showToast.success("Hủy hàng loạt thành công!");
-    } catch (error) {
-      showToast.error("Không thể hủy hàng loạt");
-    }
-  }, [handleBatchCancelOrders, selectedOrders]);
-
-  const handleBatchUpdateStatusAction = useCallback(async () => {
-    // This would open a modal to select new status for batch
-    // For now, just show a message
-    showToast.info("Tính năng cập nhật trạng thái hàng loạt đang được phát triển");
+    };
+    fetchOrders();
   }, []);
 
-  const handleExport = useCallback(async () => {
-    try {
-      await handleExportOrders();
-    } catch (error) {
-      showToast.error("Không thể xuất dữ liệu");
-    }
-  }, [handleExportOrders]);
+  // Fetch order statuses and payment methods
+  useEffect(() => {
+    setLoadingOperations(true);
+    const fetchOrderStatuses = async () => {
+      try {
+        const statuses = await orderServiceManagement.getOrderStatuses();
+        const transformedStatuses = statuses.map((status) => ({
+          ...status,
+          is_active: true, // Default value or fetched value
+          created_at: new Date(), // Default value or fetched value
+          updated_at: new Date(), // Default value or fetched value
+        }));
+        setOrderStatuses(transformedStatuses);
+      } catch (error) {
+        console.error("Error fetching order statuses", error);
+      }
+    };
 
-  const handleRefresh = useCallback(async () => {
-    try {
-      await handleRefreshData();
-      showToast.success("Làm mới dữ liệu thành công!");
-    } catch (error) {
-      showToast.error("Không thể làm mới dữ liệu");
-    }
-  }, [handleRefreshData]);
+    const fetchPaymentMethods = async () => {
+      try {
+        const methods = await orderServiceManagement.getPaymentMethods();
+        setPaymentMethods(methods);
+      } catch (error) {
+        console.error("Error fetching payment methods", error);
+      }
+    };
 
-  // Statistics for cards
-  const stats = useMemo(
-    () => ({
-      total: orderStats.total_orders,
-      pending: orderStats.pending_orders,
-      confirmed: orderStats.confirmed_orders,
-      shipping: orderStats.shipping_orders,
-      delivered: orderStats.delivered_orders,
-      cancelled: orderStats.cancelled_orders,
-      completed: orderStats.completed_orders,
-    }),
-    [orderStats]
+    fetchOrderStatuses();
+    fetchPaymentMethods();
+    setLoadingOperations(false);
+  }, []);
+
+  // Handle filter change
+  const handleFilterChange = useCallback(
+    (newFilters: OrderFilters) => {
+      setFilters(newFilters);
+      const filtered = orders.filter((order) => {
+        const matchesSearch = newFilters.search
+          ? order.order_code.includes(newFilters.search)
+          : true;
+        const matchesStatus = newFilters.status
+          ? order.status.status_name === newFilters.status
+          : true;
+        const matchesPaymentMethod = newFilters.payment_method
+          ? order.payment_method.method_name === newFilters.payment_method
+          : true;
+        const matchesDateRange =
+          newFilters.date_from && newFilters.date_to
+            ? new Date(order.created_at) >= new Date(newFilters.date_from) &&
+              new Date(order.created_at) <= new Date(newFilters.date_to)
+            : true;
+
+        return (
+          matchesSearch &&
+          matchesStatus &&
+          matchesPaymentMethod &&
+          matchesDateRange
+        );
+      });
+      setFilteredOrders(filtered);
+    },
+    [orders]
   );
 
-  const closeDetailModal = useCallback(() => {
-    setDetailModalOpen(false);
-  }, [setDetailModalOpen]);
+  // Handle reset filters
+  const handleResetFilters = useCallback(() => {
+    setFilters({
+      search: "",
+      status: "",
+      payment_method: "",
+      date_from: "",
+      date_to: "",
+      amount_min: 0,
+      amount_max: 0,
+    });
+    setFilteredOrders(orders);
+  }, [orders]);
 
-  const closeUpdateStatusModal = useCallback(() => {
+  // Handle statistics calculation
+  const stats = useMemo(() => {
+    return {
+      total: orders.length,
+      pending: orders.filter((order) => order.status.status_name === "PENDING")
+        .length,
+      confirmed: orders.filter(
+        (order) => order.status.status_name === "CONFIRMED"
+      ).length,
+      shipping: orders.filter(
+        (order) => order.status.status_name === "SHIPPING"
+      ).length,
+      delivered: orders.filter(
+        (order) => order.status.status_name === "DELIVERED"
+      ).length,
+      completed: orders.filter(
+        (order) => order.status.status_name === "COMPLETED"
+      ).length,
+      cancelled: orders.filter(
+        (order) => order.status.status_name === "CANCELLED"
+      ).length,
+      returned: orders.filter(
+        (order) => order.status.status_name === "RETURNED"
+      ).length,
+      failed: orders.filter((order) => order.status.status_name === "FAILED")
+        .length,
+      refunded: orders.filter(
+        (order) => order.status.status_name === "REFUNDED"
+      ).length,
+    };
+  }, [orders]);
+
+  // Handle modal open/close
+  const handleOpenDetailModal = useCallback((order: ImportedOrder) => {
+    setSelectedOrder(order);
+    setDetailModalOpen(true);
+  }, []);
+
+  const handleCloseDetailModal = useCallback(() => {
+    setDetailModalOpen(false);
+  }, []);
+
+  const handleOpenUpdateStatusModal = useCallback((order: ImportedOrder) => {
+    setSelectedOrder(order);
+    setUpdateStatusModalOpen(true);
+  }, []);
+
+  const handleCloseUpdateStatusModal = useCallback(() => {
     setUpdateStatusModalOpen(false);
-  }, [setUpdateStatusModalOpen]);
+  }, []);
+
+  const handleOpenConfirmModal = useCallback((order: ImportedOrder) => {
+    setSelectedOrder(order);
+    setConfirmModalOpen(true);
+  }, []);
+
+  const handleCloseConfirmModal = useCallback(() => {
+    setConfirmModalOpen(false);
+  }, []);
+
+  // Handle update order status
+  const handleUpdateOrderStatus = useCallback(
+    async (orderId: string, statusId: string, notes?: string) => {
+      setLoadingOperations(true);
+      try {
+        await orderServiceManagement.updateOrderStatus(orderId, {
+          status_id: statusId,
+          notes,
+        });
+        const updatedOrders = orders.map((order) =>
+          order.order_id === orderId
+            ? {
+                ...order,
+                id: orderId,
+                status: { ...order.status, status_id: statusId },
+              }
+            : order
+        );
+        setOrders(updatedOrders);
+        setFilteredOrders(updatedOrders);
+      } catch (error) {
+        console.error("Error updating order status", error);
+      } finally {
+        setLoadingOperations(false);
+      }
+    },
+    [orders]
+  );
+
+  const handleConfirmOrder = useCallback(
+    async (order: Order) => {
+      setLoadingOperations(true);
+      try {
+        await orderServiceManagement.confirmOrder(order.order_id);
+        const updatedOrders = orders.map((o) =>
+          o.order_id === order.order_id
+            ? { ...o, status: { ...o.status, status_name: "CONFIRMED" } }
+            : o
+        );
+        setOrders(updatedOrders);
+        setFilteredOrders(updatedOrders);
+      } catch (error) {
+        console.error("Error confirming order", error);
+      } finally {
+        setLoadingOperations(false);
+      }
+    },
+    [orders]
+  );
+
+  const handleCancelOrder = useCallback(
+    async (order: Order) => {
+      setLoadingOperations(true);
+      try {
+        await orderServiceManagement.cancelOrder(order.order_id);
+        const updatedOrders = orders.map((o) =>
+          o.order_id === order.order_id
+            ? { ...o, status: { ...o.status, status_name: "CANCELLED" } }
+            : o
+        );
+        setOrders(updatedOrders);
+        setFilteredOrders(updatedOrders);
+      } catch (error) {
+        console.error("Error cancelling order", error);
+      } finally {
+        setLoadingOperations(false);
+      }
+    },
+    [orders]
+  );
+
+  // Handle batch update statuses
+  const handleBatchUpdateStatuses = useCallback(
+    async (orderIds: string[], statusId: string, notes?: string) => {
+      setLoadingOperations(true);
+      try {
+        await orderServiceManagement.batchUpdateStatus({
+          order_ids: orderIds,
+          status_id: statusId,
+          notes,
+        });
+        const updatedOrders = orders.map((order) =>
+          orderIds.includes(order.order_id)
+            ? {
+                ...order,
+                id: order.order_id,
+                status: { ...order.status, status_id: statusId },
+              }
+            : order
+        );
+        setOrders(updatedOrders);
+        setFilteredOrders(updatedOrders);
+      } catch (error) {
+        console.error("Error batch updating order statuses", error);
+      } finally {
+        setLoadingOperations(false);
+      }
+    },
+    [orders]
+  );
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-[#44703d]">
-            📋 Quản lý đơn hàng
-          </h1>
-          <p className="text-[#74a65d] mt-1">
-            Quản lý và theo dõi tất cả đơn hàng trong hệ thống
-          </p>
-          {getPendingOrdersCount() > 0 && (
-            <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-              ⚠️ Có {getPendingOrdersCount()} đơn hàng chờ xác nhận
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-col sm:flex-row gap-2">
-          <Button
-            variant="outline"
-            onClick={handleRefresh}
-            disabled={ordersLoading}
-            className="border-[#90c577] text-[#44703d] hover:bg-[#accc8b]/20 bg-transparent"
-          >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Làm mới
-          </Button>
-          <Button
-            variant="outline"
-            onClick={handleExport}
-            disabled={ordersLoading}
-            className="border-[#90c577] text-[#44703d] hover:bg-[#accc8b]/20 bg-transparent"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Xuất dữ liệu
-          </Button>
-        </div>
-      </div>
-
       {/* Statistics Cards */}
-      <StatisticsCards
-        stats={[
-          {
-            title: "Tổng đơn hàng",
-            value: stats.total,
-            icon: "📋",
-            color: "bg-blue-100 text-blue-800",
-          },
-          {
-            title: "Chờ xác nhận",
-            value: stats.pending,
-            icon: "⏳",
-            color: "bg-yellow-100 text-yellow-800",
-          },
-          {
-            title: "Đã xác nhận",
-            value: stats.confirmed,
-            icon: "✅",
-            color: "bg-green-100 text-green-800",
-          },
-          {
-            title: "Đang giao",
-            value: stats.shipping,
-            icon: "🚚",
-            color: "bg-purple-100 text-purple-800",
-          },
-          {
-            title: "Đã giao",
-            value: stats.delivered,
-            icon: "📦",
-            color: "bg-emerald-100 text-emerald-800",
-          },
-          {
-            title: "Hoàn thành",
-            value: stats.completed,
-            icon: "🎉",
-            color: "bg-indigo-100 text-indigo-800",
-          },
-        ]}
-        title="đơn hàng"
-        loading={ordersLoading}
-      />
+      <OrderStatisticsCards orders={orders} loading={loading} />
 
       {/* Filters */}
-      <OrderFilters
-        search={filters.search || ""}
-        status={filters.status || ""}
-        payment_method={filters.payment_method || ""}
-        date_from={filters.date_from || ""}
-        date_to={filters.date_to || ""}
-        amount_min={filters.amount_min}
-        amount_max={filters.amount_max}
-        onSearchChange={handleSearchChange}
-        onStatusChange={handleStatusChange}
-        onPaymentMethodChange={handlePaymentMethodChange}
-        onDateRangeChange={handleDateRangeChange}
-        onAmountRangeChange={handleAmountRangeChange}
-        onReset={resetOrderFilters}
+      <OrderFiltersComponent
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        onResetFilters={handleResetFilters}
+        orderStatuses={orderStatuses}
+        paymentMethods={pymentMethods}
       />
 
-      {/* Batch Actions */}
-      <OrderBatchActions
-        selectedCount={getSelectedCount()}
-        onBatchConfirm={handleBatchConfirm}
-        onBatchCancel={handleBatchCancel}
-        onBatchUpdateStatus={handleBatchUpdateStatusAction}
-        onClearSelection={handleClearSelections}
-        loading={batchOperationLoading}
-      />
-
-      {/* Orders Table */}
+      {/* Table */}
       <OrderTable
         orders={filteredOrders}
-        selectedOrders={selectedOrders}
-        onSelectOrder={handleToggleOrderSelection}
-        onSelectAll={handleToggleAllOrdersSelection}
-        onViewDetails={handleViewDetails}
-        onConfirmOrder={handleConfirmOrderAction}
-        onCancelOrder={handleCancelOrderAction}
-        onUpdateStatus={handleUpdateStatusAction}
-        loading={ordersLoading}
-        isAllSelected={isAllSelected}
-        isIndeterminate={isIndeterminate}
-        canConfirmOrder={canConfirmOrder}
-        canCancelOrder={canCancelOrder}
-        canUpdateOrderStatus={canUpdateOrderStatus}
+        onViewDetails={handleOpenDetailModal}
+        onUpdateStatus={handleOpenUpdateStatusModal}
+        onConfirmOrder={handleConfirmOrder}
+        onCancelOrder={handleCancelOrder}
+        loading={loading}
       />
 
-      {/* Order Detail Modal */}
-      <OrderDetailModal
+      {/* Detail Modal */}
+      {/* <OrderDetailModal
         order={selectedOrder}
         open={detailModalOpen}
-        onClose={closeDetailModal}
-        loading={ordersLoading}
-      />
+        onClose={handleCloseDetailModal}
+      /> */}
 
       {/* Update Status Modal */}
-      <OrderUpdateStatusModal
+      {/* <OrderUpdateStatusModal
         order={selectedOrder}
         open={updateStatusModalOpen}
-        onClose={closeUpdateStatusModal}
-        onSubmit={handleUpdateStatusSubmit}
-        loading={batchOperationLoading}
-        orderStatuses={orderStatuses}
-      />
+        onClose={handleCloseUpdateStatusModal}
+      /> */}
+
+      {/* Confirm Modal */}
+      {/* <ConfirmModal
+        order={selectedOrder}
+        open={confirmModalOpen}
+        onClose={handleCloseConfirmModal}
+      /> */}
     </div>
   );
 }

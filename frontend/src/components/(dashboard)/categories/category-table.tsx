@@ -210,6 +210,11 @@ export const CategoryTable = memo<CategoryTableProps>(
           columns={columns as TableColumn<Category>[]}
           data={categories}
           customStyles={customStyles}
+          highlightOnHover
+          pointerOnHover
+          responsive
+          fixedHeader
+          fixedHeaderScrollHeight="600px"
           noDataComponent={
             <div className="text-[#44703d] py-4">
               Không có dữ liệu để hiển thị

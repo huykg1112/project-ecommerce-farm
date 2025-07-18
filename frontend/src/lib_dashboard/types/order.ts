@@ -1,26 +1,29 @@
+import { User } from "@/types/entities";
+import { BatchProduct } from "./batch-product";
+
 // Order Status Enums
 export enum OrderStatusEnum {
-  PENDING = 'PENDING',
-  CONFIRMED = 'CONFIRMED',
-  SHIPPING = 'SHIPPING',
-  DELIVERED = 'DELIVERED',
-  CANCELLED = 'CANCELLED',
-  RETURNED = 'RETURNED',
-  FAILED = 'FAILED',
-  REFUNDED = 'REFUNDED',
-  COMPLETED = 'COMPLETED',
+  PENDING = "PENDING",
+  CONFIRMED = "CONFIRMED",
+  SHIPPING = "SHIPPING",
+  DELIVERED = "DELIVERED",
+  CANCELLED = "CANCELLED",
+  RETURNED = "RETURNED",
+  FAILED = "FAILED",
+  REFUNDED = "REFUNDED",
+  COMPLETED = "COMPLETED",
 }
 
 export const OrderStatusLabels = {
-  [OrderStatusEnum.PENDING]: 'Chờ xác nhận',
-  [OrderStatusEnum.CONFIRMED]: 'Đã xác nhận',
-  [OrderStatusEnum.SHIPPING]: 'Đang giao hàng',
-  [OrderStatusEnum.DELIVERED]: 'Đã giao hàng',
-  [OrderStatusEnum.CANCELLED]: 'Đã hủy',
-  [OrderStatusEnum.RETURNED]: 'Đã trả hàng',
-  [OrderStatusEnum.FAILED]: 'Giao hàng thất bại',
-  [OrderStatusEnum.REFUNDED]: 'Đã hoàn tiền',
-  [OrderStatusEnum.COMPLETED]: 'Hoàn thành',
+  [OrderStatusEnum.PENDING]: "Chờ xác nhận",
+  [OrderStatusEnum.CONFIRMED]: "Đã xác nhận",
+  [OrderStatusEnum.SHIPPING]: "Đang giao hàng",
+  [OrderStatusEnum.DELIVERED]: "Đã giao hàng",
+  [OrderStatusEnum.CANCELLED]: "Đã hủy",
+  [OrderStatusEnum.RETURNED]: "Đã trả hàng",
+  [OrderStatusEnum.FAILED]: "Giao hàng thất bại",
+  [OrderStatusEnum.REFUNDED]: "Đã hoàn tiền",
+  [OrderStatusEnum.COMPLETED]: "Hoàn thành",
 };
 
 // Core Order interfaces
@@ -42,31 +45,6 @@ export interface PaymentMethod {
   updated_at: Date;
 }
 
-export interface OrderUser {
-  user_id: string;
-  full_name: string;
-  email: string;
-  phone_number?: string;
-  address?: string;
-}
-
-export interface BatchProduct {
-  batch_id: string;
-  batch_number: string;
-  quantity: number;
-  expiry_date: Date;
-  product: {
-    product_id: string;
-    product_name: string;
-    unit_product_price: number;
-    images: Array<{
-      image_id: string;
-      image_url: string;
-      is_primary: boolean;
-    }>;
-  };
-}
-
 export interface OrderDetail {
   order_detail_id: string;
   quantity: number;
@@ -81,8 +59,8 @@ export interface OrderDetail {
 export interface Order {
   order_id: string;
   order_code: string;
-  user: OrderUser;
-  distributor: OrderUser;
+  user: User;
+  distributor: User;
   status: OrderStatus;
   payment_method: PaymentMethod;
   total_amount: number;
@@ -100,14 +78,10 @@ export interface OrderFilters {
   search?: string;
   status?: string;
   payment_method?: string;
-  user_id?: string;
-  distributor_id?: string;
   date_from?: string;
   date_to?: string;
   amount_min?: number;
   amount_max?: number;
-  sort_by?: 'created_at' | 'updated_at' | 'total_amount' | 'order_code';
-  sort_order?: 'asc' | 'desc';
 }
 
 // Request/Response interfaces
@@ -184,7 +158,7 @@ export interface OrderTableColumn {
   actions: boolean;
 }
 
-export type OrderViewMode = 'table' | 'grid' | 'list';
+export type OrderViewMode = "table" | "grid" | "list";
 
 // Batch operation interfaces
 export interface BatchUpdateStatusRequest {

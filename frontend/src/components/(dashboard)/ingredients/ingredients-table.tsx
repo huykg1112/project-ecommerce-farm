@@ -205,6 +205,11 @@ export const IngredientsTable = memo<IngredientsTableProps>(
           columns={columns as TableColumn<ActiveIngredient>[]}
           data={ingredients}
           customStyles={customStyles}
+          highlightOnHover
+          pointerOnHover
+          responsive
+          fixedHeader
+          fixedHeaderScrollHeight="600px"
           pagination
           paginationPerPage={itemsPerPage}
           paginationRowsPerPageOptions={[5, 10, 20, 50]}

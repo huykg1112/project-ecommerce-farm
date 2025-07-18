@@ -14,58 +14,9 @@ import type { Manufacturer } from "@/lib_dashboard/types/manufacturer";
 import { Edit, Factory, MoreHorizontal, Trash2 } from "lucide-react";
 import { memo, useCallback, useMemo, useState } from "react";
 import DataTable, { TableColumn } from "react-data-table-component";
+import { customStyles } from "../user-statistics/user-data-table";
 
-// Custom styles for DataTable
-const customStyles = {
-  header: {
-    style: {
-      backgroundColor: "#f8fdf6",
-      borderBottom: "1px solid #accc8b",
-      fontWeight: "600",
-      color: "#44703d",
-    },
-  },
-  headRow: {
-    style: {
-      backgroundColor: "#f8fdf6",
-      borderBottom: "1px solid #accc8b",
-      minHeight: "48px",
-    },
-  },
-  headCells: {
-    style: {
-      fontSize: "14px",
-      fontWeight: "600",
-      color: "#44703d",
-      paddingLeft: "16px",
-      paddingRight: "16px",
-    },
-  },
-  rows: {
-    style: {
-      fontSize: "14px",
-      color: "#44703d",
-      "&:not(:last-of-type)": {
-        borderBottom: "1px solid #f0f0f0",
-      },
-      "&:hover": {
-        backgroundColor: "#f8fdf6",
-      },
-    },
-  },
-  cells: {
-    style: {
-      paddingLeft: "16px",
-      paddingRight: "16px",
-    },
-  },
-  pagination: {
-    style: {
-      backgroundColor: "#f8fdf6",
-      borderTop: "1px solid #accc8b",
-    },
-  },
-};
+// Custom styles for DataTabl
 
 interface ManufacturerTableProps {
   manufacturers: Manufacturer[];
@@ -279,6 +230,11 @@ export const ManufacturerTable = memo<ManufacturerTableProps>(
           columns={columns}
           data={manufacturers}
           customStyles={customStyles}
+          highlightOnHover
+          pointerOnHover
+          responsive
+          fixedHeader
+          fixedHeaderScrollHeight="600px"
           pagination
           paginationPerPage={itemsPerPage}
           paginationRowsPerPageOptions={[5, 10, 20, 50]}

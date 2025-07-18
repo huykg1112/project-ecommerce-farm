@@ -223,6 +223,11 @@ export const VoucherTable = memo<VoucherTableProps>(
           columns={columns as TableColumn<Voucher>[]}
           data={vouchers}
           customStyles={customStyles}
+          highlightOnHover
+          pointerOnHover
+          responsive
+          fixedHeader
+          fixedHeaderScrollHeight="600px"
           pagination
           paginationPerPage={itemsPerPage}
           paginationRowsPerPageOptions={[5, 10, 20, 50]}
