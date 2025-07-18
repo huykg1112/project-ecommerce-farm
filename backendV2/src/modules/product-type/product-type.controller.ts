@@ -31,6 +31,16 @@ export class ProductTypeController {
       { type_name: 'Kilogam', description: 'kg' },
       { type_name: 'Cái', description: 'cái' },
       { type_name: 'Hộp', description: 'hộp' },
+      { type_name: 'Chai', description: 'chai' },
+      { type_name: 'Lọ', description: 'lọ' },
+      { type_name: 'Thùng', description: 'thùng' },
+      { type_name: 'Túi', description: 'túi' },
+      { type_name: 'Hũ', description: 'hũ' },
+      { type_name: 'Bình', description: 'bình' },
+      { type_name: 'Vỉ', description: 'vỉ' },
+      { type_name: 'Gói nhỏ', description: 'gói nhỏ' },
+      { type_name: 'Lốc', description: 'lốc' },
+      { type_name: 'Bộ', description: 'bộ' },
     ];
     return this.productTypeService.createMany(productTypes);
   }

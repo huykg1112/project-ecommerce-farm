@@ -12,6 +12,7 @@ import { Public } from '@root/src/public.decorator';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
 import { PromotionService } from './promotion.service';
+import { CreateNoBatchPromotionDto } from './dto/createNoBatch-promotion.dto';
 
 @Controller('promotion')
 export class PromotionController {
@@ -23,7 +24,10 @@ export class PromotionController {
   }
 
   @Post('nobatch')
-  createNoBatch(@Body() createPromotionDto: CreatePromotionDto, @Req() req) {
+  createNoBatch(
+    @Body() createPromotionDto: CreateNoBatchPromotionDto,
+    @Req() req,
+  ) {
     return this.promotionService.createNoBacthProduct(
       createPromotionDto,
       req.user.user_id,

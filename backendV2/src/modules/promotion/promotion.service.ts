@@ -8,6 +8,7 @@ import { In, Repository } from 'typeorm';
 import { BatchProduct } from '../batch-product/entities/batch-product.entity';
 import { User } from '../user/entities/user.entity';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
+import { CreateNoBatchPromotionDto } from './dto/createNoBatch-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
 import { Promotion } from './entities/promotion.entity';
 
@@ -63,7 +64,7 @@ export class PromotionService {
   }
 
   async createNoBacthProduct(
-    createPromotionDto: CreatePromotionDto,
+    createPromotionDto: CreateNoBatchPromotionDto,
     distributor_id: string,
   ) {
     // Kiểm tra distributor tồn tại
