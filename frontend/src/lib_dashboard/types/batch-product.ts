@@ -1,18 +1,10 @@
 import type { Product } from "./product";
+import { Promotion } from "./promotion";
 
 export interface ProductType {
   product_type_id: string;
   type_name: string;
   description?: string;
-  is_active: boolean;
-}
-
-export interface Promotion {
-  promotion_id: string;
-  promotion_name: string;
-  discount_percentage: number;
-  start_date: Date;
-  end_date: Date;
   is_active: boolean;
 }
 
@@ -38,11 +30,11 @@ export interface BatchProduct {
 export interface BatchProductFilters {
   search?: string;
   product_id?: string;
-  invenstory_id?: string;
+  product_type_id?: string;
   is_active?: boolean;
   expiring_soon_days?: number;
   low_stock?: boolean;
-  batch_number?: string;
+  batch_number: string;
   from_date?: string;
   to_date?: string;
   page?: number;

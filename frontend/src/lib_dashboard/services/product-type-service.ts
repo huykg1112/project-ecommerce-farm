@@ -20,7 +20,7 @@ export const productTypeService = {
   async getProductTypes(): Promise<ProductType[]> {
     try {
       const response = await axiosInstance.get("/product-type");
-      return response.data;
+      return response.data.data;
     } catch (error) {
       let msg = "Lỗi khi lấy danh sách loại sản phẩm";
       if (axios.isAxiosError(error) && error.response?.data?.message) {
@@ -35,7 +35,7 @@ export const productTypeService = {
   async getActiveProductTypes(): Promise<ProductType[]> {
     try {
       const allTypes = await this.getProductTypes();
-      return allTypes.filter(type => type.is_active);
+      return allTypes.filter((type) => type.is_active);
     } catch (error) {
       let msg = "Lỗi khi lấy danh sách loại sản phẩm hoạt động";
       showToast.error(msg);

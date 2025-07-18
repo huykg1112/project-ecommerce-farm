@@ -21,9 +21,7 @@ export const productServiceManagement = {
     filters?: ProductFilters
   ): Promise<ProductPaginationResponse> {
     try {
-      const response = await axiosInstance.get("/products", {
-        params: filters,
-      });
+      const response = await axiosInstance.get("/products");
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi lấy danh sách sản phẩm";

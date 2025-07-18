@@ -20,16 +20,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import {
   BatchProduct,
   BatchProductFormData,
   ProductType,
-  Promotion,
 } from "@/lib_dashboard/types/batch-product";
 import { Product } from "@/lib_dashboard/types/product";
-import { cn } from "@/lib/utils";
-import { CalendarIcon, Package, Tag, Percent, Warehouse } from "lucide-react";
+import { Promotion } from "@/lib_dashboard/types/promotion";
+import { CalendarIcon, Package, Percent, Tag, Warehouse } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 interface BatchProductFormModalProps {
@@ -81,20 +80,21 @@ export function BatchProductFormModal({
           .split("T")[0],
         low_stock_threshold: initialData.low_stock_threshold,
         is_active: initialData.is_active,
-        product_type_ids: initialData.product_types?.map(pt => pt.product_type_id) || [],
-        promotion_ids: initialData.promotions?.map(p => p.promotion_id) || [],
+        product_type_ids:
+          initialData.product_types?.map((pt) => pt.product_type_id) || [],
+        promotion_ids: initialData.promotions?.map((p) => p.promotion_id) || [],
       });
     }
   }, [isEditMode, initialData, onFormDataChange]);
 
   // Get selected product details
   const selectedProduct = useMemo(() => {
-    return products.find(p => p.product_id === formData.product_id);
+    return products.find((p) => p.product_id === formData.product_id);
   }, [products, formData.product_id]);
 
   // Get active promotions
   const activePromotions = useMemo(() => {
-    return promotions.filter(p => p.is_active);
+    return promotions.filter((p) => p.is_active);
   }, [promotions]);
 
   // Validate form
@@ -129,7 +129,7 @@ export function BatchProductFormModal({
     if (formData.manufactured_date && formData.expiry_date) {
       const manufDate = new Date(formData.manufactured_date);
       const expiryDate = new Date(formData.expiry_date);
-      
+
       if (manufDate >= expiryDate) {
         newErrors.expiry_date = "Ngày hết hạn phải sau ngày sản xuất";
       }
@@ -151,34 +151,43 @@ export function BatchProductFormModal({
   }, [validateForm, onSubmit, formData, onClose]);
 
   // Handle product type selection
-  const handleProductTypeToggle = useCallback((productTypeId: string, checked: boolean) => {
-    const currentIds = formData.product_type_ids;
-    const newIds = checked
-      ? [...currentIds, productTypeId]
-      : currentIds.filter(id => id !== productTypeId);
-    
-    onFormDataChange({ product_type_ids: newIds });
-  }, [formData.product_type_ids, onFormDataChange]);
+  const handleProductTypeToggle = useCallback(
+    (productTypeId: string, checked: boolean) => {
+      const currentIds = formData.product_type_ids;
+      const newIds = checked
+        ? [...currentIds, productTypeId]
+        : currentIds.filter((id) => id !== productTypeId);
+
+      onFormDataChange({ product_type_ids: newIds });
+    },
+    [formData.product_type_ids, onFormDataChange]
+  );
 
   // Handle promotion selection
-  const handlePromotionToggle = useCallback((promotionId: string, checked: boolean) => {
-    const currentIds = formData.promotion_ids;
-    const newIds = checked
-      ? [...currentIds, promotionId]
-      : currentIds.filter(id => id !== promotionId);
-    
-    onFormDataChange({ promotion_ids: newIds });
-  }, [formData.promotion_ids, onFormDataChange]);
+  const handlePromotionToggle = useCallback(
+    (promotionId: string, checked: boolean) => {
+      const currentIds = formData.promotion_ids;
+      const newIds = checked
+        ? [...currentIds, promotionId]
+        : currentIds.filter((id) => id !== promotionId);
+
+      onFormDataChange({ promotion_ids: newIds });
+    },
+    [formData.promotion_ids, onFormDataChange]
+  );
 
   // Handle input changes
-  const handleInputChange = useCallback((field: keyof BatchProductFormData, value: any) => {
-    onFormDataChange({ [field]: value });
-    
-    // Clear error for this field
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }));
-    }
-  }, [onFormDataChange, errors]);
+  const handleInputChange = useCallback(
+    (field: keyof BatchProductFormData, value: any) => {
+      onFormDataChange({ [field]: value });
+
+      // Clear error for this field
+      if (errors[field]) {
+        setErrors((prev) => ({ ...prev, [field]: "" }));
+      }
+    },
+    [onFormDataChange, errors]
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -189,8 +198,8 @@ export function BatchProductFormModal({
             {title}
           </DialogTitle>
           <DialogDescription>
-            {isEditMode 
-              ? "Cập nhật thông tin lô sản phẩm" 
+            {isEditMode
+              ? "Cập nhật thông tin lô sản phẩm"
               : "Tạo lô sản phẩm mới trong hệ thống"}
           </DialogDescription>
         </DialogHeader>
@@ -210,15 +219,22 @@ export function BatchProductFormModal({
               </Label>
               <Select
                 value={formData.product_id}
-                onValueChange={(value) => handleInputChange("product_id", value)}
+                onValueChange={(value) =>
+                  handleInputChange("product_id", value)
+                }
                 disabled={loading}
               >
-                <SelectTrigger className={cn(errors.product_id && "border-red-500")}>
+                <SelectTrigger
+                  className={cn(errors.product_id && "border-red-500")}
+                >
                   <SelectValue placeholder="Chọn sản phẩm..." />
                 </SelectTrigger>
                 <SelectContent>
                   {products.map((product) => (
-                    <SelectItem key={product.product_id} value={product.product_id}>
+                    <SelectItem
+                      key={product.product_id}
+                      value={product.product_id}
+                    >
                       {product.product_name}
                     </SelectItem>
                   ))}
@@ -236,10 +252,14 @@ export function BatchProductFormModal({
               </Label>
               <Select
                 value={formData.invenstory_id}
-                onValueChange={(value) => handleInputChange("invenstory_id", value)}
+                onValueChange={(value) =>
+                  handleInputChange("invenstory_id", value)
+                }
                 disabled={loading}
               >
-                <SelectTrigger className={cn(errors.invenstory_id && "border-red-500")}>
+                <SelectTrigger
+                  className={cn(errors.invenstory_id && "border-red-500")}
+                >
                   <SelectValue placeholder="Chọn kho..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -266,7 +286,9 @@ export function BatchProductFormModal({
               <Input
                 id="batch_number"
                 value={formData.batch_number}
-                onChange={(e) => handleInputChange("batch_number", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("batch_number", e.target.value)
+                }
                 placeholder="Ví dụ: LOT2024001"
                 disabled={loading}
                 className={cn(errors.batch_number && "border-red-500")}
@@ -286,7 +308,9 @@ export function BatchProductFormModal({
                 type="number"
                 min="1"
                 value={formData.quantity}
-                onChange={(e) => handleInputChange("quantity", parseInt(e.target.value) || 0)}
+                onChange={(e) =>
+                  handleInputChange("quantity", parseInt(e.target.value) || 0)
+                }
                 placeholder="Nhập số lượng..."
                 disabled={loading}
                 className={cn(errors.quantity && "border-red-500")}
@@ -298,19 +322,28 @@ export function BatchProductFormModal({
 
             {/* Low Stock Threshold */}
             <div className="space-y-2">
-              <Label htmlFor="low_stock_threshold">Ngưỡng cảnh báo hết hàng</Label>
+              <Label htmlFor="low_stock_threshold">
+                Ngưỡng cảnh báo hết hàng
+              </Label>
               <Input
                 id="low_stock_threshold"
                 type="number"
                 min="0"
                 value={formData.low_stock_threshold}
-                onChange={(e) => handleInputChange("low_stock_threshold", parseInt(e.target.value) || 0)}
+                onChange={(e) =>
+                  handleInputChange(
+                    "low_stock_threshold",
+                    parseInt(e.target.value) || 0
+                  )
+                }
                 placeholder="Ví dụ: 10"
                 disabled={loading}
                 className={cn(errors.low_stock_threshold && "border-red-500")}
               />
               {errors.low_stock_threshold && (
-                <p className="text-sm text-red-500">{errors.low_stock_threshold}</p>
+                <p className="text-sm text-red-500">
+                  {errors.low_stock_threshold}
+                </p>
               )}
             </div>
           </div>
@@ -319,7 +352,9 @@ export function BatchProductFormModal({
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
               <CalendarIcon className="h-4 w-4 text-green-600" />
-              <h3 className="font-semibold text-gray-900">Ngày tháng & Bổ sung</h3>
+              <h3 className="font-semibold text-gray-900">
+                Ngày tháng & Bổ sung
+              </h3>
             </div>
 
             {/* Manufactured Date */}
@@ -329,7 +364,9 @@ export function BatchProductFormModal({
                 id="manufactured_date"
                 type="date"
                 value={formData.manufactured_date}
-                onChange={(e) => handleInputChange("manufactured_date", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("manufactured_date", e.target.value)
+                }
                 disabled={loading}
               />
             </div>
@@ -343,7 +380,9 @@ export function BatchProductFormModal({
                 id="expiry_date"
                 type="date"
                 value={formData.expiry_date}
-                onChange={(e) => handleInputChange("expiry_date", e.target.value)}
+                onChange={(e) =>
+                  handleInputChange("expiry_date", e.target.value)
+                }
                 disabled={loading}
                 className={cn(errors.expiry_date && "border-red-500")}
               />
@@ -357,7 +396,9 @@ export function BatchProductFormModal({
               <Switch
                 id="is_active"
                 checked={formData.is_active}
-                onCheckedChange={(checked) => handleInputChange("is_active", checked)}
+                onCheckedChange={(checked) =>
+                  handleInputChange("is_active", checked)
+                }
                 disabled={loading}
               />
               <Label htmlFor="is_active">Trạng thái hoạt động</Label>
@@ -371,16 +412,24 @@ export function BatchProductFormModal({
               </div>
               <div className="grid grid-cols-1 gap-2 max-h-32 overflow-y-auto border rounded-md p-3">
                 {productTypes.map((productType) => (
-                  <div key={productType.product_type_id} className="flex items-center space-x-2">
+                  <div
+                    key={productType.product_type_id}
+                    className="flex items-center space-x-2"
+                  >
                     <Checkbox
                       id={`product_type_${productType.product_type_id}`}
-                      checked={formData.product_type_ids.includes(productType.product_type_id)}
-                      onCheckedChange={(checked) => 
-                        handleProductTypeToggle(productType.product_type_id, checked as boolean)
+                      checked={formData.product_type_ids.includes(
+                        productType.product_type_id
+                      )}
+                      onCheckedChange={(checked) =>
+                        handleProductTypeToggle(
+                          productType.product_type_id,
+                          checked as boolean
+                        )
                       }
                       disabled={loading}
                     />
-                    <Label 
+                    <Label
                       htmlFor={`product_type_${productType.product_type_id}`}
                       className="text-sm font-normal cursor-pointer"
                     >
@@ -389,7 +438,9 @@ export function BatchProductFormModal({
                   </div>
                 ))}
                 {productTypes.length === 0 && (
-                  <p className="text-sm text-gray-500">Không có loại sản phẩm nào</p>
+                  <p className="text-sm text-gray-500">
+                    Không có loại sản phẩm nào
+                  </p>
                 )}
               </div>
             </div>
@@ -402,31 +453,51 @@ export function BatchProductFormModal({
               </div>
               <div className="grid grid-cols-1 gap-2 max-h-32 overflow-y-auto border rounded-md p-3">
                 {activePromotions.map((promotion) => (
-                  <div key={promotion.promotion_id} className="flex items-center space-x-2">
+                  <div
+                    key={promotion.promotion_id}
+                    className="flex items-center space-x-2"
+                  >
                     <Checkbox
                       id={`promotion_${promotion.promotion_id}`}
-                      checked={formData.promotion_ids.includes(promotion.promotion_id)}
-                      onCheckedChange={(checked) => 
-                        handlePromotionToggle(promotion.promotion_id, checked as boolean)
+                      checked={formData.promotion_ids.includes(
+                        promotion.promotion_id
+                      )}
+                      onCheckedChange={(checked) =>
+                        handlePromotionToggle(
+                          promotion.promotion_id,
+                          checked as boolean
+                        )
                       }
                       disabled={loading}
                     />
-                    <Label 
+                    <Label
                       htmlFor={`promotion_${promotion.promotion_id}`}
                       className="text-sm font-normal cursor-pointer flex-1"
                     >
                       <div>
-                        <span className="font-medium">{promotion.promotion_name}</span>
-                        <span className="text-orange-600 ml-2">-{promotion.discount_percentage}%</span>
+                        <span className="font-medium">
+                          {promotion.promotion_name}
+                        </span>
+                        <span className="text-orange-600 ml-2">
+                          -{promotion.discount_value}%
+                        </span>
                       </div>
                       <div className="text-xs text-gray-500">
-                        {new Date(promotion.start_date).toLocaleDateString()} - {new Date(promotion.end_date).toLocaleDateString()}
+                        {new Date(
+                          promotion?.start_date || ""
+                        ).toLocaleDateString()}{" "}
+                        -{" "}
+                        {new Date(
+                          promotion?.end_date || ""
+                        ).toLocaleDateString()}
                       </div>
                     </Label>
                   </div>
                 ))}
                 {activePromotions.length === 0 && (
-                  <p className="text-sm text-gray-500">Không có khuyến mãi nào đang hoạt động</p>
+                  <p className="text-sm text-gray-500">
+                    Không có khuyến mãi nào đang hoạt động
+                  </p>
                 )}
               </div>
             </div>
@@ -436,11 +507,15 @@ export function BatchProductFormModal({
         {/* Selected Product Info */}
         {selectedProduct && (
           <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <h4 className="font-medium text-blue-900 mb-2">Thông tin sản phẩm đã chọn</h4>
+            <h4 className="font-medium text-blue-900 mb-2">
+              Thông tin sản phẩm đã chọn
+            </h4>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-blue-700">Tên sản phẩm:</span>
-                <span className="ml-2 font-medium">{selectedProduct.product_name}</span>
+                <span className="ml-2 font-medium">
+                  {selectedProduct.product_name}
+                </span>
               </div>
               <div>
                 <span className="text-blue-700">Giá:</span>
@@ -453,11 +528,7 @@ export function BatchProductFormModal({
         )}
 
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={onClose}
-            disabled={loading}
-          >
+          <Button variant="outline" onClick={onClose} disabled={loading}>
             Hủy
           </Button>
           <Button

@@ -127,7 +127,7 @@ export function AppSidebar() {
           },
           {
             title: "Quản lý kho",
-            url: "/warehouses-management",
+            url: "/batch-products-management",
             icon: Warehouse,
           },
           {

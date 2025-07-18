@@ -1,4 +1,3 @@
-import { showToast } from "@/lib/toast-provider";
 import { atom } from "jotai";
 import { batchProductService } from "../services/batch-product-service";
 import { productServiceManagement } from "../services/product-service-management";
@@ -11,9 +10,9 @@ import {
   BatchProductPaginationResponse,
   BatchProductStats,
   ProductType,
-  Promotion,
 } from "../types/batch-product";
 import { Product } from "../types/product";
+import { Promotion } from "../types/promotion";
 
 // ================================================
 // 📊 CORE DATA ATOMS
@@ -59,7 +58,7 @@ export const batchProductStatsAtom = atom<BatchProductStats>({
 export const productsListAtom = atom<Product[]>([]);
 export const productTypesListAtom = atom<ProductType[]>([]);
 export const promotionsListAtom = atom<Promotion[]>([]);
-export const warehousesListAtom = atom<Array<{id: string, name: string}>>([]);
+export const warehousesListAtom = atom<Array<{ id: string; name: string }>>([]);
 
 // ================================================
 // 🔍 FILTER & SEARCH ATOMS
@@ -68,7 +67,7 @@ export const warehousesListAtom = atom<Array<{id: string, name: string}>>([]);
 export const batchProductFiltersAtom = atom<BatchProductFilters>({
   search: "",
   product_id: "",
-  invenstory_id: "",
+  product_type_id: "",
   is_active: undefined,
   expiring_soon_days: undefined,
   low_stock: undefined,
@@ -85,13 +84,15 @@ export const batchProductFiltersAtom = atom<BatchProductFilters>({
 // 🎯 SELECTION ATOMS
 // ================================================
 
-export const selectedBatchProductIdsAtom = atom<Set<string>>(new Set());
+export const selectedBatchProductIdsAtom = atom<string[]>([]);
 
 // Derived atom for selected batch products
 export const selectedBatchProductsAtom = atom((get) => {
   const selectedIds = get(selectedBatchProductIdsAtom);
   const allBatchProducts = get(batchProductsDataAtom);
-  return allBatchProducts.filter((batch) => selectedIds.has(batch.batch_id));
+  return allBatchProducts.filter((batch) =>
+    selectedIds.includes(batch.batch_id)
+  );
 });
 
 // ================================================
@@ -129,15 +130,18 @@ export const getBatchProductsAtom = atom(
     try {
       const currentFilters = get(batchProductFiltersAtom);
       const mergedFilters = { ...currentFilters, ...filters };
-      
-      const response = await batchProductService.getBatchProducts(mergedFilters);
-      
+
+      const response = await batchProductService.getBatchProducts(
+        mergedFilters
+      );
+
       set(batchProductsDataAtom, response.data);
       set(batchProductPaginationAtom, response.pagination);
-      
+
       return response;
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Lỗi không xác định";
+      const message =
+        error instanceof Error ? error.message : "Lỗi không xác định";
       set(batchProductsErrorAtom, message);
       throw error;
     } finally {
@@ -158,7 +162,8 @@ export const getBatchProductByIdAtom = atom(
       set(selectedBatchProductAtom, batchProduct);
       return batchProduct;
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Lỗi không xác định";
+      const message =
+        error instanceof Error ? error.message : "Lỗi không xác định";
       set(batchProductDetailErrorAtom, message);
       throw error;
     } finally {
@@ -167,23 +172,7 @@ export const getBatchProductByIdAtom = atom(
   }
 );
 
-// Get batch product stats
-export const getBatchProductStatsAtom = atom(
-  null,
-  async (get, set) => {
-    set(batchProductStatsLoadingAtom, true);
-
-    try {
-      const stats = await batchProductService.getBatchProductStats();
-      set(batchProductStatsAtom, stats);
-      return stats;
-    } catch (error) {
-      throw error;
-    } finally {
-      set(batchProductStatsLoadingAtom, false);
-    }
-  }
-);
+// Get batch product stat
 
 // Create batch product
 export const createBatchProductAtom = atom(
@@ -198,8 +187,7 @@ export const createBatchProductAtom = atom(
 
       // Refresh the list
       await set(getBatchProductsAtom);
-      await set(getBatchProductStatsAtom);
-      
+
       set(isCreateBatchProductModalOpenAtom, false);
       set(batchProductFormDataAtom, {
         product_id: "",
@@ -230,10 +218,13 @@ export const updateBatchProductAtom = atom(
     set(batchOperationLoadingAtom, true);
 
     try {
-      const updatedBatchProduct = await batchProductService.updateBatchProduct(id, {
-        batch_id: id,
-        ...formData,
-      } as any);
+      const updatedBatchProduct = await batchProductService.updateBatchProduct(
+        id,
+        {
+          batch_id: id,
+          ...formData,
+        } as any
+      );
 
       // Update in the list
       const currentData = get(batchProductsDataAtom);
@@ -247,8 +238,6 @@ export const updateBatchProductAtom = atom(
       if (selectedBatch?.batch_id === id) {
         set(selectedBatchProductAtom, updatedBatchProduct);
       }
-
-      await set(getBatchProductStatsAtom);
       set(isEditBatchProductModalOpenAtom, false);
 
       return updatedBatchProduct;
@@ -283,15 +272,14 @@ export const deleteBatchProductAtom = atom(
 
       // Clear selection if deleted
       const selectedIds = get(selectedBatchProductIdsAtom);
-      if (selectedIds.has(id)) {
-        const newSelectedIds = new Set(selectedIds);
-        newSelectedIds.delete(id);
+      if (selectedIds.includes(id)) {
+        const newSelectedIds = selectedIds.filter(
+          (selectedId) => selectedId !== id
+        );
         set(selectedBatchProductIdsAtom, newSelectedIds);
       }
 
-      await set(getBatchProductStatsAtom);
       set(isDeleteBatchProductModalOpenAtom, false);
-
     } catch (error) {
       throw error;
     } finally {
@@ -301,34 +289,33 @@ export const deleteBatchProductAtom = atom(
 );
 
 // Load related data for form dropdowns
-export const loadFormDataAtom = atom(
-  null,
-  async (get, set) => {
-    try {
-      // Load products
-      const productsResponse = await productServiceManagement.getProducts({ limit: 1000 });
-      set(productsListAtom, productsResponse.data);
-      
-      // Load product types
-      const productTypes = await productTypeService.getActiveProductTypes();
-      set(productTypesListAtom, productTypes);
+export const loadFormDataAtom = atom(null, async (get, set) => {
+  try {
+    // Load products
+    const productsResponse = await productServiceManagement.getProducts();
+    set(productsListAtom, productsResponse.data);
 
-      // Load promotions
-      const promotions = await promotionService.getPromotions();
-      set(promotionsListAtom, promotions.filter(p => p.is_active));
+    // Load product types
+    const productTypes = await productTypeService.getActiveProductTypes();
+    set(productTypesListAtom, productTypes);
 
-      // Load warehouses (mock data for now)
-      set(warehousesListAtom, [
-        { id: "warehouse1", name: "Kho chính" },
-        { id: "warehouse2", name: "Kho phụ" },
-        { id: "warehouse3", name: "Kho miền Nam" },
-      ]);
+    // Load promotions
+    const promotions = await promotionService.getPromotions();
+    set(
+      promotionsListAtom,
+      promotions.filter((p) => p.is_active)
+    );
 
-    } catch (error) {
-      console.error("Error loading form data:", error);
-    }
+    // Load warehouses (mock data for now)
+    set(warehousesListAtom, [
+      { id: "warehouse1", name: "Kho chính" },
+      { id: "warehouse2", name: "Kho phụ" },
+      { id: "warehouse3", name: "Kho miền Nam" },
+    ]);
+  } catch (error) {
+    console.error("Error loading form data:", error);
   }
-);
+});
 
 // Batch toggle status
 export const batchToggleStatusAtom = atom(
@@ -352,9 +339,7 @@ export const batchToggleStatusAtom = atom(
       set(batchProductsDataAtom, updatedData);
 
       // Clear selections
-      set(selectedBatchProductIdsAtom, new Set());
-      await set(getBatchProductStatsAtom);
-
+      set(selectedBatchProductIdsAtom, []);
     } catch (error) {
       throw error;
     } finally {
@@ -380,7 +365,7 @@ export const resetBatchProductFiltersAtom = atom(null, (get, set) => {
   set(batchProductFiltersAtom, {
     search: "",
     product_id: "",
-    invenstory_id: "",
+    product_type_id: "",
     is_active: undefined,
     expiring_soon_days: undefined,
     low_stock: undefined,
@@ -418,37 +403,34 @@ export const toggleBatchProductSelectionAtom = atom(
   null,
   (get, set, batchId: string) => {
     const selectedIds = get(selectedBatchProductIdsAtom);
-    const newSelectedIds = new Set(selectedIds);
-    
-    if (newSelectedIds.has(batchId)) {
-      newSelectedIds.delete(batchId);
+    const newSelectedIds = selectedIds.slice();
+
+    if (newSelectedIds.includes(batchId)) {
+      newSelectedIds.splice(newSelectedIds.indexOf(batchId), 1);
     } else {
-      newSelectedIds.add(batchId);
+      newSelectedIds.push(batchId);
     }
-    
+
     set(selectedBatchProductIdsAtom, newSelectedIds);
   }
 );
 
-export const toggleAllBatchProductsSelectionAtom = atom(
-  null,
-  (get, set) => {
-    const selectedIds = get(selectedBatchProductIdsAtom);
-    const allBatchProducts = get(batchProductsDataAtom);
-    const allIds = allBatchProducts.map((batch) => batch.batch_id);
-    
-    if (selectedIds.size === allIds.length) {
-      // Deselect all
-      set(selectedBatchProductIdsAtom, new Set());
-    } else {
-      // Select all
-      set(selectedBatchProductIdsAtom, new Set(allIds));
-    }
+export const toggleAllBatchProductsSelectionAtom = atom(null, (get, set) => {
+  const selectedIds = get(selectedBatchProductIdsAtom);
+  const allBatchProducts = get(batchProductsDataAtom);
+  const allIds = allBatchProducts.map((batch) => batch.batch_id);
+
+  if (selectedIds.length === allIds.length) {
+    // Deselect all
+    set(selectedBatchProductIdsAtom, []);
+  } else {
+    // Select all
+    set(selectedBatchProductIdsAtom, allIds);
   }
-);
+});
 
 export const clearBatchProductSelectionsAtom = atom(null, (get, set) => {
-  set(selectedBatchProductIdsAtom, new Set());
+  set(selectedBatchProductIdsAtom, []);
 });
 
 // ================================================
@@ -480,7 +462,7 @@ export const batchProductCountsAtom = atom((get) => {
   const batchProducts = get(batchProductsDataAtom);
   const now = new Date();
   const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-  
+
   return {
     total: batchProducts.length,
     active: batchProducts.filter((b) => b.is_active).length,

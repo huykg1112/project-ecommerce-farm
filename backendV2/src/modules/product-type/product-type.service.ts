@@ -46,6 +46,20 @@ export class ProductTypeService {
     };
   }
 
+  async createMany(productTypes: { type_name: string; description: string }[]) {
+    const types = productTypes.map((type) => {
+      return this.productTypeRepository.create({
+        type_name: type.type_name,
+        description: type.description,
+      });
+    });
+    const saved = await this.productTypeRepository.save(types);
+    return {
+      message: 'Tạo nhiều loại sản phẩm thành công',
+      data: saved,
+    };
+  }
+
   async findAll() {
     const types = await this.productTypeRepository.find({
       order: { created_at: 'ASC' },

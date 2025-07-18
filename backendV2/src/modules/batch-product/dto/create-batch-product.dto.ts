@@ -16,8 +16,10 @@ export class CreateBatchProductDto {
 
   @IsUUID()
   @IsOptional()
-  invenstory_id?: string;
+  product_type_id?: string;
 
+  @IsUUID()
+  @IsOptional()
   @IsString()
   @IsOptional()
   @MaxLength(50)

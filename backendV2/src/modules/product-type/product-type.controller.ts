@@ -21,6 +21,20 @@ export class ProductTypeController {
     return this.productTypeService.create(createProductTypeDto);
   }
 
+  // tự động tạo loại sản phẩm gồm các loại: dụng dịch (ml), gói (g), bột (kg), kilogam(kg), cái (cái), hộp (hộp)
+  @Post('auto-create')
+  autoCreate() {
+    const productTypes = [
+      { type_name: 'Dụng dịch', description: 'ml' },
+      { type_name: 'Gói', description: 'g' },
+      { type_name: 'Bột', description: 'kg' },
+      { type_name: 'Kilogam', description: 'kg' },
+      { type_name: 'Cái', description: 'cái' },
+      { type_name: 'Hộp', description: 'hộp' },
+    ];
+    return this.productTypeService.createMany(productTypes);
+  }
+
   @Public()
   @Get()
   findAll() {

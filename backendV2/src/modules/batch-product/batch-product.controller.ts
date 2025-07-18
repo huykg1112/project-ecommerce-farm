@@ -7,11 +7,11 @@ import {
   Patch,
   Post,
   Query,
+  Req,
 } from '@nestjs/common';
 import { Public } from '@root/src/public.decorator';
 import { BatchProductService } from './batch-product.service';
 import { CreateBatchProductDto } from './dto/create-batch-product.dto';
-import { FilterBatchProductDto } from './dto/filter-batch-product.dto';
 import { UpdateBatchProductDto } from './dto/update-batch-product.dto';
 
 @Controller('batch-product')
@@ -19,14 +19,25 @@ export class BatchProductController {
   constructor(private readonly batchService: BatchProductService) {}
 
   @Post()
-  create(@Body() createBatchDto: CreateBatchProductDto) {
-    return this.batchService.create(createBatchDto);
+  create(@Body() createBatchDto: CreateBatchProductDto, @Req() req) {
+    const invenstory_id = req.user.invenstory?.invenstory_id;
+    if (!invenstory_id) {
+      throw new Error('Invenstory not found for user');
+    }
+    return this.batchService.create(invenstory_id, createBatchDto);
   }
 
-  @Public()
   @Get()
-  findAll(@Query() filter: FilterBatchProductDto) {
-    return this.batchService.findAll(filter);
+  findAll(@Req() req) {
+    if (req.user.invenstory?.invenstory_id) {
+      return this.batchService.findAll(req.user.invenstory.invenstory_id);
+    }
+
+    console.log(
+      'Invenstory not found for user:',
+      req.user.invenstory?.invenstory_id,
+    );
+    throw new Error('Invenstory not found for user');
   }
 
   @Patch()

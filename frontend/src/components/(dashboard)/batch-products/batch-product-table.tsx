@@ -17,22 +17,16 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { formatCurrency } from "@/lib/utils";
 import { BatchProduct } from "@/lib_dashboard/types/batch-product";
-import { formatCurrency, formatDate } from "@/lib/utils";
-import {
-  AlertCircle,
-  Calendar,
-  Edit,
-  Package,
-  Trash2,
-  TrendingDown,
-} from "lucide-react";
+import { formatDate } from "@/lib_dashboard/utils/date";
+import { Calendar, Edit, Package, Trash2, TrendingDown } from "lucide-react";
 import Image from "next/image";
 import { useCallback, useMemo } from "react";
 
 interface BatchProductTableProps {
   batchProducts: BatchProduct[];
-  selectedIds: Set<string>;
+  selectedIds: string[];
   loading?: boolean;
   onToggleSelection: (id: string) => void;
   onToggleAllSelection: () => void;
@@ -57,21 +51,25 @@ export function BatchProductTable({
 }: BatchProductTableProps) {
   // Check if all items are selected
   const isAllSelected = useMemo(() => {
-    return batchProducts.length > 0 && selectedIds.size === batchProducts.length;
-  }, [batchProducts.length, selectedIds.size]);
+    return (
+      batchProducts.length > 0 && selectedIds.length === batchProducts.length
+    );
+  }, [batchProducts.length, selectedIds.length]);
 
   // Check if some items are selected
   const isSomeSelected = useMemo(() => {
-    return selectedIds.size > 0 && selectedIds.size < batchProducts.length;
-  }, [batchProducts.length, selectedIds.size]);
+    return selectedIds.length > 0 && selectedIds.length < batchProducts.length;
+  }, [batchProducts.length, selectedIds.length]);
 
   // Get status badge color and text
   const getStatusBadge = useCallback((batchProduct: BatchProduct) => {
     const now = new Date();
     const expiryDate = new Date(batchProduct.expiry_date);
     const isExpired = expiryDate < now;
-    const isExpiringSoon = expiryDate.getTime() - now.getTime() <= 7 * 24 * 60 * 60 * 1000;
-    const isLowStock = batchProduct.quantity <= batchProduct.low_stock_threshold;
+    const isExpiringSoon =
+      expiryDate.getTime() - now.getTime() <= 7 * 24 * 60 * 60 * 1000;
+    const isLowStock =
+      batchProduct.quantity <= batchProduct.low_stock_threshold;
 
     if (!batchProduct.is_active) {
       return <Badge variant="secondary">Không hoạt động</Badge>;
@@ -86,10 +84,18 @@ export function BatchProductTable({
     }
 
     if (isLowStock) {
-      return <Badge variant="outline" className="border-yellow-500 text-yellow-700">Sắp hết hàng</Badge>;
+      return (
+        <Badge variant="outline" className="border-yellow-500 text-yellow-700">
+          Sắp hết hàng
+        </Badge>
+      );
     }
 
-    return <Badge variant="default" className="bg-green-100 text-green-800">Bình thường</Badge>;
+    return (
+      <Badge variant="default" className="bg-green-100 text-green-800">
+        Bình thường
+      </Badge>
+    );
   }, []);
 
   // Get warning icons
@@ -97,8 +103,10 @@ export function BatchProductTable({
     const now = new Date();
     const expiryDate = new Date(batchProduct.expiry_date);
     const isExpired = expiryDate < now;
-    const isExpiringSoon = expiryDate.getTime() - now.getTime() <= 7 * 24 * 60 * 60 * 1000;
-    const isLowStock = batchProduct.quantity <= batchProduct.low_stock_threshold;
+    const isExpiringSoon =
+      expiryDate.getTime() - now.getTime() <= 7 * 24 * 60 * 60 * 1000;
+    const isLowStock =
+      batchProduct.quantity <= batchProduct.low_stock_threshold;
 
     const icons = [];
 
@@ -168,8 +176,13 @@ export function BatchProductTable({
       <div className="bg-white rounded-lg border border-gray-200">
         <div className="p-8 text-center">
           <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Không có lô sản phẩm</h3>
-          <p className="text-gray-500">Chưa có lô sản phẩm nào được tạo hoặc không có kết quả phù hợp với bộ lọc.</p>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            Không có lô sản phẩm
+          </h3>
+          <p className="text-gray-500">
+            Chưa có lô sản phẩm nào được tạo hoặc không có kết quả phù hợp với
+            bộ lọc.
+          </p>
         </div>
       </div>
     );
@@ -186,7 +199,8 @@ export function BatchProductTable({
                 onCheckedChange={onToggleAllSelection}
                 aria-label="Chọn tất cả"
                 ref={(el) => {
-                  if (el) el.indeterminate = isSomeSelected;
+                  if (el)
+                    (el as HTMLInputElement).indeterminate = isSomeSelected;
                 }}
               />
             </TableHead>
@@ -225,17 +239,19 @@ export function BatchProductTable({
             <TableRow
               key={batchProduct.batch_id}
               className={`hover:bg-gray-50 ${
-                selectedIds.has(batchProduct.batch_id) ? "bg-blue-50" : ""
+                selectedIds.includes(batchProduct.batch_id) ? "bg-blue-50" : ""
               }`}
             >
               <TableCell>
                 <Checkbox
-                  checked={selectedIds.has(batchProduct.batch_id)}
-                  onCheckedChange={() => onToggleSelection(batchProduct.batch_id)}
+                  checked={selectedIds.includes(batchProduct.batch_id)}
+                  onCheckedChange={() =>
+                    onToggleSelection(batchProduct.batch_id)
+                  }
                   aria-label={`Chọn lô ${batchProduct.batch_number}`}
                 />
               </TableCell>
-              
+
               <TableCell>
                 <div className="flex items-center space-x-3">
                   <div className="flex-shrink-0">
@@ -261,31 +277,33 @@ export function BatchProductTable({
                       {formatCurrency(batchProduct.product.unit_product_price)}
                     </p>
                     {/* Product Types */}
-                    {batchProduct.product_types && batchProduct.product_types.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {batchProduct.product_types.map((type) => (
-                          <span
-                            key={type.product_type_id}
-                            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800"
-                          >
-                            {type.type_name}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    {batchProduct.product_types &&
+                      batchProduct.product_types.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {batchProduct.product_types.map((type) => (
+                            <span
+                              key={type.product_type_id}
+                              className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800"
+                            >
+                              {type.type_name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     {/* Promotions */}
-                    {batchProduct.promotions && batchProduct.promotions.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {batchProduct.promotions.map((promotion) => (
-                          <span
-                            key={promotion.promotion_id}
-                            className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800"
-                          >
-                            -{promotion.discount_percentage}%
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                    {batchProduct.promotions &&
+                      batchProduct.promotions.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {batchProduct.promotions.map((promotion) => (
+                            <span
+                              key={promotion.promotion_id}
+                              className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800"
+                            >
+                              -{promotion.discount_value}%
+                            </span>
+                          ))}
+                        </div>
+                      )}
                   </div>
                 </div>
               </TableCell>
@@ -298,11 +316,13 @@ export function BatchProductTable({
 
               <TableCell>
                 <div className="text-sm">
-                  <span className={`font-medium ${
-                    batchProduct.quantity <= batchProduct.low_stock_threshold
-                      ? "text-yellow-600"
-                      : "text-gray-900"
-                  }`}>
+                  <span
+                    className={`font-medium ${
+                      batchProduct.quantity <= batchProduct.low_stock_threshold
+                        ? "text-yellow-600"
+                        : "text-gray-900"
+                    }`}
+                  >
                     {batchProduct.quantity.toLocaleString()}
                   </span>
                   <div className="text-xs text-gray-500">
@@ -316,20 +336,22 @@ export function BatchProductTable({
               </TableCell>
 
               <TableCell className="text-sm">
-                <span className={`${
-                  new Date(batchProduct.expiry_date) < new Date()
-                    ? "text-red-600 font-medium"
-                    : new Date(batchProduct.expiry_date).getTime() - new Date().getTime() <= 7 * 24 * 60 * 60 * 1000
-                    ? "text-yellow-600 font-medium"
-                    : "text-gray-900"
-                }`}>
+                <span
+                  className={`${
+                    new Date(batchProduct.expiry_date) < new Date()
+                      ? "text-red-600 font-medium"
+                      : new Date(batchProduct.expiry_date).getTime() -
+                          new Date().getTime() <=
+                        7 * 24 * 60 * 60 * 1000
+                      ? "text-yellow-600 font-medium"
+                      : "text-gray-900"
+                  }`}
+                >
                   {formatDate(batchProduct.expiry_date)}
                 </span>
               </TableCell>
 
-              <TableCell>
-                {getStatusBadge(batchProduct)}
-              </TableCell>
+              <TableCell>{getStatusBadge(batchProduct)}</TableCell>
 
               <TableCell>
                 <div className="flex items-center space-x-1">
