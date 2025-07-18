@@ -175,7 +175,7 @@ export class ProductController {
     @Req() req,
   ) {
     return this.productService.update(
-      id,
+      updateProductDto.product_id || id,
       updateProductDto,
       files || [],
       req.user,

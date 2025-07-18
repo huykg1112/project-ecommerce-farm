@@ -37,6 +37,7 @@ interface ProductFormModalProps {
   title: string;
   submitText: string;
   isEdit?: boolean;
+  onProductImagesChange?: (files: File[] | null | undefined) => void; // Callback for image changes
 }
 
 interface ImageUpload {
@@ -56,6 +57,7 @@ export function ProductFormModal({
   title,
   submitText,
   isEdit = false,
+  onProductImagesChange,
 }: ProductFormModalProps) {
   // Hooks for dropdown
 
@@ -194,6 +196,7 @@ export function ProductFormModal({
       const success = await onSubmit();
 
       if (success) {
+        onProductImagesChange?.(images.map((img) => img.file).filter(Boolean));
         setImages([]);
         setErrors({});
       }
@@ -205,6 +208,7 @@ export function ProductFormModal({
   }, [onSubmit, validateForm]);
 
   const handleClose = useCallback(() => {
+    onProductImagesChange?.(images.map((img) => img.file).filter(Boolean));
     setImages([]);
     setErrors({});
     onClose();
@@ -258,6 +262,7 @@ export function ProductFormModal({
           reader.readAsDataURL(file);
         }
       });
+      // Notify parent component about image chang
     },
     [images.length]
   );
@@ -271,6 +276,7 @@ export function ProductFormModal({
       }
       return updated;
     });
+    // Notify parent component about image change
   }, []);
 
   const handleSetPrimaryImage = useCallback((imageId: string) => {
@@ -280,6 +286,7 @@ export function ProductFormModal({
         is_primary: img.id === imageId,
       }))
     );
+    // Notify parent component about image changes, sắp xếp lại thứ tự hình ảnh sao cho hình ảnh chính luôn ở đầu
   }, []);
 
   // manufacturer

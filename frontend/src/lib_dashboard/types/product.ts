@@ -14,7 +14,7 @@ export interface Product {
   reviews: ProductReview[];
   avg_rating: number | null;
   product_ingredients: ProductIngredient[];
-  diseases: ProductDisease[];
+  productDiseases: ProductDisease[];
 }
 
 // Supporting interfaces - mapping theo serializeProduct() từ BE

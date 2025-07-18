@@ -53,6 +53,7 @@ async function bootstrap() {
         whitelist: true, // Xóa các field không có trong DTO
         forbidNonWhitelisted: true, // Nếu có field lạ => báo lỗi
         transform: true, // Tự động chuyển đổi kiểu dữ liệu
+        transformOptions: { enableImplicitConversion: true },
       }),
     );
 

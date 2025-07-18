@@ -1,13 +1,11 @@
+import { Transform } from 'class-transformer';
 import {
   IsArray,
   IsBoolean,
   IsNotEmpty,
-  IsNumber,
   IsOptional,
   IsString,
-  IsUUID,
   Length,
-  Min,
 } from 'class-validator';
 
 export class CreateProductDto {
@@ -25,37 +23,37 @@ export class CreateProductDto {
   usage_instructions?: string;
 
   @IsArray()
-  @IsUUID('all', { each: true })
+  @Transform(({ value }) =>
+    typeof value === 'string' ? JSON.parse(value) : value,
+  )
   category_ids: string[];
 
-  @IsNumber()
-  @Min(0)
-  unit_product_price: number;
+  @IsOptional()
+  unit_product_price?: string;
 
   @IsOptional()
   @IsBoolean()
+  @Transform(({ value }) => value === 'true' || value === true)
   is_active?: boolean;
 
-  // danh mục sản phẩm
-
   @IsOptional()
-  @IsUUID()
   manufacturer_id?: string;
 
   @IsOptional()
   @IsArray()
-  @IsUUID('all', { each: true })
+  @Transform(({ value }) =>
+    typeof value === 'string' ? JSON.parse(value) : value,
+  )
   ingredient_ids?: string[];
 
   @IsOptional()
   @IsArray()
-  @IsUUID('all', { each: true })
+  @Transform(({ value }) =>
+    typeof value === 'string' ? JSON.parse(value) : value,
+  )
   disease_ids?: string[];
 
   @IsOptional()
   @IsArray()
   image_ids?: string[];
-
-  // Hình ảnh sẽ được xử lý qua multipart/form-data
-  // Không cần validation ở đây vì sẽ được xử lý trong controller
 }

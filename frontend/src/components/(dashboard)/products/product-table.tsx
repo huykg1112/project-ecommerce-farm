@@ -97,11 +97,6 @@ export function ProductTable({
     );
   }, []);
 
-  const getPrimaryImage = useCallback((product: Product) => {
-    const primaryImage = product.images?.find((img) => img.is_primary);
-    return primaryImage?.image_url || "";
-  }, []);
-
   const getImageCount = useCallback((product: Product) => {
     return product.images?.length || 0;
   }, []);
@@ -207,7 +202,9 @@ export function ProductTable({
                   <TableCell>
                     <div className="relative">
                       <Image
-                        src={getPrimaryImage(product)}
+                        src={
+                          product.images?.[0]?.image_url || "/placeholder.svg"
+                        }
                         alt={product.product_name}
                         width={48}
                         height={48}

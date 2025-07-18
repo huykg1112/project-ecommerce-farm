@@ -72,7 +72,10 @@ export default function ProductsManagementPage() {
   } = useProductManagement();
 
   const [selectedProduct] = useAtom(selectedProductAtom);
-  const [productImages, setProductImages] = useState<File[]>([]);
+  const [productImages, setProductImages] = useState<File[] | null | undefined>(
+    []
+  );
+  console.log("Selected productImages:", productImages);
 
   // Load data on component mount
   useEffect(() => {
@@ -183,12 +186,14 @@ export default function ProductsManagementPage() {
   // Form handlers
   const handleCreateProduct = useCallback(async () => {
     try {
-      await createProduct(productFormData);
+      await createProduct(productFormData, productImages);
       await getMyProducts();
       await getMyProductStats();
+      setProductImages([]); // Clear images after creation
       closeModals();
       return true;
     } catch (error) {
+      showToast.error("Không thể tạo sản phẩm mới");
       return false;
     }
   }, [
@@ -206,8 +211,8 @@ export default function ProductsManagementPage() {
       await updateProduct(selectedProduct.product_id, productFormData);
       await getMyProducts();
       await getMyProductStats();
+      setProductImages([]); // Clear images after update
       closeModals();
-      showToast.success("Cập nhật sản phẩm thành công!");
       return true;
     } catch (error) {
       showToast.error("Không thể cập nhật sản phẩm");
@@ -229,6 +234,7 @@ export default function ProductsManagementPage() {
       await deleteProduct(selectedProduct.product_id);
       await getMyProducts();
       await getMyProductStats();
+      setProductImages([]); // Clear images after deletion
       closeModals();
       return true;
     } catch (error) {
@@ -315,6 +321,13 @@ export default function ProductsManagementPage() {
   }, [resetProductForm, openAddModal]);
 
   console.log("myProducts:", myProducts);
+
+  const handleProductImagesChange = useCallback(
+    (files: File[] | null | undefined) => {
+      setProductImages(files);
+    },
+    []
+  );
 
   return (
     <div className="space-y-6">
@@ -410,6 +423,7 @@ export default function ProductsManagementPage() {
         onUpdateFormData={updateProductForm}
         title="Thêm sản phẩm mới"
         submitText="Tạo sản phẩm"
+        onProductImagesChange={handleProductImagesChange}
       />
       <ProductFormModal
         open={editProductModal}

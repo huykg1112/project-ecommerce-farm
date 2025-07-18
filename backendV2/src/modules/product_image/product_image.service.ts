@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { ProductImageSerializer } from '../../serializers';
 import { Product } from '../product/entities/product.entity';
 import { CreateProductImageDto } from './dto/create-product_image.dto';
+import { CreatesProductImagesDto } from './dto/creates-product_images.dto';
 import { UpdateProductImageDto } from './dto/update-product_image.dto';
 import { ProductImage } from './entities/product_image.entity';
 
@@ -34,15 +35,36 @@ export class ProductImageService {
     };
   }
 
+  async creates(createProductImageDtos: CreatesProductImagesDto) {
+    //tạo nhiều ảnh cho một sản phẩm
+    const product = await this.productRepository.findOne({
+      where: { product_id: createProductImageDtos.product_id },
+    });
+    if (!product) {
+      throw new NotFoundException('Không tìm thấy sản phẩm');
+    }
+    const images = createProductImageDtos.image_url.map((url) => {
+      const image = this.productImageRepository.create({
+        product,
+        image_url: url,
+        description: createProductImageDtos.description,
+      });
+      return image;
+    });
+    const savedImages = await this.productImageRepository.save(images);
+    return {
+      message: 'Tạo nhiều ảnh sản phẩm thành công',
+      data: savedImages.map((image) => ProductImageSerializer.serialize(image)),
+    };
+  }
+
   async findAll() {
     const images = await this.productImageRepository.find({
       relations: ['product'],
-      order: { created_at: 'DESC' },
     });
     return {
       message: 'Lấy danh sách ảnh sản phẩm thành công',
-      data: images.map(ProductImageSerializer.serialize),
-      total: images.length,
+      data: images.map((image) => ProductImageSerializer.serialize(image)),
     };
   }
 

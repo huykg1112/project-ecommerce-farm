@@ -123,7 +123,10 @@ export class ProductService {
     }
 
     // Validate price
-    if (createProductDto.unit_product_price <= 0) {
+    const unit_product_price = parseFloat(
+      createProductDto?.unit_product_price || '0',
+    );
+    if (unit_product_price <= 0) {
       throw new BadRequestException('Giá sản phẩm phải lớn hơn 0');
     }
 
@@ -142,7 +145,7 @@ export class ProductService {
       product_name: createProductDto.product_name,
       description: createProductDto.description,
       usage_instructions: createProductDto.usage_instructions,
-      unit_product_price: createProductDto.unit_product_price,
+      unit_product_price: unit_product_price,
       is_active: createProductDto.is_active ?? true,
       categories,
       productDiseases: validatedDiseases,
@@ -162,7 +165,9 @@ export class ProductService {
           ingredient_id: ingredient.ingredient_id,
           product: savedProduct,
           ingredient: ingredient,
-          is_primary: false, // Có thể thêm logic để xác định primary
+          //lấy hình ảnh đầu tiên làm primary
+          is_primary:
+            ingredient.ingredient_id === validatedIngredients[0].ingredient_id,
         }),
       );
       await this.piRepo.save(productIngredients);
@@ -299,13 +304,15 @@ export class ProductService {
     files: Express.Multer.File[],
     user: User,
   ) {
+    console.log('Update Product:', updateProductDto);
+
     const product = await this.productRepo.findOne({
       where: { product_id, is_deleted: false },
       relations: ['distributor'],
     });
     if (!product) throw new NotFoundException('Không tìm thấy sản phẩm');
 
-    // Chỉ distributor của sản phẩm hoặc admin mới được sửa
+    // Kiểm tra quyền sửa
     if (
       (user.role?.role_name as Role) !== Role.ADMIN &&
       product.distributor.user_id !== user.user_id
@@ -341,6 +348,7 @@ export class ProductService {
       }
     }
 
+    // Validate ingredients
     let validatedIngredients: ActiveIngredient[] = [];
     if (
       updateProductDto.ingredient_ids &&
@@ -377,10 +385,10 @@ export class ProductService {
     }
 
     // Validate price
-    if (
-      updateProductDto.unit_product_price &&
-      updateProductDto.unit_product_price <= 0
-    ) {
+    const unit_product_price = parseFloat(
+      updateProductDto?.unit_product_price || '0',
+    );
+    if (unit_product_price <= 0) {
       throw new BadRequestException('Giá sản phẩm phải lớn hơn 0');
     }
 
@@ -400,12 +408,9 @@ export class ProductService {
       description: updateProductDto.description || product.description,
       usage_instructions:
         updateProductDto.usage_instructions || product.usage_instructions,
-      unit_product_price:
-        updateProductDto.unit_product_price || product.unit_product_price,
+      unit_product_price: unit_product_price || product.unit_product_price,
       is_active: updateProductDto.is_active ?? product.is_active,
       categories,
-      productDiseases: validatedDiseases,
-      product_ingredients: validatedIngredients,
       manufacturer: manufacturer ?? undefined,
       updated_at: new Date(),
     });
@@ -415,63 +420,35 @@ export class ProductService {
     // Cập nhật ingredients nếu có
     if (updateProductDto.ingredient_ids) {
       // Xóa liên kết cũ
-      await this.piRepo.delete({ product_id: product_id });
+      await this.piRepo.delete({ product_id });
 
       // Tạo liên kết mới
-      if (updateProductDto.ingredient_ids.length > 0) {
-        const validatedIngredients = await this.activeIngredientRepo.find({
-          where: {
-            ingredient_id: In(updateProductDto.ingredient_ids),
-            is_deleted: false,
-          },
-        });
-        if (
-          validatedIngredients.length !== updateProductDto.ingredient_ids.length
-        ) {
-          throw new NotFoundException('Có thành phần không tồn tại');
-        }
-
-        const productIngredients = validatedIngredients.map((ingredient) =>
-          this.piRepo.create({
-            product_id: updatedProduct.product_id,
-            ingredient_id: ingredient.ingredient_id,
-            product: updatedProduct,
-            ingredient: ingredient,
-            is_primary: false,
-          }),
-        );
-        await this.piRepo.save(productIngredients);
-      }
+      const productIngredients = validatedIngredients.map((ingredient) =>
+        this.piRepo.create({
+          product_id: updatedProduct.product_id, // Đảm bảo giá trị không null
+          ingredient_id: ingredient.ingredient_id,
+          product: updatedProduct,
+          ingredient: ingredient,
+          is_primary: false,
+        }),
+      );
+      await this.piRepo.save(productIngredients);
     }
 
     // Cập nhật diseases nếu có
     if (updateProductDto.disease_ids) {
-      // Xóa liên kết cũ
-      await this.productDiseaseRepo.delete({ product_id: product_id });
+      await this.productDiseaseRepo.delete({ product_id });
 
-      // Tạo liên kết mới
-      if (updateProductDto.disease_ids.length > 0) {
-        const validatedDiseases = await this.diseaseRepo.find({
-          where: {
-            disease_id: In(updateProductDto.disease_ids),
-            is_deleted: false,
-          },
-        });
-        if (validatedDiseases.length !== updateProductDto.disease_ids.length) {
-          throw new NotFoundException('Có bệnh không tồn tại');
-        }
-
-        const productDiseases = validatedDiseases.map((disease) =>
-          this.productDiseaseRepo.create({
-            product_id: updatedProduct.product_id,
-            disease_id: disease.disease_id,
-            product: updatedProduct,
-            disease: disease,
-            is_primary: false,
-          }),
-        );
-        await this.productDiseaseRepo.save(productDiseases);
-      }
+      const productDiseases = validatedDiseases.map((disease) =>
+        this.productDiseaseRepo.create({
+          product_id: updatedProduct.product_id, // Đảm bảo giá trị không null
+          disease_id: disease.disease_id,
+          product: updatedProduct,
+          disease: disease,
+          is_primary: false,
+        }),
+      );
+      await this.productDiseaseRepo.save(productDiseases);
     }
 
     // Thêm hình ảnh mới nếu có (không xóa hình cũ)

@@ -525,12 +525,17 @@ export const fetchMyProductStatsAtom = atom(null, async (get, set) => {
 // Create product
 export const createProductAtom = atom(
   null,
-  async (get, set, data: ProductFormData, files?: File[]) => {
+  async (
+    get,
+    set,
+    data: ProductFormData,
+    files?: File[] | null | undefined
+  ) => {
     set(productFormLoadingAtom, true);
     set(productFormErrorsAtom, {});
 
     try {
-      const product = await productServiceManagement.createProduct(data);
+      const product = await productServiceManagement.createProduct(data, files);
 
       // Update my products list
       const myProducts = get(myProductsAtom);
@@ -769,7 +774,7 @@ export const setProductForEditingAtom = atom(
       category_ids: product.categories.map((c) => c.id),
       manufacturer_id: product.manufacturer?.id || "",
       ingredient_ids: product.product_ingredients.map((i) => i.ingredient_id),
-      disease_ids: product.diseases.map((d) => d.disease_id),
+      disease_ids: product.productDiseases.map((d) => d.disease_id),
       is_active: product.is_active,
       // images: product.images.map((img) => img.image_url), // Assuming images are stored as URLs
     });
