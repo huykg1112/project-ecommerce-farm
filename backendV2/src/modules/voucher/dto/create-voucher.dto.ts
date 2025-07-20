@@ -5,7 +5,6 @@ import {
   IsNumber,
   IsOptional,
   IsString,
-  IsUUID,
   Min,
 } from 'class-validator';
 
@@ -43,7 +42,6 @@ export class CreateVoucherDto {
   @IsOptional()
   is_active?: boolean;
 
-  @IsUUID()
-  @IsNotEmpty({ message: 'Distributor ID is required' })
+  @IsOptional()
   distributor_id: string;
 }

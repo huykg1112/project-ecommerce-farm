@@ -40,10 +40,18 @@ export class CategoryService {
       where: { isDeleted: false },
     });
   }
+  async findForUsers(): Promise<Category[]> {
+    return await this.categoryRepository.find({
+      where: { isActive: true, isDeleted: false },
+      relations: ['products'],
+      order: { name: 'ASC' },
+    });
+  }
 
   async findOne(id: string): Promise<Category> {
     const category = await this.categoryRepository.findOne({
       where: { id, isDeleted: false },
+      relations: ['products'],
     });
     if (!category) {
       throw new NotFoundException(`Category with id ${id} not found`);

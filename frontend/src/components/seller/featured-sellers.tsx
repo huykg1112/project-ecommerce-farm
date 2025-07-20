@@ -1,15 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { InvenstoryClient } from "@/lib_dashboard/types/product";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Star } from "lucide-react";
-import { sellers } from "@/data/sellers";
+import { useState } from "react";
 
-export default function FeaturedSellers() {
+export default function FeaturedSellers({
+  sellers,
+}: {
+  sellers: InvenstoryClient[];
+}) {
+  console.log("Featured Sellers:", sellers);
   const [startIndex, setStartIndex] = useState(0);
   const visibleSellers = 4;
 
@@ -34,14 +39,14 @@ export default function FeaturedSellers() {
           .slice(startIndex, startIndex + visibleSellers)
           .map((seller) => (
             <Card
-              key={seller.id}
+              key={seller.invenstory_id}
               className="overflow-hidden border-none shadow-md"
             >
               <div className="relative h-32 bg-gradient-to-r from-primary-light to-primary">
                 <div className="absolute -bottom-12 left-1/2 -translate-x-1/2">
                   <Image
-                    src={seller.avatar || "/placeholder.svg"}
-                    alt={seller.name}
+                    src={seller.invenstory_img || "/placeholder.svg"}
+                    alt={"Seller Avatar"}
                     width={80}
                     height={80}
                     className="rounded-full border-4 border-white"
@@ -49,12 +54,12 @@ export default function FeaturedSellers() {
                 </div>
               </div>
               <CardContent className="pt-16 pb-4 text-center">
-                <Link href={`/seller/${seller.id}`}>
+                <Link href={`/seller/${seller.invenstory_id}`}>
                   <h3 className="font-semibold text-lg hover:text-primary">
                     {seller.name}
                   </h3>
                 </Link>
-                <div className="flex items-center justify-center mt-2">
+                {/* <div className="flex items-center justify-center mt-2">
                   <div className="flex">
                     {[...Array(5)].map((_, i) => (
                       <Star
@@ -73,15 +78,17 @@ export default function FeaturedSellers() {
                 </div>
                 <p className="text-sm text-gray-500 mt-2">
                   {seller.productCount} sản phẩm
-                </p>
-                {seller.verified && (
+                </p> */}
+                {seller.is_active && (
                   <Badge className="mt-2 bg-green-500">Đã xác thực</Badge>
                 )}
                 <Button
                   asChild
                   className="mt-4 w-full bg-primary hover:bg-primary-dark"
                 >
-                  <Link href={`/seller/${seller.id}`}>Xem cửa hàng</Link>
+                  <Link href={`/seller/${seller.distributor.user_id}`}>
+                    Xem cửa hàng
+                  </Link>
                 </Button>
               </CardContent>
             </Card>

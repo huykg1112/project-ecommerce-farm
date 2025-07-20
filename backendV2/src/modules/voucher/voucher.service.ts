@@ -96,6 +96,36 @@ export class VoucherService {
     return voucher;
   }
 
+  async findVouchersForUsers(): Promise<Voucher[]> {
+    return this.voucherRepository.find({
+      where: { is_active: true, is_deleted: false },
+      relations: ['distributor', 'distributor.invenstory', 'users'],
+    });
+  }
+
+  async findMyCollectedVouchers(
+    userId: string,
+    distributorId?: string,
+  ): Promise<Voucher[]> {
+    const user = await this.userRepository.findOne({
+      where: { user_id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    let vouchers = user.vouchers.filter((v) => !v.is_deleted);
+
+    if (distributorId) {
+      vouchers = vouchers.filter(
+        (v) => v.distributor.user_id === distributorId,
+      );
+    }
+
+    return vouchers;
+  }
+
   async update(
     id: string,
     updateVoucherDto: UpdateVoucherDto,
@@ -223,16 +253,13 @@ export class VoucherService {
     // Check if user already has this voucher
     const hasVoucher = user.vouchers.some((v) => v.voucher_id === voucherId);
     if (hasVoucher) {
-      throw new BadRequestException('User already has this voucher');
+      throw new BadRequestException('Voucher đã được thu thập');
     }
-
-    // Add voucher to user
-    user.vouchers.push(voucher);
-    await this.userRepository.save(user);
 
     // Increment used count
     voucher.used_count += 1;
     voucher.updated_at = new Date();
+    voucher.users.push(user);
     await this.voucherRepository.save(voucher);
 
     return voucher;

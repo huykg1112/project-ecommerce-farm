@@ -99,6 +99,12 @@ export class CategoryController {
     return this.categoriesService.findAll();
   }
 
+  @Get('for-users')
+  @Public()
+  findForUsers() {
+    return this.categoriesService.findForUsers();
+  }
+
   @Get('active')
   @Public()
   findActiveCategories() {

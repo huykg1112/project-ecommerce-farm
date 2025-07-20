@@ -1,3 +1,5 @@
+import { Product } from "./product";
+
 export interface Manufacturer {
   id: string;
   name: string;
@@ -5,10 +7,11 @@ export interface Manufacturer {
   logo?: string;
   logoPublicId?: string;
   isActive: boolean;
+
   createdAt: Date;
   updatedAt?: Date;
   isDeleted: boolean;
-  //   products?: Product[];
+  products?: Product[];
 }
 
 export interface CreateManufacturerRequest {

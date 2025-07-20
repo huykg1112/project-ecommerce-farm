@@ -9,45 +9,59 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
+import { Category } from "@/lib_dashboard/types/category";
+import { InvenstoryClient } from "@/lib_dashboard/types/product";
 import { FilterState } from "@/types/products";
+import { useState } from "react";
 
 interface FiltersSidebarProps {
-  filters: any;
+  filters: FilterState;
   handleFilterChange: (filterType: keyof FilterState, value: any) => void;
   handleCategoryChange: (category: string) => void;
-  handleSellerChange: (seller: string) => void;
+  handleInventoryChange: (inventory: string) => void;
   handleRatingChange: (rating: number | null) => void;
   handlePriceChange: (value: number[]) => void;
   clearAllFilters: () => void;
   searchTerm: string;
   setSearchTerm: (value: string) => void;
-  searchSeller: string;
-  setSearchSeller: (value: string) => void;
-  categories: any[];
-  sellers: string[];
+  categories: Category[];
+  inventorys: InvenstoryClient[];
   minPrice: number;
   maxPrice: number;
+}
+
+// đém số lượng sản phẩm trong mỗi danh mục
+function countProductsInCategory(category: Category): number {
+  return category.products.filter(
+    (product) => product.is_active && !product.is_deleted
+  ).length;
 }
 
 export default function FiltersSidebar({
   filters,
   handleFilterChange,
   handleCategoryChange,
-  handleSellerChange,
+  handleInventoryChange,
   handleRatingChange,
   handlePriceChange,
   clearAllFilters,
   searchTerm,
   setSearchTerm,
-  searchSeller,
-  setSearchSeller,
   categories,
-  sellers,
+  inventorys,
   minPrice,
   maxPrice,
 }: FiltersSidebarProps) {
+  const [searchInventory, setSearchInventory] = useState<string>("");
+
+  const handleSearchInventoryChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setSearchInventory(e.target.value);
+  };
+
   return (
-    <div className="hidden md:block w-64 shrink-0">
+    <div className="md:block w-64 shrink-0 overflow-y-auto">
       <div className="sticky top-24">
         <div className="mb-6">
           <h2 className="text-lg font-semibold mb-4">Bộ lọc sản phẩm</h2>
@@ -84,7 +98,7 @@ export default function FiltersSidebar({
                       htmlFor={`category-${category.id}`}
                       className="text-sm cursor-pointer"
                     >
-                      {category.name} ({category.productCount})
+                      {category.name} ({countProductsInCategory(category)})
                     </Label>
                   </div>
                 ))}
@@ -157,26 +171,35 @@ export default function FiltersSidebar({
                 <Input
                   type="search"
                   placeholder="Tìm kiếm đại lý..."
-                  value={searchSeller}
-                  onChange={(e) => setSearchSeller(e.target.value)}
+                  value={searchInventory}
+                  onChange={handleSearchInventoryChange}
                   className="mb-4 "
                 />
-                {sellers
-                  .filter((seller) =>
-                    seller.toLowerCase().includes(searchSeller.toLowerCase())
+                {inventorys
+                  .filter((inventory) =>
+                    (inventory?.name || "")
+                      .toLowerCase()
+                      .includes(searchInventory.toLowerCase())
                   )
-                  .map((seller) => (
-                    <div key={seller} className="flex items-center space-x-2">
+                  .map((inventory) => (
+                    <div
+                      key={inventory?.invenstory_id}
+                      className="flex items-center space-x-2"
+                    >
                       <Checkbox
-                        id={`seller-${seller}`}
-                        checked={filters.sellers.includes(seller)}
-                        onCheckedChange={() => handleSellerChange(seller)}
+                        id={inventory?.invenstory_id}
+                        checked={filters.inventory_ids.includes(
+                          inventory?.invenstory_id
+                        )}
+                        onCheckedChange={() =>
+                          handleInventoryChange(inventory?.invenstory_id)
+                        }
                       />
                       <Label
-                        htmlFor={`seller-${seller}`}
+                        htmlFor={inventory?.invenstory_id}
                         className="text-sm cursor-pointer"
                       >
-                        {seller}
+                        {inventory?.name}
                       </Label>
                     </div>
                   ))}

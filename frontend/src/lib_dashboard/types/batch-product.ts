@@ -6,6 +6,7 @@ export interface ProductType {
   type_name: string;
   description?: string;
   is_active: boolean;
+  is_deleted: boolean;
 }
 
 export interface BatchProduct {
@@ -18,6 +19,7 @@ export interface BatchProduct {
   low_stock_threshold: number;
   unit_product_price: number;
   is_active: boolean;
+  is_deleted: boolean;
   created_at?: Date;
   updated_at?: Date;
   invenstory?: {

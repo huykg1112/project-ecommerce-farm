@@ -62,14 +62,11 @@ export default function Header() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  
-
-
   const mainNavItems = [
     { name: "Trang Chủ", href: "/home" },
+    { name: "Phân tích", href: "/blog", label: "AI" },
     { name: "Sản phẩm", href: "/products" },
-    { name: "Cưa hàng & Đại lý", href: "/stores" },
-    { name: "Blog", href: "/blog" },
+    { name: "Cửa hàng ", href: "/stores" },
     { name: "Liên hệ", href: "/contact" },
   ];
 
@@ -130,16 +127,25 @@ export default function Header() {
                       href={item.href}
                       className={cn(
                         "text-xl font-semibold flex items-center transition-all duration-200 relative group",
-                        isScrolled ? "text-white" : "text-gray-700",
-                        isActive ? "text-[#599146]" : "hover:text-[#599146]"
+                        isScrolled ? "text-white" : "text-gray-700"
+                        // isActive ? "text-gray-700 " : "hover:text-[#599146]"
                       )}
                     >
                       {item.name}
+                      {item.label && (
+                        <span
+                          className={cn(
+                            "text-xs bg-[#599146] text-white px-2 py-1 rounded-full ml-2 -mt-4 "
+                          )}
+                        >
+                          {item.label}
+                        </span>
+                      )}
                       <span
                         className={cn(
                           "absolute bottom-0 left-0 w-full h-0.5 bg-[#599146] transform scale-x-0 origin-left transition-transform duration-300 ease-in-out",
                           isActive ? "scale-x-100" : "group-hover:scale-x-100",
-                          isScrolled && "bg-[#477e35]"
+                          isScrolled && "bg-white"
                         )}
                       />
                     </Link>

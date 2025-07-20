@@ -1,20 +1,23 @@
 import { Card, CardContent } from "@/components/ui/card";
+import { Category } from "@/lib_dashboard/types/category";
 import Image from "next/image";
 import Link from "next/link";
-
-interface Category {
-  id: string;
-  name: string;
-  image: string;
-  slug: string;
-  productCount: number;
-}
+import { useMemo } from "react";
 
 interface CategoryCardProps {
   category: Category;
 }
 
 export default function CategoryCard({ category }: CategoryCardProps) {
+  // console.log("CategoryCard", category);
+  const countProducts = useMemo(() => {
+    if (!category.products) return 0;
+    if (category.products.length === 0) return 0;
+    const activeProducts = category.products.filter(
+      (product) => product.is_active && !product.is_deleted
+    );
+    return activeProducts.length;
+  }, [category.products]);
   return (
     <Link href={`/products?category=${encodeURIComponent(category.name)}`}>
       <Card className="overflow-hidden border-none shadow-md rounded-lg category-card relative h-40">
@@ -30,7 +33,7 @@ export default function CategoryCard({ category }: CategoryCardProps) {
             {category.name}
           </h3>
           <p className="font-medium text-sm transition-all duration-300 category-card-count">
-            {category.productCount} sản phẩm
+            {countProducts} sản phẩm
           </p>
         </CardContent>
       </Card>

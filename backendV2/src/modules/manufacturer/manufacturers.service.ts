@@ -24,6 +24,14 @@ export class ManufacturersService {
     return true;
   }
 
+  async findAllForUsers(): Promise<Manufacturer[]> {
+    return await this.manufacturerRepository.find({
+      where: { isActive: true, isDeleted: false },
+      relations: ['products'],
+      order: { name: 'ASC' },
+    });
+  }
+
   async create(
     createManufacturerDto: CreateManufacturerDto,
   ): Promise<Manufacturer> {

@@ -34,6 +34,21 @@ export const categoryServiceManagement = {
       throw error;
     }
   },
+
+  async getCategoriesForUser() {
+    try {
+      const response = await axiosInstance.get(`/category/for-users`);
+      return response.data;
+    } catch (error) {
+      let msg = "Lỗi khi lấy danh sách danh mục cho người dùng";
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        msg = error.response.data.message;
+      }
+      showToast.error(msg);
+      throw error;
+    }
+  },
+
   async createCategory(data: CreateCategoryRequest) {
     console.log("Creating category with data:", data);
     try {

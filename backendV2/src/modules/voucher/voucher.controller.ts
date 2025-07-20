@@ -21,7 +21,7 @@ export class VoucherController {
   @Post()
   create(@Body() createVoucherDto: CreateVoucherDto, @Request() req: any) {
     // Get distributor ID from JWT token or request
-    const distributorId = req.user?.user_id || createVoucherDto.distributor_id;
+    const distributorId = req.user?.user_id;
     return this.voucherService.create(createVoucherDto, distributorId);
   }
 
@@ -35,6 +35,24 @@ export class VoucherController {
   findMyVouchers(@Request() req: any) {
     const distributorId = req.user?.user_id;
     return this.voucherService.findAll(distributorId);
+  }
+
+  @Get('my-vouchers-for-user')
+  findMyVouchersForUser(@Request() req: any) {
+    const userId = req.user?.user_id;
+    return this.voucherService.findMyCollectedVouchers(userId);
+  }
+
+  @Get('for-users')
+  findVouchersForUsers() {
+    return this.voucherService.findVouchersForUsers();
+  }
+
+  //lấy voucher đã được người dùng thu thập của một nhà phân phối
+  @Get('my-collected')
+  findMyCollectedVouchers(@Request() req, @Body() distributorId?: string) {
+    const userId = req.user?.user_id;
+    return this.voucherService.findMyCollectedVouchers(userId, distributorId);
   }
 
   @Public()

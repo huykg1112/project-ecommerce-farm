@@ -55,6 +55,34 @@ export const voucherService = {
     }
   },
 
+  async getVouchersForUser(): Promise<Voucher[]> {
+    try {
+      const response = await axiosInstance.get(`/voucher/for-users`);
+      return response.data;
+    } catch (error) {
+      let msg = "Lỗi khi lấy danh sách voucher của người dùng";
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        msg = error.response.data.message;
+      }
+      showToast.error(msg);
+      throw error;
+    }
+  },
+
+  async getMyCollectedVouchers(): Promise<Voucher[]> {
+    try {
+      const response = await axiosInstance.get(`/voucher/my-vouchers-for-user`);
+      return response.data;
+    } catch (error) {
+      let msg = "Lỗi khi lấy danh sách voucher đã thu thập";
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        msg = error.response.data.message;
+      }
+      showToast.error(msg);
+      throw error;
+    }
+  },
+
   async getVoucherById(id: string): Promise<Voucher> {
     try {
       const response = await axiosInstance.get(`/voucher/${id}`);
@@ -173,7 +201,6 @@ export const voucherService = {
   async collectVoucher(id: string): Promise<Voucher> {
     try {
       const response = await axiosInstance.post(`/voucher/${id}/collect`);
-      showToast.success("Thu thập voucher thành công");
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi thu thập voucher";

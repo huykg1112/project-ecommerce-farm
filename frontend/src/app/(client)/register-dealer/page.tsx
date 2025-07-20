@@ -22,8 +22,8 @@ export default function RegisterDealerPage() {
       full_name: "",
       email: "",
       phone_number: "",
-      id_number: "",
       business_license: "",
+      cccd: "",
     },
     dealerInfo: {
       dealer_name: "",
@@ -78,6 +78,7 @@ export default function RegisterDealerPage() {
               full_name: user.full_name || "",
               email: user.email || "",
               phone_number: user.phone_number || "",
+              cccd: user.cccd || "",
             },
           }));
         }
@@ -120,13 +121,13 @@ export default function RegisterDealerPage() {
         setIsStepCompleted(true);
         break;
       case 2: // Thông tin cá nhân
-        const { full_name, email, phone_number, id_number, business_license } =
+        const { full_name, email, phone_number, cccd, business_license } =
           formData.personalInfo;
         setIsStepCompleted(
           !!full_name &&
             !!email &&
             !!phone_number &&
-            !!id_number &&
+            !!cccd &&
             !!business_license
         );
         break;
@@ -163,7 +164,7 @@ export default function RegisterDealerPage() {
         full_name: personalInfo.full_name,
         email: personalInfo.email,
         phone_number: personalInfo.phone_number,
-        cccd: personalInfo.id_number,
+        cccd: personalInfo.cccd,
         license: personalInfo.business_license,
         name_store: dealerInfo.dealer_name,
         address_store: dealerInfo.address.fullAddress,

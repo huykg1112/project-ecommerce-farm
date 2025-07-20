@@ -10,7 +10,7 @@ interface PersonalInfoData {
   full_name: string;
   email: string;
   phone_number: string;
-  id_number: string;
+  cccd: string;
   business_license: string;
 }
 
@@ -39,7 +39,7 @@ export default function PersonalInfoStep({
         return /^(0|\+84)[3|5|7|8|9][0-9]{8}$/.test(value)
           ? ""
           : "Số điện thoại không hợp lệ";
-      case "id_number":
+      case "cccd":
         return /^[0-9]{9,12}$/.test(value)
           ? ""
           : "Số CMND/CCCD phải có 9-12 số";
@@ -133,15 +133,13 @@ export default function PersonalInfoStep({
             Số CMND/CCCD <span className="text-red-500">*</span>
           </Label>
           <Input
-            id="id_number"
-            name="id_number"
-            value={data.id_number}
+            id="cccd"
+            name="cccd"
+            value={data.cccd}
             onChange={handleChange}
             placeholder="123456789"
           />
-          {errors.id_number && (
-            <p className="text-red-500 text-sm">{errors.id_number}</p>
-          )}
+          {errors.cccd && <p className="text-red-500 text-sm">{errors.cccd}</p>}
         </div>
 
         <div className="space-y-2 md:col-span-2">

@@ -3,7 +3,7 @@ export type FilterState = {
   categories: string[];
   priceRange: [number, number];
   rating: number | null;
-  sellers: string[];
+  inventory_ids: string[];
   onSale: boolean;
 };
 

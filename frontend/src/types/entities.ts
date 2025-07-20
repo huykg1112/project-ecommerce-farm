@@ -12,6 +12,7 @@ export interface User {
   created_at: Date;
   updated_at: Date;
   role: Role;
+  invenstory?: Invenstory;
 }
 
 export interface StoreOwnerRequest {
@@ -120,6 +121,7 @@ export interface ActiveIngredient {
   chemical_formula?: string;
   cas_number?: string; // cas_number là số CAS của hoạt chất
   is_active: boolean;
+  is_deleted?: boolean;
   created_at: Date;
   updated_at: Date;
 }
@@ -155,8 +157,6 @@ export interface Invenstory {
 export interface Voucher {
   voucher_id: string;
   voucher_code: string;
-  promotion_id: string;
-  promotion?: Promotion;
   distributor_id: string;
   min_order_value?: number;
   max_discount_value?: number;
@@ -167,18 +167,9 @@ export interface Voucher {
   is_active: boolean;
   created_at: Date;
   updated_at: Date;
+  distributor: User; // The user who created the voucher
+  users?: User[]; // Optional list of user vouchers
   is_deleted: boolean;
-}
-
-export interface Promotion {
-  promotion_id: string;
-  promotion_name: string;
-  description?: string;
-  discount_type: "PERCENTAGE" | "FIXED_AMOUNT";
-  discount_value: number;
-  is_active: boolean;
-  created_at: Date;
-  updated_at: Date;
 }
 
 export interface Pagination {

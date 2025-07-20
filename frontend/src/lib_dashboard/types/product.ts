@@ -1,3 +1,11 @@
+import { ActiveIngredient } from "@/types/entities";
+import { BatchProduct } from "./batch-product";
+import { Category } from "./category";
+import { DiseaseTableData } from "./disease";
+import { Manufacturer } from "./manufacturer";
+import { ReviewResponse } from "./review";
+import { User } from "./user";
+
 export interface Product {
   product_id: string;
   product_name: string;
@@ -5,34 +13,28 @@ export interface Product {
   usage_instructions?: string;
   unit_product_price: number;
   is_active: boolean;
+  is_deleted?: boolean;
   created_at: Date;
   updated_at?: Date;
-  categories: ProductCategory[];
-  manufacturer?: ProductManufacturer;
+  batches?: BatchProduct[];
+  categories: Category[];
+  manufacturer?: Manufacturer;
   distributor?: ProductDistributor;
   images: ProductImage[];
-  reviews: ProductReview[];
+  reviews: ReviewResponse[];
   avg_rating: number | null;
   product_ingredients: ProductIngredient[];
   productDiseases: ProductDisease[];
 }
 
-// Supporting interfaces - mapping theo serializeProduct() từ BE
-export interface ProductCategory {
-  id: string;
-  name: string;
-}
-
-export interface ProductManufacturer {
-  id: string;
-  name: string;
-  logo?: string;
-}
+// Supporting interfaces - mapping theo serializeProduct() từ B
 
 export interface ProductDistributor {
-  distributor_id: string;
+  user_id: string;
   full_name: string;
   invenstory?: Invenstory;
+  is_active: boolean;
+  is_deleted?: boolean;
 }
 
 export interface ProductImage {
@@ -53,12 +55,14 @@ export interface ProductIngredient {
   ingredient_id: string;
   ingredient_name: string;
   is_primary: boolean;
+  ingredient: ActiveIngredient;
 }
 
 export interface ProductDisease {
   disease_id: string;
   disease_name: string;
   is_primary: boolean;
+  disease: DiseaseTableData;
 }
 
 // Request DTOs - mapping theo backend DTOs
@@ -177,6 +181,23 @@ export interface ProductFormErrors {
 
 export interface Invenstory {
   invenstory_id: string;
+  name?: string;
+  business_license?: string;
+  invenstory_address?: string;
+  invenstory_img?: string;
+  invenstory_lat?: string;
+  invenstory_lng?: string;
+  email?: string;
+  created_at: Date;
+  updated_at?: Date;
+  is_active: boolean;
+  is_deleted?: boolean;
+}
+
+export interface InvenstoryClient {
+  distributor: User;
+  invenstory_id: string;
+  batch_products?: BatchProduct[];
   name?: string;
   business_license?: string;
   invenstory_address?: string;

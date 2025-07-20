@@ -204,22 +204,27 @@ export class ProductService {
   }
 
   async findAll() {
+    const relations = [
+      'images',
+      'categories',
+      'distributor',
+      'distributor.invenstory',
+      'manufacturer',
+      'reviews',
+      'reviews.user',
+      'reviews.distributor',
+      'reviews.parent_review',
+      'batches',
+      'batches.product_types',
+      'batches.promotions',
+      'product_ingredients',
+      'product_ingredients.ingredient',
+      'productDiseases',
+      'productDiseases.disease',
+    ];
     return await this.productRepo.find({
       where: { is_deleted: false },
-      relations: [
-        'images',
-        'categories',
-        'distributor',
-        'distributor.invenstory',
-        'manufacturer',
-        'batches',
-        'batches.product_types',
-        'batches.promotions',
-        'product_ingredients',
-        'product_ingredients.ingredient',
-        'productDiseases',
-        'productDiseases.disease',
-      ],
+      relations: relations,
       order: { created_at: 'DESC' },
     });
   }

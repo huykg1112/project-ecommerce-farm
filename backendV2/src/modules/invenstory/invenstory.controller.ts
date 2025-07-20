@@ -28,6 +28,12 @@ export class InvenstoryController {
   }
 
   @Public()
+  @Get('for-users')
+  async findForUsers() {
+    return await this.invenstoryService.findForUsers();
+  }
+
+  @Public()
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return await this.invenstoryService.findOne(id);

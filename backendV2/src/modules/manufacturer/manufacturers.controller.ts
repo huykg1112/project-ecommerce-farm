@@ -43,6 +43,12 @@ export class ManufacturersController {
     return this.manufacturersService.findAll();
   }
 
+  @Get('for-users')
+  @Public()
+  findAllForUsers() {
+    return this.manufacturersService.findAllForUsers();
+  }
+
   @Post('with-logo')
   @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(FileInterceptor('logo'))

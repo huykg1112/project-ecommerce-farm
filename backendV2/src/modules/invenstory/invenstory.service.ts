@@ -32,8 +32,41 @@ export class InvenstoryService {
 
   async findAll() {
     return this.invenstoryRepo.find({
-      relations: ['distributor'],
+      relations: [
+        'distributor',
+        'batch_products.product',
+        'batch_products.product.images',
+        'batch_products.product.manufacturer',
+        'batch_products.product.reviews',
+        'batch_products.product.categories',
+        'batch_products.product.productDiseases',
+        'batch_products.product.productDiseases.disease',
+        'batch_products.product.product_ingredients',
+        'batch_products.product.product_ingredients.ingredient',
+        'batch_products.product_types',
+        'batch_products.promotions',
+      ],
       where: { is_deleted: false },
+    });
+  }
+
+  async findForUsers() {
+    return this.invenstoryRepo.find({
+      where: { is_active: true, is_deleted: false },
+      relations: [
+        'distributor',
+        'batch_products.product',
+        'batch_products.product.images',
+        'batch_products.product.manufacturer',
+        'batch_products.product.reviews',
+        'batch_products.product.categories',
+        'batch_products.product.productDiseases',
+        'batch_products.product.productDiseases.disease',
+        'batch_products.product.product_ingredients',
+        'batch_products.product.product_ingredients.ingredient',
+        'batch_products.product_types',
+        'batch_products.promotions',
+      ],
     });
   }
 

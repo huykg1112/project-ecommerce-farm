@@ -7,8 +7,13 @@ import MobileFiltersSheet from "@/components/products/productsPage/MobileFilters
 import ProductList from "@/components/products/productsPage/ProductList";
 import SortSelect from "@/components/products/productsPage/SortSelect";
 import { Badge } from "@/components/ui/badge";
-import { categories } from "@/data/categories";
-import { products } from "@/data/products";
+import { categoryServiceManagement } from "@/lib_dashboard/services/category-service-management";
+import { inventoryServiceManagement } from "@/lib_dashboard/services/invenstory-service-management";
+import { manufacturerServiceManagement } from "@/lib_dashboard/services/manufacturers-service-management";
+import { productServiceManagement } from "@/lib_dashboard/services/product-service-management";
+import { Category } from "@/lib_dashboard/types/category";
+import { Manufacturer } from "@/lib_dashboard/types/manufacturer";
+import { InvenstoryClient, Product } from "@/lib_dashboard/types/product";
 import { FilterState, SortOption } from "@/types/products";
 import { X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -17,36 +22,73 @@ import { useEffect, useState } from "react";
 export default function ProductsPage() {
   const searchParams = useSearchParams();
   const [categoryParam, setCategoryParam] = useState<string | null>(null);
+
+  const [fetchedCategories, setFetchedCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [fetchedProducts, setFetchedProducts] = useState<Product[]>([]);
+  const [fetchedInventory, setFetchedInventory] = useState<InvenstoryClient[]>(
+    []
+  );
+  const [fetchedManufacturers, setFetchedManufacturers] = useState<
+    Manufacturer[]
+  >([]);
+
+  // Fetch data
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const products = await productServiceManagement.getProductsForUser();
+
+        console.log("Fetched Products:", products);
+        if (products) {
+          setFetchedProducts(products);
+        }
+
+        const inventory =
+          await inventoryServiceManagement.getInventoryForUser();
+        if (inventory) {
+          setFetchedInventory(inventory);
+        }
+
+        const manufacturers =
+          await manufacturerServiceManagement.getManufacturersForUser();
+        if (manufacturers) {
+          setFetchedManufacturers(manufacturers);
+        }
+
+        const categories =
+          await categoryServiceManagement.getCategoriesForUser();
+        if (categories) {
+          setFetchedCategories(categories);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   useEffect(() => {
     setCategoryParam(searchParams.get("category"));
   }, [searchParams]);
 
-  // Giá trị mặc định cho bộ lọc
   const initialFilters: FilterState = {
     categories: categoryParam ? [categoryParam] : [],
-    priceRange: [0, 500000],
+    priceRange: [0, 5000000],
     rating: null,
-    sellers: [],
+    inventory_ids: [],
     onSale: false,
   };
   const initSearchTerm = searchParams.get("search") || "";
 
-  // State cho bộ lọc và sắp xếp
   const [filters, setFilters] = useState<FilterState>(initialFilters);
   const [sort, setSort] = useState<SortOption>("featured");
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [searchSeller, setSearchSeller] = useState("");
+  const [searchTerm, setSearchTerm] = useState(initSearchTerm);
 
-  useEffect(() => {
-    if (initSearchTerm) {
-      setSearchTerm(initSearchTerm);
-    } else {
-      setSearchTerm("");
-    }
-  }, [initSearchTerm]);
-
-  // Cập nhật filters khi categoryParam thay đổi
   useEffect(() => {
     if (categoryParam) {
       setFilters((prev) => ({
@@ -56,55 +98,37 @@ export default function ProductsPage() {
     }
   }, [categoryParam]);
 
-  // Lấy giá thấp nhất và cao nhất từ danh sách sản phẩm
-  const minPrice = 0;
-  const maxPrice = 500000;
-
-  // Danh sách các đại lý
-  const sellers = Array.from(
-    new Set(products.map((product) => product.seller.name))
-  );
-
-  // Lọc sản phẩm dựa trên bộ lọc
-  const filteredProducts = products.filter((product) => {
-    // Lọc theo danh mục
+  const filteredProducts = fetchedProducts.filter((product) => {
+    // Filter by category
     if (
       filters.categories.length > 0 &&
-      !filters.categories.includes(product.category)
+      !filters.categories.includes(product.categories?.[0]?.name || "")
     ) {
       return false;
     }
 
-    // Lọc theo khoảng giá
+    // Filter by price range
     if (
-      product.price < filters.priceRange[0] ||
-      product.price > filters.priceRange[1]
+      product.unit_product_price < filters.priceRange[0] ||
+      product.unit_product_price > filters.priceRange[1]
     ) {
       return false;
     }
 
-    // Lọc theo đánh giá
-    if (filters.rating && product.rating < filters.rating) {
-      return false;
-    }
-
-    // Lọc theo đại lý
+    // Filter by inventory
     if (
-      filters.sellers.length > 0 &&
-      !filters.sellers.includes(product.seller.name)
+      filters.inventory_ids.length > 0 &&
+      !filters.inventory_ids.includes(
+        product.distributor?.invenstory?.invenstory_id || ""
+      )
     ) {
       return false;
     }
 
-    // Lọc theo khuyến mãi
-    if (filters.onSale && (!product.discount || product.discount <= 0)) {
-      return false;
-    }
-
-    // Lọc theo từ khóa tìm kiếm
+    // Filter by search term
     if (
       searchTerm &&
-      !product.name.toLowerCase().includes(searchTerm.toLowerCase())
+      !product.product_name.toLowerCase().includes(searchTerm.toLowerCase())
     ) {
       return false;
     }
@@ -112,26 +136,23 @@ export default function ProductsPage() {
     return true;
   });
 
-  // Sắp xếp sản phẩm
+  console.log("Filtered Products:", filteredProducts);
+
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     switch (sort) {
       case "newest":
         return (
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
       case "price-low-high":
-        return a.price - b.price;
+        return a.unit_product_price - b.unit_product_price;
       case "price-high-low":
-        return b.price - a.price;
-      case "rating":
-        return b.rating - a.rating;
-      case "featured":
+        return b.unit_product_price - a.unit_product_price;
       default:
-        return b.featured ? 1 : -1;
+        return 0;
     }
   });
 
-  // Xử lý thay đổi bộ lọc
   const handleFilterChange = (filterType: keyof FilterState, value: any) => {
     setFilters((prev) => ({
       ...prev,
@@ -139,7 +160,6 @@ export default function ProductsPage() {
     }));
   };
 
-  // Xử lý thay đổi danh mục
   const handleCategoryChange = (category: string) => {
     setFilters((prev) => {
       const newCategories = prev.categories.includes(category)
@@ -152,20 +172,18 @@ export default function ProductsPage() {
     });
   };
 
-  // Xử lý thay đổi đại lý
-  const handleSellerChange = (seller: string) => {
+  const handleInventoryChange = (inventory: string) => {
     setFilters((prev) => {
-      const newSellers = prev.sellers.includes(seller)
-        ? prev.sellers.filter((s) => s !== seller)
-        : [...prev.sellers, seller];
+      const newInventory = prev.inventory_ids.includes(inventory)
+        ? prev.inventory_ids.filter((i) => i !== inventory)
+        : [...prev.inventory_ids, inventory];
       return {
         ...prev,
-        sellers: newSellers,
+        inventory_ids: newInventory,
       };
     });
   };
 
-  // Xử lý thay đổi đánh giá
   const handleRatingChange = (rating: number | null) => {
     setFilters((prev) => ({
       ...prev,
@@ -173,7 +191,6 @@ export default function ProductsPage() {
     }));
   };
 
-  // Xử lý thay đổi khoảng giá
   const handlePriceChange = (value: number[]) => {
     setFilters((prev) => ({
       ...prev,
@@ -181,23 +198,19 @@ export default function ProductsPage() {
     }));
   };
 
-  // Xóa tất cả bộ lọc
   const clearAllFilters = () => {
     setCategoryParam(null);
     setFilters(initialFilters);
     setSearchTerm("");
-    setSearchSeller("");
   };
 
-  // Đếm số lượng bộ lọc đang áp dụng
   const activeFilterCount =
     filters.categories.length +
     (filters.rating ? 1 : 0) +
-    filters.sellers.length +
+    filters.inventory_ids.length +
     (filters.onSale ? 1 : 0) +
     (searchTerm ? 1 : 0);
 
-  // Hiển thị các bộ lọc đang áp dụng
   const renderActiveFilters = () => {
     const activeFilters = [];
     filters.categories.forEach((category) => {
@@ -228,15 +241,19 @@ export default function ProductsPage() {
         </Badge>
       );
     }
-    filters.sellers.forEach((seller) => {
+    filters.inventory_ids.forEach((inventory_id) => {
       activeFilters.push(
         <Badge
-          key={`seller-${seller}`}
+          key={inventory_id}
           variant="outline"
           className="flex items-center gap-1 m-1"
         >
-          {seller}
-          <button onClick={() => handleSellerChange(seller)}>
+          {/* tìm lại tên của inventory bằng  */}
+          {
+            fetchedInventory.find((inv) => inv.invenstory_id === inventory_id)
+              ?.name
+          }
+          <button onClick={() => handleInventoryChange(inventory_id)}>
             <X className="h-3 w-3" />
           </button>
         </Badge>
@@ -281,17 +298,15 @@ export default function ProductsPage() {
       <div className="flex flex-col md:flex-row gap-8">
         {/* Desktop Filters */}
         <FiltersSidebar
-          categories={categories}
-          sellers={sellers}
+          categories={fetchedCategories}
+          inventorys={fetchedInventory}
           filters={filters}
-          minPrice={minPrice}
-          maxPrice={maxPrice}
+          minPrice={0}
+          maxPrice={5000000}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
-          searchSeller={searchSeller}
-          setSearchSeller={setSearchSeller}
           handleCategoryChange={handleCategoryChange}
-          handleSellerChange={handleSellerChange}
+          handleInventoryChange={handleInventoryChange}
           handleRatingChange={handleRatingChange}
           handlePriceChange={handlePriceChange}
           handleFilterChange={handleFilterChange}
@@ -300,15 +315,15 @@ export default function ProductsPage() {
 
         {/* Mobile Filters */}
         <MobileFiltersSheet
-          categories={categories}
-          sellers={sellers}
+          categories={fetchedCategories}
+          inventorys={fetchedInventory}
           filters={filters}
-          minPrice={minPrice}
-          maxPrice={maxPrice}
+          minPrice={0}
+          maxPrice={500000}
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
           handleCategoryChange={handleCategoryChange}
-          handleSellerChange={handleSellerChange}
+          handleInventoryChange={handleInventoryChange}
           handleRatingChange={handleRatingChange}
           handlePriceChange={handlePriceChange}
           handleFilterChange={handleFilterChange}

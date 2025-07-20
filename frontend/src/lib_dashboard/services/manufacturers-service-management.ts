@@ -21,6 +21,20 @@ export const manufacturerServiceManagement = {
     }
   },
 
+  async getManufacturersForUser() {
+    try {
+      const response = await axiosInstance.get(`/manufacturers/for-users`);
+      return response.data;
+    } catch (error) {
+      let msg = "Lỗi khi lấy danh sách nhà sản xuất cho người dùng";
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        msg = error.response.data.message;
+      }
+      showToast.error(msg);
+      throw error;
+    }
+  },
+
   async getManufacturerById(id: string) {
     try {
       const response = await axiosInstance.get(`/manufacturers/${id}`);

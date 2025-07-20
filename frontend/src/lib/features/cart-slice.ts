@@ -1,3 +1,5 @@
+import { BatchProduct } from "@/lib_dashboard/types/batch-product";
+import { Promotion } from "@/lib_dashboard/types/promotion";
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 //createSlice là một hàm của Redux Toolkit để tạo ra một slice (một phần của Redux store) với các reducer và action creators tự động
 //PayloadAction là một kiểu dữ liệu của Redux Toolkit để định nghĩa action với payload
@@ -6,10 +8,13 @@ export interface CartItem {
   id: string;
   name: string;
   price: number;
+  valueDiscount?: number; // Optional value for discount
   quantity: number;
   image: string;
   sellerId: string;
   sellerName: string;
+  promotion: Promotion | null; // Optional promotion
+  batch: BatchProduct | null; // Optional batch
 }
 
 interface CartState {
@@ -31,7 +36,9 @@ const cartSlice = createSlice({
     addToCart: (state, action: PayloadAction<CartItem>) => {
       //PayloadAction là một kiểu dữ liệu của Redux Toolkit để định nghĩa action với payload
       const existingItem = state.items.find(
-        (item) => item.id === action.payload.id
+        (item) =>
+          item.id === action.payload.id &&
+          item.batch?.batch_id === action.payload.batch?.batch_id
       );
 
       if (existingItem) {

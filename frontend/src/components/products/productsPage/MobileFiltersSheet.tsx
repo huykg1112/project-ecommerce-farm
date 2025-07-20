@@ -17,21 +17,23 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Slider } from "@/components/ui/slider";
+import { Category } from "@/lib_dashboard/types/category";
+import { InvenstoryClient } from "@/lib_dashboard/types/product";
 import { FilterState, SortOption } from "@/types/products";
 import { Filter } from "lucide-react";
 import ActiveFilters from "./ActiveFilters";
 import SortSelect from "./SortSelect";
 
 interface MobileFiltersSheetProps {
-  categories: any[];
-  sellers: string[];
+  categories: Category[];
+  inventorys: InvenstoryClient[];
   filters: FilterState;
   minPrice: number;
   maxPrice: number;
   searchTerm: string;
   setSearchTerm: (value: string) => void;
   handleCategoryChange: (category: string) => void;
-  handleSellerChange: (seller: string) => void;
+  handleInventoryChange: (inventory: string) => void;
   handleRatingChange: (rating: number | null) => void;
   handlePriceChange: (value: number[]) => void;
   handleFilterChange: (filterType: keyof FilterState, value: any) => void;
@@ -46,14 +48,14 @@ interface MobileFiltersSheetProps {
 
 export default function MobileFiltersSheet({
   categories,
-  sellers,
+  inventorys,
   filters,
   minPrice,
   maxPrice,
   searchTerm,
   setSearchTerm,
   handleCategoryChange,
-  handleSellerChange,
+  handleInventoryChange,
   handleRatingChange,
   handlePriceChange,
   handleFilterChange,
@@ -131,7 +133,7 @@ export default function MobileFiltersSheet({
                               htmlFor={`mobile-category-${category.id}`}
                               className="text-sm cursor-pointer"
                             >
-                              {category.name} ({category.productCount})
+                              {category.name} ({category.products?.length || 0})
                             </Label>
                           </div>
                         ))}
@@ -204,21 +206,25 @@ export default function MobileFiltersSheet({
                     <AccordionTrigger>Đại lý</AccordionTrigger>
                     <AccordionContent>
                       <div className="space-y-2">
-                        {sellers.map((seller) => (
+                        {inventorys.map((inventory) => (
                           <div
-                            key={seller}
+                            key={inventory.invenstory_id}
                             className="flex items-center space-x-2"
                           >
                             <Checkbox
-                              id={`mobile-seller-${seller}`}
-                              checked={filters.sellers.includes(seller)}
-                              onCheckedChange={() => handleSellerChange(seller)}
+                              id={`mobile-inventory-${inventory.invenstory_id}`}
+                              checked={filters.inventory_ids.includes(
+                                inventory.invenstory_id
+                              )}
+                              onCheckedChange={() =>
+                                handleInventoryChange(inventory.invenstory_id)
+                              }
                             />
                             <Label
-                              htmlFor={`mobile-seller-${seller}`}
+                              htmlFor={`mobile-inventory-${inventory.invenstory_id}`}
                               className="text-sm cursor-pointer"
                             >
-                              {seller}
+                              {inventory.name}
                             </Label>
                           </div>
                         ))}

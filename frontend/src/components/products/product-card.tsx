@@ -3,6 +3,13 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useAuthAction } from "@/lib/auth/use-auth-action";
 import { useCartAnimation } from "@/lib/cart/cart-animation-context";
 import { addToCart } from "@/lib/features/cart-slice";
@@ -14,134 +21,220 @@ import {
 import { showToast } from "@/lib/toast-provider";
 import { formatCurrency } from "@/lib/utils";
 import { useWishlistAnimation } from "@/lib/wishlist/wishlist-animation-context";
+import { BatchProduct } from "@/lib_dashboard/types/batch-product";
+import { Product } from "@/lib_dashboard/types/product";
+import { Promotion } from "@/lib_dashboard/types/promotion";
 import { Heart, ShoppingCart, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  originalPrice?: number;
-  discount?: number;
-  images: string[];
-  rating: number;
-  ratingCount: number;
-  seller: {
-    id: string;
-    name: string;
-  };
-  category: string;
-  featured?: boolean;
-  createdAt: string;
-}
 
 interface ProductCardProps {
   product: Product;
 }
 
+const getMaxDiscountForBatch = (batch: BatchProduct): Promotion | null => {
+  if (!batch.promotions || batch.promotions.length === 0) return null;
+  let maxDiscount = 0;
+  let maxPromotion: Promotion | null = null;
+  batch.promotions.forEach((promo) => {
+    if (
+      promo.is_active &&
+      !promo.is_deleted &&
+      promo?.discount_value &&
+      promo?.discount_value > maxDiscount
+    ) {
+      maxDiscount = promo.discount_value;
+      maxPromotion = promo;
+    }
+  });
+  return maxPromotion;
+};
+
+const valueWithDiscount = (
+  batch: BatchProduct,
+  maxPromotion: Promotion | null
+): number => {
+  if (
+    maxPromotion &&
+    maxPromotion.discount_value &&
+    maxPromotion.discount_value > 0
+  ) {
+    return (
+      batch.unit_product_price -
+      (batch.unit_product_price * maxPromotion.discount_value) / 100
+    );
+  }
+  return batch.unit_product_price;
+};
+
 export default function ProductCard({ product }: ProductCardProps) {
-  const isInWishlist = useSelector(selectIsInWishlist(product.id));
+  const isInWishlist = useSelector(selectIsInWishlist(product.product_id));
   const dispatch = useDispatch();
   const { requireAuth } = useAuthAction();
   const { startAnimation } = useCartAnimation();
   const { startAnimation: startWishlistAnimation } = useWishlistAnimation();
   const productRef = useRef<HTMLDivElement>(null);
+  const [selectedBatch, setSelectedBatch] = useState<BatchProduct | null>(null);
+
+  const averageRating: number = useMemo(() => {
+    if (!product.reviews || product.reviews.length === 0) return 0;
+    const totalRating = product.reviews.reduce(
+      (sum, review) => sum + review.rating,
+      0
+    );
+    return totalRating / product.reviews.length;
+  }, [product.reviews]);
+
+  const differentProductTypes = useMemo(() => {
+    if (!product.batches || product.batches.length === 0) return [];
+
+    const uniqueTypes = new Map<string, BatchProduct>();
+
+    product.batches.forEach((batch) => {
+      if (
+        !batch.is_active ||
+        batch.is_deleted ||
+        !batch.product_types ||
+        !batch.product_types.is_active ||
+        batch.product_types.is_deleted ||
+        !batch.unit_product_price ||
+        batch.quantity <= 0 ||
+        batch.expiry_date <= new Date()
+      ) {
+        return;
+      }
+
+      const existing = uniqueTypes.get(batch.product_types.product_type_id);
+
+      if (
+        !existing ||
+        (batch.expiry_date && batch.expiry_date < existing.expiry_date)
+      ) {
+        uniqueTypes.set(batch.product_types.product_type_id, batch);
+      }
+    });
+
+    const batches = Array.from(uniqueTypes.values());
+    if (batches.length > 0 && !selectedBatch) {
+      setSelectedBatch(batches[0]);
+    }
+    return batches;
+  }, [product.batches, selectedBatch]);
+
+  const maxPromotion = useMemo(
+    () => (selectedBatch ? getMaxDiscountForBatch(selectedBatch) : null),
+    [selectedBatch]
+  );
+
+  const discountedPrice = useMemo(
+    () => (selectedBatch ? valueWithDiscount(selectedBatch, maxPromotion) : 0),
+    [selectedBatch, maxPromotion]
+  );
 
   const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault(); // Ngăn chặn chuyển hướng đến trang chi tiết sản phẩm
+    e.preventDefault();
 
-    // Kiểm tra đăng nhập trước khi thêm vào giỏ hàng
+    if (!selectedBatch) return;
+
     requireAuth(() => {
-      // Thêm vào giỏ hàng
       dispatch(
         addToCart({
-          id: product.id,
-          name: product.name,
-          price: product.price,
+          id: product.product_id,
+          name: product.product_name,
+          price: discountedPrice,
+          valueDiscount: maxPromotion?.discount_value || 0,
           quantity: 1,
-          image: product.images[0],
-          sellerId: product.seller.id,
-          sellerName: product.seller.name,
+          image: product.images[0].image_url,
+          sellerId:
+            product.distributor?.invenstory?.invenstory_id ||
+            (Math.floor(Math.random() * 999) + 1).toString(),
+          sellerName: product.distributor?.invenstory?.name || "N/A",
+          promotion: maxPromotion,
+          batch: selectedBatch,
         })
       );
 
-      // Lấy vị trí của sản phẩm để bắt đầu animation
       if (productRef.current) {
         const rect = productRef.current.getBoundingClientRect();
         const sourcePosition = {
-          x: rect.left + rect.width / 2 - 32, // Căn giữa
+          x: rect.left + rect.width / 2 - 32,
           y: rect.top + rect.height / 2 - 32,
         };
 
-        // Bắt đầu animation
-        startAnimation(product.images[0], product.name, sourcePosition);
+        startAnimation(
+          product.images[0].image_url,
+          product.product_name,
+          sourcePosition
+        );
       }
 
-      // Hiển thị thông báo
-      showToast.success(`Đã thêm ${product.name} vào giỏ hàng!`);
+      showToast.success(`Đã thêm ${product.product_name} vào giỏ hàng!`);
     });
   };
 
   const toggleWishlist = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevent navigation to product detail page
+    e.preventDefault();
 
-    // Check login before adding to wishlist
     requireAuth(() => {
       if (isInWishlist) {
-        dispatch(removeFromWishlist(product.id));
-        showToast.info(`Đã xóa ${product.name} khỏi danh sách yêu thích!`);
+        dispatch(removeFromWishlist(product.product_id));
+        showToast.info(
+          `Đã xóa ${product.product_name} khỏi danh sách yêu thích!`
+        );
       } else {
         dispatch(
           addToWishlist({
-            id: product.id,
-            name: product.name,
-            price: product.price,
-            image: product.images[0],
-            sellerId: product.seller.id,
-            sellerName: product.seller.name,
-            category: product.category,
-            discount: product.discount,
+            id: product.product_id,
+            name: product.product_name,
+            price:
+              selectedBatch?.unit_product_price || product.unit_product_price,
+            image: product.images[0].image_url,
+            sellerId:
+              product.distributor?.invenstory?.invenstory_id ||
+              (Math.floor(Math.random() * 999) + 1).toString(),
+            sellerName: product.distributor?.invenstory?.name || "N/A",
+            category: product.categories[0]?.name || "N/A",
+            discount: maxPromotion?.discount_value || 0,
           })
         );
 
-        // Get product position for animation
         if (productRef.current) {
           const rect = productRef.current.getBoundingClientRect();
           const sourcePosition = {
-            x: rect.left + rect.width / 2 - 32, // Center
+            x: rect.left + rect.width / 2 - 32,
             y: rect.top + rect.height / 2 - 32,
           };
 
-          // Start animation
           startWishlistAnimation(
-            product.images[0],
-            product.name,
+            product.images[0].image_url,
+            product.product_name,
             sourcePosition
           );
         }
 
-        showToast.success(`Đã thêm ${product.name} vào danh sách yêu thích!`);
+        showToast.success(
+          `Đã thêm ${product.product_name} vào danh sách yêu thích!`
+        );
       }
     });
   };
 
   return (
     <Card
-      className="overflow-hidden product-card border-none shadow-md"
+      className="overflow-hidden product-card border-none shadow-md hover:shadow-lg transition-shadow"
       ref={productRef}
     >
       <div className="relative">
-        <Link href={`/products/${product.id}`}>
+        <Link href={`/products/${product.product_id}`}>
           <div className="aspect-square overflow-hidden">
             <Image
-              src={product.images[0] || "/placeholder.svg"}
-              alt={product.name}
+              src={product.images[0].image_url || "/placeholder.svg"}
+              alt={product.product_name}
               width={300}
               height={300}
-              className="object-cover w-full h-full transition-transform hover:scale-110 "
+              className="object-cover w-full h-full transition-transform hover:scale-110"
             />
           </div>
         </Link>
@@ -158,20 +251,40 @@ export default function ProductCard({ product }: ProductCardProps) {
           />
           <span className="sr-only">Add to wishlist</span>
         </Button>
-        {product.discount && product.discount > 0 && (
-          <Badge className="absolute top-2 left-2 bg-red-500">
-            -{product.discount}%
-          </Badge>
-        )}
-        {product.featured && (
+        {maxPromotion &&
+          maxPromotion.discount_value &&
+          maxPromotion.discount_value > 0 && (
+            <Badge className="absolute top-2 left-2 bg-red-500">
+              -{maxPromotion.discount_value}%
+            </Badge>
+          )}
+        {Math.floor(Math.random() * 999) % 2 === 0 && (
           <Badge className="absolute bottom-2 left-2 bg-primary">Nổi bật</Badge>
         )}
       </div>
       <CardContent className="p-4">
-        <div className="text-sm text-gray-500 mb-1">{product.category}</div>
-        <Link href={`/products/${product.id}`} className="hover:underline">
+        <div className="flex justify-between items-center mb-2">
+          <div className="text-sm text-gray-500">
+            {product.categories && product.categories.length > 0
+              ? product.categories[0]?.name
+              : "Không có danh mục"}
+          </div>
+          {product.manufacturer?.logo && (
+            <Image
+              src={product.manufacturer.logo}
+              alt={`${product.manufacturer.name} logo`}
+              width={40}
+              height={40}
+              className="object-contain"
+            />
+          )}
+        </div>
+        <Link
+          href={`/products/${product.product_id}`}
+          className="hover:underline"
+        >
           <h3 className="font-semibold text-lg line-clamp-2 h-12">
-            {product.name}
+            {product.product_name}
           </h3>
         </Link>
         <div className="flex items-center mt-2 mb-1">
@@ -180,7 +293,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               <Star
                 key={i}
                 className={`h-4 w-4 ${
-                  i < Math.floor(product.rating)
+                  i < Math.floor(averageRating)
                     ? "fill-yellow-400 text-yellow-400"
                     : "text-gray-300"
                 }`}
@@ -188,33 +301,62 @@ export default function ProductCard({ product }: ProductCardProps) {
             ))}
           </div>
           <span className="text-xs text-gray-500 ml-1">
-            ({product.ratingCount})
+            ({product?.reviews?.length || 0} đánh giá)
           </span>
         </div>
         <div className="flex items-center mt-2">
           <Link
-            href={`/seller/${product.seller.id}`}
+            href={`/seller/${product.distributor?.invenstory?.invenstory_id}`}
             className="text-sm text-primary hover:underline"
           >
-            {product.seller.name}
+            {product.distributor?.invenstory?.name || "Nhà cung cấp"}
           </Link>
         </div>
+        {differentProductTypes.length > 0 && (
+          <Select
+            value={selectedBatch?.batch_id}
+            onValueChange={(value) => {
+              const batch = differentProductTypes.find(
+                (b) => b.batch_id === value
+              );
+              setSelectedBatch(batch || null);
+            }}
+          >
+            <SelectTrigger className="mt-2 bg-gray-50 border-gray-200">
+              <SelectValue
+                placeholder="Chọn loại sản phẩm"
+                className="text-sm"
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {differentProductTypes.map((batch) => (
+                <SelectItem key={batch.batch_id} value={batch.batch_id}>
+                  {batch.product_types?.type_name || "Không có tên"} (Còn{" "}
+                  {batch.quantity})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </CardContent>
       <CardFooter className="p-4 pt-0 flex items-center justify-between">
         <div className="flex flex-col justify-start items-start">
           <span className="font-bold text-lg">
-            {formatCurrency(product.price)}
+            {formatCurrency(discountedPrice)}
           </span>
-          {product.originalPrice && (
-            <span className="text-gray-400 line-through text-sm ml-2">
-              {formatCurrency(product.originalPrice)}
-            </span>
-          )}
+          {maxPromotion &&
+            maxPromotion.discount_value &&
+            maxPromotion.discount_value > 0 && (
+              <span className="text-gray-400 line-through text-sm">
+                {formatCurrency(selectedBatch?.unit_product_price || 0)}
+              </span>
+            )}
         </div>
         <Button
           size="sm"
           onClick={handleAddToCart}
           className="bg-primary hover:bg-primary-dark"
+          disabled={!selectedBatch}
         >
           <ShoppingCart className="h-4 w-4 mr-1" />
           <span className="sr-only md:not-sr-only md:inline-block">Thêm</span>
