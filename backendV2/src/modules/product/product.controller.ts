@@ -57,6 +57,38 @@ export class ProductController {
     return this.productService.findAllForUser();
   }
 
+  @Public()
+  @Get('recommendations')
+  async getRecommendations(@Req() req) {
+    if (!req.user) {
+      return this.productService.getPopularProducts(10);
+    }
+    const userId = req.user.user_id;
+    return this.productService.getRecommendationsForUser(userId);
+  }
+
+  /**
+   * Lấy sản phẩm đề xuất dựa trên nội dung (content-based)
+   */
+  @Public()
+  @Get('recommendations/content-based')
+  async getContentBasedRecommendations(@Req() req) {
+    if (!req.user) {
+      return this.productService.getPopularProducts(10);
+    }
+    const userId = req.user.user_id;
+    return this.productService.getContentBasedRecommendations(userId);
+  }
+
+  /**
+   * Lấy sản phẩm phổ biến (fallback cho user mới)
+   */
+  @Public()
+  @Get('popular')
+  async getPopularProducts() {
+    return this.productService.getPopularProducts(10);
+  }
+
   //  @Roles(Role.DISTRIBUTOR, Role.ADMIN)
   @Patch('batch/toggle-status')
   batchToggleStatus(@Body() batchDto: BatchToggleStatusDto, @Req() req) {
@@ -237,4 +269,10 @@ export class ProductController {
       req.user,
     );
   }
+
+  // === RECOMMENDATION SYSTEM ===
+
+  /**
+   * Lấy sản phẩm đề xuất cho user dựa trên Collaborative Filtering
+   */
 }

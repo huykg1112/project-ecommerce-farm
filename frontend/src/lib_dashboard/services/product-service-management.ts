@@ -429,4 +429,69 @@ export const productServiceManagement = {
       throw error;
     }
   },
+
+  /**
+   * Lấy sản phẩm đề xuất cho user
+   * @param userId ID của user
+   * @param limit Số lượng sản phẩm đề xuất
+   * @returns Array of recommended products
+   */
+  async getRecommendationsForUser() {
+    try {
+      const res = await axiosInstance.get(`/products/recommendations`);
+      console.log("recomment data", res.data);
+      return res.data;
+    } catch (error: any) {
+      let msg = "Lỗi khi lấy sản phẩm đề xuất";
+      if (error?.response?.data?.message) {
+        msg = error.response.data.message;
+      }
+      showToast.error(msg);
+      return [];
+    }
+  },
+
+  /**
+   * Lấy sản phẩm đề xuất dựa trên nội dung
+   * @param userId ID của user
+   * @param limit Số lượng sản phẩm đề xuất
+   * @returns Array of content-based recommended products
+   */
+  async getContentBasedRecommendations() {
+    try {
+      const res = await axiosInstance.get(
+        `/products/recommendations/content-based`
+      );
+      console.log("recomment data", res.data);
+
+      return res.data;
+    } catch (error: any) {
+      let msg = "Lỗi khi lấy sản phẩm đề xuất theo nội dung";
+      if (error?.response?.data?.message) {
+        msg = error.response.data.message;
+      }
+      showToast.error(msg);
+      return [];
+    }
+  },
+
+  /**
+   * Lấy sản phẩm phổ biến (cho user mới hoặc fallback)
+   * @param limit Số lượng sản phẩm
+   * @returns Array of popular products
+   */
+  async getPopularProducts() {
+    try {
+      const res = await axiosInstance.get(`/products/popular`);
+      console.log("recomment data", res.data);
+      return res.data;
+    } catch (error: any) {
+      let msg = "Lỗi khi lấy sản phẩm phổ biến";
+      if (error?.response?.data?.message) {
+        msg = error.response.data.message;
+      }
+      showToast.error(msg);
+      return [];
+    }
+  },
 };

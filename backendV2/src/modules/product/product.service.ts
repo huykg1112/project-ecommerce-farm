@@ -22,6 +22,7 @@ import { User } from '../user/entities/user.entity';
 import { AdvancedProductFilterDto } from './dto/advanced-product-filter.dto';
 import { CreateProductDto } from './dto/create-product.dto';
 import { ProductFilterDto } from './dto/product-filter.dto';
+import { PredictionScore, SimilarUser } from './dto/recommendation.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Product } from './entities/product.entity';
 
@@ -46,6 +47,9 @@ export class ProductService {
     private readonly activeIngredientRepo: Repository<ActiveIngredient>,
     @InjectRepository(Disease)
     private readonly diseaseRepo: Repository<Disease>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+
     private readonly cloudinaryService: CloudinaryService,
   ) {}
 
@@ -1048,5 +1052,460 @@ export class ProductService {
       console.error('Error extracting public_id:', error);
       return null;
     }
+  }
+
+  // === RECOMMENDATION SYSTEM ===
+
+  /**
+   * Hệ thống đề xuất sản phẩm dựa trên Collaborative Filtering
+   * @param userId ID của user cần đề xuất
+   * @param limit Số lượng sản phẩm đề xuất (default: 10)
+   * @param similarUsersLimit Số lượng user tương tự để tính toán (default: 20)
+   * @returns Array of recommended products with scores
+   */
+  async getRecommendationsForUser(
+    userId: string,
+    limit: number = 10,
+    similarUsersLimit: number = 20,
+  ) {
+    try {
+      // Kiểm tra user tồn tại
+      const targetUser = await this.userRepo.findOne({
+        where: { user_id: userId, is_deleted: false },
+      });
+
+      if (!targetUser) {
+        throw new NotFoundException('User không tồn tại');
+      }
+
+      // Lấy lịch sử mua hàng và review của user
+      const userHistory = await this.getUserPurchaseAndReviewHistory(userId);
+
+      // Nếu user chưa có lịch sử, return popular products
+      if (userHistory.length === 0) {
+        return await this.getPopularProducts(limit);
+      }
+
+      // Tạo user-product matrix cho tất cả users
+      const userProductMatrix = await this.buildUserProductMatrix();
+
+      // Tìm users tương tự
+      const similarUsers = await this.findSimilarUsers(
+        userId,
+        userProductMatrix,
+        similarUsersLimit,
+      );
+
+      // Tính điểm dự đoán cho các sản phẩm chưa mua
+      const recommendations = await this.calculateRecommendations(
+        userId,
+        similarUsers,
+        userProductMatrix,
+        limit,
+      );
+
+      return recommendations;
+    } catch (error) {
+      console.error('Error in getRecommendationsForUser:', error);
+      // Fallback to popular products
+      return await this.getPopularProducts(limit);
+    }
+  }
+
+  /**
+   * Lấy lịch sử mua hàng và review của user
+   */
+  private async getUserPurchaseAndReviewHistory(userId: string) {
+    // Lấy lịch sử mua hàng
+    const purchaseHistory = await this.productRepo
+      .createQueryBuilder('product')
+      .select([
+        'product.product_id as product_id',
+        'product.product_name as product_name',
+        'COUNT(DISTINCT order_detail.order_detail_id) as purchase_count',
+        'MAX(order.created_at) as last_purchase_date',
+      ])
+      .leftJoin('product.batches', 'batch_product')
+      .leftJoin('batch_product.order_details', 'order_detail')
+      .leftJoin('order_detail.order', 'order')
+      .leftJoin('order.user', 'user')
+      .where('user.user_id = :userId', { userId })
+      .andWhere('product.is_deleted = false')
+      .andWhere('batch_product.is_deleted = false')
+      .andWhere('order_detail.is_deleted = false')
+      .andWhere('order.is_deleted = false')
+      .groupBy('product.product_id, product.product_name')
+      .getRawMany();
+
+    // Lấy lịch sử review
+    const reviewHistory = await this.productRepo
+      .createQueryBuilder('product')
+      .select([
+        'product.product_id as product_id',
+        'AVG(review.rating) as avg_rating',
+      ])
+      .leftJoin('product.reviews', 'review')
+      .where('review.user.user_id = :userId', { userId })
+      .andWhere('product.is_deleted = false')
+      .andWhere('review.is_deleted = false')
+      .andWhere('review.rating IS NOT NULL')
+      .groupBy('product.product_id')
+      .getRawMany();
+
+    // Combine purchase và review data
+    const combinedHistory = purchaseHistory.map((purchase) => {
+      const review = reviewHistory.find(
+        (r) => r.product_id === purchase.product_id,
+      );
+      return {
+        ...purchase,
+        avg_rating: review?.avg_rating || null,
+        purchase_count: parseInt(purchase.purchase_count) || 0,
+      };
+    });
+
+    return combinedHistory.sort(
+      (a, b) =>
+        new Date(b.last_purchase_date).getTime() -
+        new Date(a.last_purchase_date).getTime(),
+    );
+  } /**
+   * Xây dựng user-product matrix cho tất cả users
+   */
+  private async buildUserProductMatrix() {
+    // Lấy purchase scores
+    const purchaseScores = await this.userRepo
+      .createQueryBuilder('user')
+      .select([
+        'user.user_id as user_id',
+        'product.product_id as product_id',
+        'COUNT(order_detail.order_detail_id) * 0.3 as score',
+      ])
+      .leftJoin('user.orders', 'order')
+      .leftJoin('order.order_details', 'order_detail')
+      .leftJoin('order_detail.batch_product', 'batch_product')
+      .leftJoin('batch_product.product', 'product')
+      .where('user.is_deleted = false')
+      .andWhere('order.is_deleted = false')
+      .andWhere('order_detail.is_deleted = false')
+      .andWhere('batch_product.is_deleted = false')
+      .andWhere('product.is_deleted = false')
+      .andWhere('product.is_active = true')
+      .groupBy('user.user_id, product.product_id')
+      .getRawMany();
+
+    // Lấy review scores
+    const reviewScores = await this.userRepo
+      .createQueryBuilder('user')
+      .select([
+        'user.user_id as user_id',
+        'review.product.product_id as product_id',
+        'AVG(review.rating) * 0.7 / 5 as score',
+      ])
+      .leftJoin('user.reviews', 'review')
+      .leftJoin('review.product', 'product')
+      .where('user.is_deleted = false')
+      .andWhere('review.is_deleted = false')
+      .andWhere('review.rating IS NOT NULL')
+      .andWhere('product.is_deleted = false')
+      .andWhere('product.is_active = true')
+      .groupBy('user.user_id, review.product.product_id')
+      .getRawMany();
+
+    // Combine scores và tạo matrix
+    const matrix = {};
+
+    // Add purchase scores
+    purchaseScores.forEach((row) => {
+      if (!matrix[row.user_id]) {
+        matrix[row.user_id] = {};
+      }
+      matrix[row.user_id][row.product_id] = parseFloat(row.score) || 0;
+    });
+
+    // Add review scores
+    reviewScores.forEach((row) => {
+      if (!matrix[row.user_id]) {
+        matrix[row.user_id] = {};
+      }
+      const currentScore = matrix[row.user_id][row.product_id] || 0;
+      matrix[row.user_id][row.product_id] =
+        currentScore + (parseFloat(row.score) || 0);
+    });
+
+    return matrix;
+  }
+
+  /**
+   * Tìm users có hành vi tương tự bằng Cosine Similarity
+   */
+  private async findSimilarUsers(
+    targetUserId: string,
+    userProductMatrix: any,
+    limit: number,
+  ): Promise<SimilarUser[]> {
+    const targetUserVector = userProductMatrix[targetUserId] || {};
+    const similarities: SimilarUser[] = [];
+
+    for (const userId in userProductMatrix) {
+      if (userId === targetUserId) continue;
+
+      const userVector = userProductMatrix[userId];
+      const similarity = this.calculateCosineSimilarity(
+        targetUserVector,
+        userVector,
+      );
+
+      if (similarity > 0) {
+        similarities.push({
+          userId,
+          similarity,
+        });
+      }
+    }
+
+    // Sort by similarity descending và lấy top N
+    return similarities
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, limit);
+  }
+
+  /**
+   * Tính Cosine Similarity giữa 2 vectors
+   */
+  private calculateCosineSimilarity(vectorA: any, vectorB: any) {
+    const commonProducts = Object.keys(vectorA).filter(
+      (productId) => vectorB[productId] !== undefined,
+    );
+
+    if (commonProducts.length === 0) return 0;
+
+    let dotProduct = 0;
+    let normA = 0;
+    let normB = 0;
+
+    commonProducts.forEach((productId) => {
+      const scoreA = vectorA[productId] || 0;
+      const scoreB = vectorB[productId] || 0;
+
+      dotProduct += scoreA * scoreB;
+      normA += scoreA * scoreA;
+      normB += scoreB * scoreB;
+    });
+
+    if (normA === 0 || normB === 0) return 0;
+
+    return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+  }
+
+  /**
+   * Tính điểm dự đoán và tạo recommendations
+   */
+  private async calculateRecommendations(
+    targetUserId: string,
+    similarUsers: SimilarUser[],
+    userProductMatrix: any,
+    limit: number,
+  ) {
+    const targetUserProducts = new Set(
+      Object.keys(userProductMatrix[targetUserId] || {}),
+    );
+
+    const productScores: {
+      [key: string]: {
+        weightedSum: number;
+        similaritySum: number;
+        voters: number;
+      };
+    } = {};
+
+    // Tính predicted score cho từng sản phẩm
+    similarUsers.forEach(({ userId, similarity }) => {
+      const userProducts = userProductMatrix[userId] || {};
+
+      Object.keys(userProducts).forEach((productId) => {
+        if (!targetUserProducts.has(productId)) {
+          if (!productScores[productId]) {
+            productScores[productId] = {
+              weightedSum: 0,
+              similaritySum: 0,
+              voters: 0,
+            };
+          }
+
+          productScores[productId].weightedSum +=
+            userProducts[productId] * similarity;
+          productScores[productId].similaritySum += similarity;
+          productScores[productId].voters += 1;
+        }
+      });
+    });
+
+    // Tính predicted score và sort
+    const predictions: PredictionScore[] = [];
+    for (const productId in productScores) {
+      const { weightedSum, similaritySum, voters } = productScores[productId];
+
+      if (similaritySum > 0 && voters >= 2) {
+        // Ít nhất 2 users tương tự
+        const predictedScore = weightedSum / similaritySum;
+        const confidence = Math.min(voters / 5, 1); // Confidence based on số lượng voters
+
+        predictions.push({
+          productId,
+          predictedScore,
+          confidence,
+          voters,
+        });
+      }
+    }
+
+    // Sort by predicted score và confidence
+    predictions.sort((a, b) => {
+      const scoreA = a.predictedScore * a.confidence;
+      const scoreB = b.predictedScore * b.confidence;
+      return scoreB - scoreA;
+    });
+
+    // Lấy thông tin chi tiết của products
+    const topProductIds = predictions.slice(0, limit).map((p) => p.productId);
+
+    if (topProductIds.length === 0) {
+      return await this.getPopularProducts(limit);
+    }
+
+    const products = await this.productRepo.find({
+      where: {
+        product_id: In(topProductIds),
+        is_deleted: false,
+        is_active: true,
+      },
+      relations: [
+        'images',
+        'categories',
+        'distributor',
+        'manufacturer',
+        'batches',
+      ],
+    });
+
+    // Combine với prediction data
+    const recommendations = products.map((product) => {
+      const prediction = predictions.find(
+        (p) => p.productId === product.product_id,
+      );
+      return {
+        ...this.serializeProduct(product),
+        predictedScore: prediction?.predictedScore || 0,
+        confidence: prediction?.confidence || 0,
+        recommendationReason: this.generateRecommendationReason(
+          prediction?.voters || 0,
+        ),
+      };
+    });
+
+    return recommendations;
+  }
+
+  /**
+   * Fallback: Trả về sản phẩm phổ biến nhất
+   */
+  async getPopularProducts(limit: number) {
+    // Sử dụng product.total_saled để sắp xếp theo số lượng bán ra
+    return await this.productRepo.find({
+      where: { is_deleted: false, is_active: true },
+      relations: [
+        'images',
+        'categories',
+        'distributor',
+        'distributor.invenstory',
+        'manufacturer',
+        'batches',
+        'batches.product_types',
+        'batches.promotions',
+        'product_ingredients',
+        'product_ingredients.ingredient',
+        'productDiseases',
+        'productDiseases.disease',
+      ],
+      order: {
+        total_saled: 'DESC',
+        created_at: 'DESC',
+      },
+      take: limit,
+    });
+  }
+
+  /**
+   * Generate lý do recommend
+   */
+  private generateRecommendationReason(voters: number): string {
+    if (voters >= 10) {
+      return 'Được nhiều khách hàng có sở thích tương tự yêu thích';
+    } else if (voters >= 5) {
+      return 'Khách hàng có sở thích tương tự đã mua';
+    } else if (voters >= 2) {
+      return 'Một số khách hàng tương tự quan tâm';
+    }
+    return 'Sản phẩm được đề xuất cho bạn';
+  }
+
+  /**
+   * Content-based recommendations dựa trên categories đã mua
+   */
+  async getContentBasedRecommendations(userId: string, limit: number = 10) {
+    // Lấy các category mà user đã mua nhiều nhất bằng TypeORM
+    const userCategories = await this.userRepo
+      .createQueryBuilder('user')
+      .select(['category.id as category_id', 'COUNT(*) as purchase_frequency'])
+      .innerJoin('user.orders', 'order')
+      .innerJoin('order.order_details', 'order_detail')
+      .innerJoin('order_detail.batch_product', 'batch_product')
+      .innerJoin('batch_product.product', 'product')
+      .innerJoin('product.categories', 'category')
+      .where('user.user_id = :userId', { userId })
+      .andWhere('order.is_deleted = false')
+      .andWhere('order_detail.is_deleted = false')
+      .andWhere('batch_product.is_deleted = false')
+      .andWhere('product.is_deleted = false')
+      .andWhere('category.isDeleted = false')
+      .groupBy('category.id')
+      .orderBy('purchase_frequency', 'DESC')
+      .limit(5)
+      .getRawMany();
+
+    if (userCategories.length === 0) {
+      return await this.getPopularProducts(limit);
+    }
+
+    const categoryIds = userCategories.map((row) => row.category_id);
+
+    // Lấy sản phẩm từ categories mà user đã quan tâm nhưng chưa mua
+    const products = await this.productRepo
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.categories', 'category')
+      .leftJoinAndSelect('product.images', 'images')
+      .leftJoinAndSelect('product.distributor', 'distributor')
+      .leftJoinAndSelect('distributor.invenstory', 'invenstory')
+      .leftJoinAndSelect('product.manufacturer', 'manufacturer')
+      .leftJoinAndSelect('product.batches', 'batches')
+      .leftJoinAndSelect('batches.product_types', 'product_types')
+      .leftJoinAndSelect('batches.promotions', 'promotions')
+      .leftJoinAndSelect('product.product_ingredients', 'product_ingredients')
+      .leftJoinAndSelect('product_ingredients.ingredient', 'ingredient')
+      .leftJoinAndSelect('product.productDiseases', 'productDiseases')
+      .leftJoinAndSelect('productDiseases.disease', 'disease')
+      .where('product.is_deleted = false')
+      .andWhere('product.is_active = true')
+      .andWhere('category.id IN (:...categoryIds)', { categoryIds })
+      .andWhere(
+        'product.product_id NOT IN (SELECT DISTINCT p.product_id FROM "order" o JOIN order_detail od ON o.order_id = od.order_id JOIN batch_product bp ON od.batch_id = bp.batch_id JOIN product p ON bp.product_id = p.product_id WHERE o.user_id = :userId)',
+        { userId },
+      )
+      .orderBy('product.created_at', 'DESC')
+      .limit(limit)
+      .getMany();
+
+    return products;
   }
 }
