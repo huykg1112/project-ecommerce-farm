@@ -54,6 +54,9 @@ export class Product {
   @Column({ type: 'float', nullable: false, default: 0 })
   unit_product_price: number;
 
+  @Column({ type: 'int', nullable: true })
+  total_saled!: number;
+
   // một sản phẩm có nhiều review thông qua review
   @OneToMany(() => Review, (review) => review.product, {
     nullable: true,

@@ -49,7 +49,6 @@ function CheckoutPage() {
     lng: currentUser?.lng || 0,
   });
 
-
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -58,8 +57,8 @@ function CheckoutPage() {
         const lng = data.lng && !isNaN(Number(data.lng)) ? Number(data.lng) : 0;
 
         setFormData({
-          fullName: data.fullName || "",
-          phone: data.phone || "",
+          fullName: data.full_name || "",
+          phone: data.phone_number || "",
           email: data.email || "",
           address: data.address || "",
           lat: lat,
@@ -110,12 +109,24 @@ function CheckoutPage() {
 
   // Xử lý thay đổi địa chỉ từ bản đồ
   const handleAddressChange = (address: AddressData) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       address: address.fullAddress,
       lat: address.latitude,
       lng: address.longitude,
     }));
+  };
+
+  // Lấy IP của người dùng (chỉ hoạt động trên client)
+  const getUserIpAddress = async () => {
+    try {
+      const response = await fetch("https://api.ipify.org?format=json");
+      const data = await response.json();
+      return data.ip;
+    } catch (error) {
+      console.error("Error getting IP address:", error);
+      return "127.0.0.1"; // Fallback IP
+    }
   };
 
   // Xử lý đặt hàng
@@ -147,7 +158,6 @@ function CheckoutPage() {
         createdAt: new Date().toISOString(),
       };
 
-   
       // Lưu đơn hàng vào localStorage để demo
       const orders = JSON.parse(localStorage.getItem("orders") || "[]");
       const orderId = `ORD${Date.now()}`;
@@ -156,30 +166,82 @@ function CheckoutPage() {
         ...orderData,
       };
       console.log(formData);
-      
+
       orders.push(newOrder);
 
       localStorage.setItem("orders", JSON.stringify(orders));
-      
+
       // Giả lập API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      // await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      // Lưu danh sách sản phẩm đã xóa để xử lý sau khi chuyển hướng
-      const itemsToRemove = [...selectedItems];
+      // // Lưu danh sách sản phẩm đã xóa để xử lý sau khi chuyển hướng
+      // const itemsToRemove = [...selectedItems];
 
-      // Chuyển hướng đến trang xác nhận đơn hàng trước
-      router.push(`/checkout/success?orderId=${orderId}`);
+      // // Chuyển hướng đến trang xác nhận đơn hàng trước
+      // router.push(`/checkout/success?orderId=${orderId}`);
 
-      // Xóa danh sách sản phẩm đã chọn khỏi localStorage
-      // Đặt trong setTimeout để đảm bảo chuyển hướng đã hoàn tất
-      setTimeout(() => {
+      // // Xóa danh sách sản phẩm đã chọn khỏi localStorage
+      // // Đặt trong setTimeout để đảm bảo chuyển hướng đã hoàn tất
+      // setTimeout(() => {
+      //   localStorage.removeItem("selectedCartItems");
+
+      //   // Xóa các sản phẩm đã chọn khỏi giỏ hàng
+      //   itemsToRemove.forEach((item) => {
+      //     dispatch(removeFromCart(item.id));
+      //   });
+      // }, 500);
+
+      if (paymentMethod === "cod") {
+        // Giả lập API call cho COD
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
+        // Xóa danh sách sản phẩm đã chọn khỏi localStorage và Redux
         localStorage.removeItem("selectedCartItems");
-
-        // Xóa các sản phẩm đã chọn khỏi giỏ hàng
-        itemsToRemove.forEach((item) => {
+        selectedItems.forEach((item) => {
           dispatch(removeFromCart(item.id));
         });
-      }, 500);
+
+        router.push(`/checkout/success?orderId=${orderId}`);
+      } else if (paymentMethod === "vnpay") {
+        console.log("Processing VNPay payment...");
+
+        const ipAddr = await getUserIpAddress();
+        const orderInfo = `Thanh toan don hang ${orderId}`;
+        console.log("Sending request to create VNPay payment URL...");
+        console.log("Request data:", {
+          amount: finalTotal,
+          orderId: orderId,
+          orderInfo: orderInfo,
+          ipAddr: ipAddr,
+        });
+
+        const response = await fetch("/api/vnpay/create-payment", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            amount: finalTotal,
+            orderId: orderId,
+            orderInfo: orderInfo,
+            ipAddr: ipAddr,
+          }),
+        });
+
+        const data = await response.json();
+        console.log("VNPay API response:", data);
+
+        if (response.ok && data.paymentUrl) {
+          console.log("Redirecting to VNPay:", data.paymentUrl);
+
+          // Chuyển hướng đến trang thanh toán VNPay
+          window.location.href = data.paymentUrl;
+        } else {
+          console.error("VNPay API error:", data);
+          alert("Không thể tạo URL thanh toán VNPay. Vui lòng thử lại.");
+          setIsSubmitting(false);
+        }
+      }
     } catch (error) {
       console.error("Error during checkout:", error);
       setIsSubmitting(false);
@@ -316,9 +378,7 @@ function CheckoutPage() {
                 </div>
                 <div className="flex items-center space-x-2">
                   <RadioGroupItem value="fast" id="fast" />
-                  <Label htmlFor="fast">
-                    Nhận tại cửa hàng
-                  </Label>
+                  <Label htmlFor="fast">Nhận tại cửa hàng</Label>
                   <span className="ml-auto font-medium">
                     {shippingFee > 0 ? formatCurrency(shippingFee) : "Miễn phí"}
                   </span>
@@ -348,24 +408,10 @@ function CheckoutPage() {
                   <Label htmlFor="cod">Thanh toán khi nhận hàng (COD)</Label>
                 </div>
                 <div className="flex items-center space-x-2 mb-3">
-                  <RadioGroupItem value="bank" id="bank" />
-                  <Label htmlFor="bank">Chuyển khoản ngân hàng</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="momo" id="momo" />
-                  <Label htmlFor="momo">Ví điện tử MoMo</Label>
+                  <RadioGroupItem value="vnpay" id="vnpay" />
+                  <Label htmlFor="vnpay">Thanh toán qua VNPay</Label>
                 </div>
               </RadioGroup>
-
-              {paymentMethod === "bank" && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-md text-sm">
-                  <p className="font-medium mb-2">Thông tin chuyển khoản:</p>
-                  <p>Ngân hàng: Vietcombank</p>
-                  <p>Số tài khoản: 1234567890</p>
-                  <p>Chủ tài khoản: CÔNG TY NÔNG SẢN VIỆT NAM</p>
-                  <p>Nội dung: [Họ tên] thanh toán đơn hàng</p>
-                </div>
-              )}
             </CardContent>
           </Card>
         </div>

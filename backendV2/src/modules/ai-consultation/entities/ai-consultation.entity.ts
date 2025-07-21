@@ -4,8 +4,10 @@ import {
   JoinColumn,
   ManyToOne,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { Disease } from '../../disease/entities/disease.entity';
 import { TreatmentPlan } from '../../treatment-plan/entities/treatment-plan.entity';
 import { User } from '../../user/entities/user.entity';
 
@@ -38,6 +40,10 @@ export class AiConsultation {
   @ManyToOne(() => User, (user) => user.ai_consultations, { nullable: true })
   @JoinColumn({ name: 'user_id' })
   user!: User;
+
+  @OneToOne(() => Disease, { nullable: true })
+  @JoinColumn({ name: 'disease_id' })
+  disease!: Disease;
 
   @OneToMany(
     () => TreatmentPlan,

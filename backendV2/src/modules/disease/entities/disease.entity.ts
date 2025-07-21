@@ -1,4 +1,5 @@
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { AiConsultation } from '../../ai-consultation/entities/ai-consultation.entity';
 import { ProductDisease } from '../../product_disease/entities/product_disease.entity';
 
 @Entity('disease')
@@ -23,6 +24,11 @@ export class Disease {
 
   @Column({ type: 'boolean', default: false, nullable: false })
   is_deleted!: boolean;
+
+  @OneToMany(() => AiConsultation, (consultation) => consultation.disease, {
+    nullable: true,
+  })
+  aiConsultations: AiConsultation[];
 
   @OneToMany(() => ProductDisease, (pd) => pd.disease, { nullable: true })
   productDiseases: ProductDisease[];
