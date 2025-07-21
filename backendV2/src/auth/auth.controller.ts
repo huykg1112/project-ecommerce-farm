@@ -70,7 +70,7 @@ export class AuthController {
         'GOOGLE_FRONTEND_REDIRECT_URL',
       );
       return res.redirect(
-        `${redirectUrl}?access_token=${access_token}&refresh_token=${refresh_token}`,
+        `${redirectUrl}?access_token=${access_token}&refresh_token=${refresh_token}&user_id=${req.user.id}`,
       );
     } catch (error) {
       console.error('Google callback error:', error);

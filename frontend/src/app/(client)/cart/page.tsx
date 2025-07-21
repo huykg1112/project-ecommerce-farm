@@ -7,7 +7,7 @@ import { OrderSummary } from "@/components/cart/OrderSummaryCart";
 import { RecommendedProducts } from "@/components/cart/RecommendedProducts";
 import { SellerSection } from "@/components/cart/SellerSection";
 import { Button } from "@/components/ui/button";
-import { products } from "@/data/products";
+import { Skeleton } from "@/components/ui/skeleton";
 import { withAuth } from "@/lib/auth/with-auth";
 import {
   clearCart,
@@ -16,6 +16,8 @@ import {
 } from "@/lib/features/cart-slice";
 import type { AppDispatch, RootState } from "@/lib/features/store";
 import { showToast } from "@/lib/toast-provider";
+import { productServiceManagement } from "@/lib_dashboard/services/product-service-management";
+import { Product } from "@/lib_dashboard/types/product";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -31,15 +33,22 @@ function CartPage() {
   const [couponCode, setCouponCode] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [discount, setDiscount] = useState(0);
-  const [recommendedProducts, setRecommendedProducts] = useState<
-    typeof products
-  >([]);
+  const [loading, setLoading] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [expandedSellers, setExpandedSellers] = useState<string[]>([]);
 
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
+
   useEffect(() => {
-    const shuffled = [...products].sort(() => 0.5 - Math.random());
-    setRecommendedProducts(shuffled.slice(0, 8));
+    setLoading(true);
+    const fetchRecommendedProducts = async () => {
+      const response =
+        await productServiceManagement.getRecommendationsForUser();
+      setRecommendedProducts(response.slice(0, 8));
+    };
+
+    fetchRecommendedProducts();
+    setLoading(false);
   }, []);
 
   const itemsBySeller = items.reduce((acc, item) => {
@@ -241,9 +250,17 @@ function CartPage() {
           onCheckout={handleCheckout}
         />
       </div>
-      {recommendedProducts.length > 0 && (
-        <RecommendedProducts products={recommendedProducts} />
-      )}
+      <div>
+        {loading
+          ? Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="h-40">
+                <Skeleton className="h-full w-full rounded-lg" />
+              </div>
+            ))
+          : recommendedProducts.length > 0 && (
+              <RecommendedProducts products={recommendedProducts} />
+            )}
+      </div>
     </div>
   );
 }

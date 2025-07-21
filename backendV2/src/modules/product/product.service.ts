@@ -212,7 +212,7 @@ export class ProductService {
     return await this.findOne(savedProduct.product_id);
   }
 
-  async findAll() {
+  async findAll(userId: string) {
     const relations = [
       'images',
       'categories',
@@ -231,12 +231,54 @@ export class ProductService {
       'productDiseases',
       'productDiseases.disease',
     ];
+
+    const user = await this.userRepo.findOne({
+      where: { user_id: userId },
+      relations: ['role'],
+    });
+    if (!user) {
+      throw new NotFoundException('Người dùng không tồn tại');
+    }
+    // Nếu là Admin, trả về tất cả sản phẩm
+    if (user.role?.role_name === Role.ADMIN) {
+      return await this.productRepo.find({
+        where: { is_deleted: false },
+        relations: relations,
+        order: { created_at: 'DESC' },
+      });
+    }
     return await this.productRepo.find({
-      where: { is_deleted: false },
+      where: { distributor: { user_id: userId }, is_deleted: false },
       relations: relations,
       order: { created_at: 'DESC' },
     });
   }
+
+  // async findAllForDistributor(distributor_id: string) {
+  //   const relations = [
+  //     'images',
+  //     'categories',
+  //     'distributor',
+  //     'distributor.invenstory',
+  //     'manufacturer',
+  //     'reviews',
+  //     'reviews.user',
+  //     'reviews.distributor',
+  //     'reviews.parent_review',
+  //     'batches',
+  //     'batches.product_types',
+  //     'batches.promotions',
+  //     'product_ingredients',
+  //     'product_ingredients.ingredient',
+  //     'productDiseases',
+  //     'productDiseases.disease',
+  //   ];
+  //   return await this.productRepo.find({
+  //     where: { distributor: { user_id: distributor_id } },
+  //     relations: relations,
+  //     order: { created_at: 'DESC' },
+  //   });
+  // }
 
   async findAllForUser() {
     return await this.productRepo.find({
@@ -455,7 +497,8 @@ export class ProductService {
           ingredient_id: ingredient.ingredient_id,
           product: updatedProduct,
           ingredient: ingredient,
-          is_primary: false,
+          is_primary:
+            ingredient.ingredient_id === updateProductDto.ingredient_id_primary,
         }),
       );
       await this.piRepo.save(productIngredients);
@@ -471,7 +514,8 @@ export class ProductService {
           disease_id: disease.disease_id,
           product: updatedProduct,
           disease: disease,
-          is_primary: false,
+          is_primary:
+            disease.disease_id === updateProductDto.disease_id_primary,
         }),
       );
       await this.productDiseaseRepo.save(productDiseases);

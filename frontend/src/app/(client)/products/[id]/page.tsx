@@ -25,7 +25,9 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
-const getMaxDiscountForBatch = (batch: BatchProduct): Promotion | null => {
+export const getMaxDiscountForBatch = (
+  batch: BatchProduct
+): Promotion | null => {
   if (!batch.promotions || batch.promotions.length === 0) return null;
   let maxDiscount = 0;
   let maxPromotion: Promotion | null = null;
@@ -196,7 +198,7 @@ export default function ProductPage() {
       requireAuth(() => {
         dispatch(
           addToCart({
-            id: product.product_id,
+            id: product.product_id + selectedBatch?.batch_id || "",
             name: product.product_name,
             price: discountedPrice,
             valueDiscount: maxPromotion?.discount_value || 0,
@@ -255,16 +257,7 @@ export default function ProductPage() {
         } else {
           dispatch(
             addToWishlist({
-              id: product.product_id,
-              name: product.product_name,
-              price: discountedPrice,
-              image: product.images[0]?.image_url || "",
-              sellerId:
-                product.distributor?.invenstory?.invenstory_id ||
-                (Math.floor(Math.random() * 999) + 1).toString(),
-              sellerName: product.distributor?.invenstory?.name || "N/A",
-              category: product.categories[0]?.name || "N/A",
-              discount: maxPromotion?.discount_value || 0,
+              product: product,
             })
           );
 

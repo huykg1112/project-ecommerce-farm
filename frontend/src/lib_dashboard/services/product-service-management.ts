@@ -17,9 +17,7 @@ import { axiosInstance } from "./axios-instance";
 export const productServiceManagement = {
   // === CRUD Operations ===
 
-  async getProducts(
-    filters?: ProductFilters
-  ): Promise<ProductPaginationResponse> {
+  async getProducts(): Promise<Product[]> {
     try {
       const response = await axiosInstance.get("/products");
       return response.data;
@@ -107,10 +105,7 @@ export const productServiceManagement = {
     }
   },
 
-  async createProduct(
-    data: CreateProductRequest,
-    files?: File[] | null | undefined
-  ): Promise<Product> {
+  async createProduct(data: CreateProductRequest): Promise<Product> {
     try {
       const formData = new FormData();
 
@@ -135,8 +130,8 @@ export const productServiceManagement = {
       if (data.disease_ids)
         formData.append("disease_ids", JSON.stringify(data.disease_ids));
 
-      if (files && files.length > 0) {
-        files.forEach((file, index) => {
+      if (data.product_images && data.product_images.length > 0) {
+        data.product_images.forEach((file, index) => {
           formData.append("images", file); // Tên field 'images' phải khớp với FilesInterceptor ở backend
         });
       }
@@ -158,11 +153,9 @@ export const productServiceManagement = {
 
   async updateProduct(
     id: string,
-    data: UpdateProductRequest,
-    files?: File[] | null | undefined
+    data: UpdateProductRequest
   ): Promise<Product> {
     try {
-      console.log("files", files);
       const formData = new FormData();
 
       // Thêm dữ liệu JSON vào FormData
@@ -186,8 +179,8 @@ export const productServiceManagement = {
       if (data.disease_ids)
         formData.append("disease_ids", JSON.stringify(data.disease_ids));
 
-      if (files && files.length > 0) {
-        files.forEach((file, index) => {
+      if (data.product_images && data.product_images.length > 0) {
+        data.product_images.forEach((file, index) => {
           formData.append("images", file); // Tên field 'images' phải khớp với FilesInterceptor ở backend
         });
       }
@@ -444,7 +437,7 @@ export const productServiceManagement = {
    * @param limit Số lượng sản phẩm đề xuất
    * @returns Array of recommended products
    */
-  async getRecommendationsForUser() {
+  async getRecommendationsForUser(): Promise<Product[]> {
     try {
       const res = await axiosInstance.get(`/products/recommendations`);
       console.log("recomment data", res.data);

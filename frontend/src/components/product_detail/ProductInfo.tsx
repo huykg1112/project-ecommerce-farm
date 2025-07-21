@@ -1,3 +1,4 @@
+import { getMaxDiscountForBatch } from "@/app/(client)/products/[id]/page";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -104,7 +105,12 @@ export default function ProductInfo({
               {differentProductTypes.map((batch) => (
                 <SelectItem key={batch.batch_id} value={batch.batch_id}>
                   {batch.product_types?.type_name || "Không có tên"} (Còn{" "}
-                  {batch.quantity})
+                  {batch.quantity}){" "}
+                  {getMaxDiscountForBatch(batch) ? (
+                    <span className="text-red-500 ml-2">
+                      Giảm giá {getMaxDiscountForBatch(batch)?.discount_value}%
+                    </span>
+                  ) : null}
                 </SelectItem>
               ))}
             </SelectContent>

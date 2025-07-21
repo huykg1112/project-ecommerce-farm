@@ -1,13 +1,11 @@
 "use client";
 
 import { RecommendedProducts } from "@/components/cart/RecommendedProducts";
+import ProductCard from "@/components/products/product-card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { products } from "@/data/products";
+import { Skeleton } from "@/components/ui/skeleton";
 import { withAuth } from "@/lib/auth/with-auth";
 import { useCartAnimation } from "@/lib/cart/cart-animation-context";
-import { addToCart } from "@/lib/features/cart-slice";
 import type { AppDispatch } from "@/lib/features/store";
 import {
   clearWishlist,
@@ -15,12 +13,12 @@ import {
   selectWishlistItems,
 } from "@/lib/features/wishlist-slice";
 import { showToast } from "@/lib/toast-provider";
-import { formatCurrency } from "@/lib/utils";
-import { Heart, ShoppingCart, Trash2, X } from "lucide-react";
-import Image from "next/image";
+import { productServiceManagement } from "@/lib_dashboard/services/product-service-management";
+import { Product } from "@/lib_dashboard/types/product";
+import { Heart, ShoppingCart, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 function WishlistPage() {
@@ -28,19 +26,23 @@ function WishlistPage() {
   const { startAnimation } = useCartAnimation();
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
 
   const productRef = useRef<HTMLDivElement>(null);
 
-  const [recommendedProducts, setRecommendedProducts] = useState(
-    products
-      .filter((p) => !wishlistItems.some((item) => item.id === p.id))
-      .slice(0, 8)
-  );
+  const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
 
-  const handleRemoveFromWishlist = (id: string, name: string) => {
-    dispatch(removeFromWishlist(id));
-    showToast.info(`Đã xóa ${name} khỏi danh sách yêu thích!`);
-  };
+  useEffect(() => {
+    setLoading(true);
+    const fetchRecommendedProducts = async () => {
+      const response =
+        await productServiceManagement.getRecommendationsForUser();
+      setRecommendedProducts(response.slice(0, 8));
+    };
+
+    fetchRecommendedProducts();
+    setLoading(false);
+  }, []);
 
   const handleClearWishlist = () => {
     if (
@@ -53,21 +55,7 @@ function WishlistPage() {
     }
   };
 
-  const handleAddToCart = (item: (typeof wishlistItems)[0]) => {
-    dispatch(
-      addToCart({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: 1,
-        image: item.image,
-        sellerId: item.sellerId,
-        sellerName: item.sellerName,
-      })
-    );
-    showToast.success(`Đã thêm ${item.name} vào giỏ hàng!`);
-  };
-
+  console.log("Wishlist Items:", wishlistItems);
   // If wishlist is empty
   if (wishlistItems.length === 0) {
     return (
@@ -90,10 +78,15 @@ function WishlistPage() {
             </Link>
           </Button>
         </div>
-
-        {recommendedProducts.length > 0 && (
-          <RecommendedProducts products={recommendedProducts} />
-        )}
+        {loading
+          ? Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="h-40">
+                <Skeleton className="h-full w-full rounded-lg" />
+              </div>
+            ))
+          : recommendedProducts.length > 0 && (
+              <RecommendedProducts products={recommendedProducts} />
+            )}
       </div>
     );
   }
@@ -123,68 +116,7 @@ function WishlistPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {wishlistItems.map((item) => (
-          <Card
-            key={item.id}
-            className="overflow-hidden border-none shadow-md hover:shadow-lg transition-shadow"
-          >
-            <div className="relative">
-              <Link href={`/products/${item.id}`}>
-                <div className="aspect-square overflow-hidden">
-                  <Image
-                    src={item.image || "/placeholder.svg"}
-                    alt={item.name}
-                    width={300}
-                    height={300}
-                    className="object-cover w-full h-full transition-transform hover:scale-105"
-                  />
-                </div>
-              </Link>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-2 right-2 bg-white rounded-full hover:bg-gray-100 hover:text-red-500"
-                onClick={() => handleRemoveFromWishlist(item.id, item.name)}
-              >
-                <X className="h-5 w-5" />
-              </Button>
-              {item.discount && item.discount > 0 && (
-                <div className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-                  -{item.discount}%
-                </div>
-              )}
-            </div>
-            <CardContent className="p-4">
-              <div className="text-sm text-gray-500 mb-1">{item.category}</div>
-              <Link href={`/products/${item.id}`} className="hover:underline">
-                <h3 className="font-semibold text-lg line-clamp-2 h-12">
-                  {item.name}
-                </h3>
-              </Link>
-              <div className="flex items-center mt-2">
-                <Link
-                  href={`/seller/${item.sellerId}`}
-                  className="text-sm text-primary hover:underline"
-                >
-                  {item.sellerName}
-                </Link>
-              </div>
-              <Separator className="my-3" />
-              <div className="flex items-center justify-between">
-                <div className="font-bold text-lg">
-                  {formatCurrency(item.price)}
-                </div>
-                <Button
-                  size="sm"
-                  className="bg-primary hover:bg-primary-dark"
-                  onClick={() => handleAddToCart(item)}
-                >
-                  <ShoppingCart className="h-4 w-4 mr-1" />
-                  Thêm vào giỏ
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-          //     <ProductCard key={item.id} product={item} />
+          <ProductCard key={item.product.product_id} product={item.product} />
         ))}
       </div>
     </div>

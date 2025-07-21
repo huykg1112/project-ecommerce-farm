@@ -141,7 +141,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     requireAuth(() => {
       dispatch(
         addToCart({
-          id: product.product_id,
+          id: product.product_id + selectedBatch.batch_id || "",
           name: product.product_name,
           price: discountedPrice,
           valueDiscount: maxPromotion?.discount_value || 0,
@@ -186,17 +186,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       } else {
         dispatch(
           addToWishlist({
-            id: product.product_id,
-            name: product.product_name,
-            price:
-              selectedBatch?.unit_product_price || product.unit_product_price,
-            image: product.images[0].image_url,
-            sellerId:
-              product.distributor?.invenstory?.invenstory_id ||
-              (Math.floor(Math.random() * 999) + 1).toString(),
-            sellerName: product.distributor?.invenstory?.name || "N/A",
-            category: product.categories[0]?.name || "N/A",
-            discount: maxPromotion?.discount_value || 0,
+            product: product,
           })
         );
 

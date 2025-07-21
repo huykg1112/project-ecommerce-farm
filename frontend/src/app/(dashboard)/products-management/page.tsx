@@ -4,145 +4,320 @@ import { ProductFilters } from "@/components/(dashboard)/products/product-filter
 import { ProductFormModal } from "@/components/(dashboard)/products/product-form-modal";
 import { ProductPagination } from "@/components/(dashboard)/products/product-pagination";
 import { ProductTable } from "@/components/(dashboard)/products/product-table";
-import { BatchActions } from "@/components/common/batch-actions";
-import { DeleteModal } from "@/components/common/delete-modal";
-import { StatisticsCards } from "@/components/common/statistics-cards";
+import { BatchActions } from "@/components/(dashboard)/shared/batch-actions";
+import DeleteModal from "@/components/(dashboard)/shared/delete-modal";
+import { StatisticsCards } from "@/components/(dashboard)/shared/statistics-cards";
 import { Button } from "@/components/ui/button";
-import { useProductManagement } from "@/hooks/use-product-management";
 import { showToast } from "@/lib/toast-provider";
-import { selectedProductAtom } from "@/lib_dashboard/store/product-store-management";
-import { useAtom } from "jotai";
+import { productServiceManagement } from "@/lib_dashboard/services/product-service-management";
+import {
+  Product,
+  ProductFormData,
+  ProductStatsResponse,
+} from "@/lib_dashboard/types/product";
 import { Download, Plus } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+interface ProductFiltersState {
+  search?: string;
+  category_id?: string;
+  status?: "active" | "inactive" | "all";
+  price_min?: number;
+  price_max?: number;
+  sort_by?: "name" | "price" | "created_at" | "rating";
+  sort_order?: "asc" | "desc";
+  page?: number;
+  limit?: number;
+}
+
+interface PaginationState {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
 export default function ProductsManagementPage() {
-  const {
-    // Data states
-    myProducts,
-    myProductsLoading,
-    myProductStats,
-    selectedProducts,
-    productCounts,
-    pagination,
-    filters,
+  // Data states
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productStats, setProductStats] = useState<ProductStatsResponse>({
+    total_products: 0,
+    active_products: 0,
+    inactive_products: 0,
+    avg_price: 0,
+  });
+  const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-    // Loading states
-    productsLoading,
-    batchOperationLoading,
+  // Loading states
+  const [loading, setLoading] = useState(false);
+  const [batchOperationLoading, setBatchOperationLoading] = useState(false);
 
-    // Query functions
-    getMyProducts,
-    getMyProductStats,
+  // Modal states
+  const [addProductModal, setAddProductModal] = useState(false);
+  const [editProductModal, setEditProductModal] = useState(false);
+  const [deleteProductModal, setDeleteProductModal] = useState(false);
 
-    // Filter functions
-    updateProductFilters,
-    resetProductFilters,
-    changePage,
-    changeLimit,
-    sortProducts,
+  const [productFormData, setProductFormData] = useState<ProductFormData>({
+    product_name: "",
+    description: "",
+    usage_instructions: "",
+    unit_product_price: 0,
+    category_ids: [],
+    manufacturer_id: "",
+    ingredient_ids: [],
+    disease_ids: [],
+    ingredient_id_primary: "",
+    disease_id_primary: "",
+    is_active: true,
+    product_images: [], // For image uploads
+  });
 
-    // Selection functions
-    toggleProductSelection,
-    toggleAllProductsSelection,
-    clearSelections,
-    getSelectedCount,
+  // Filter states
+  const [filters, setFilters] = useState<ProductFiltersState>({
+    search: "",
+    category_id: "all",
+    status: "all",
+    sort_by: "created_at",
+    sort_order: "desc",
+    page: 1,
+    limit: 10,
+  });
 
-    // Management functions
-    createProduct,
-    updateProduct,
-    deleteProduct,
-    toggleProductStatus,
-    batchToggleStatus,
-    batchDeleteProducts,
-
-    // Modal states
-    addProductModal,
-    editProductModal,
-    deleteProductModal,
-    openAddModal,
-    openEditModal,
-    openDeleteModal,
-    closeModals,
-
-    // Form states
-    productFormData,
-    updateProductForm,
-    setProductForEditing,
-    resetProductForm,
-  } = useProductManagement();
-
-  const [selectedProduct] = useAtom(selectedProductAtom);
-  const [productImages, setProductImages] = useState<File[] | null | undefined>(
-    []
-  );
-  // console.log("Selected productImages:", productImages);
+  // Pagination state
+  const [pagination, setPagination] = useState<PaginationState>({
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 0,
+  });
 
   // Load data on component mount
   useEffect(() => {
-    getMyProducts();
-    getMyProductStats();
-  }, [getMyProducts, getMyProductStats]);
+    fetchProducts();
+    fetchProductStats();
+  }, []);
+
+  // Fetch products from API
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await productServiceManagement.getProducts();
+      setProducts(response);
+      setPagination({
+        page: 1,
+        limit: 10,
+        total: 0,
+        totalPages: 0,
+      });
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Fetch product stats
+  const fetchProductStats = useCallback(async () => {
+    try {
+      const stats = await productServiceManagement.getMyProductStats();
+      setProductStats(stats);
+    } catch (error) {
+      console.error("Error fetching product stats:", error);
+    }
+  }, []);
+
+  // Filtered and paginated products using useMemo
+  const filteredProducts = useMemo(() => {
+    let filtered = products;
+
+    // Apply search filter
+    if (filters.search) {
+      filtered = filtered.filter(
+        (product) =>
+          product.product_name
+            .toLowerCase()
+            .includes(filters.search!.toLowerCase()) ||
+          product.description
+            ?.toLowerCase()
+            .includes(filters.search!.toLowerCase())
+      );
+    }
+
+    // Apply category filter
+    if (filters.category_id && filters.category_id !== "all") {
+      filtered = filtered.filter((product) =>
+        product.categories.some((cat) => cat.id === filters.category_id)
+      );
+    }
+
+    // Apply status filter
+    if (filters.status && filters.status !== "all") {
+      filtered = filtered.filter((product) =>
+        filters.status === "active" ? product.is_active : !product.is_active
+      );
+    }
+
+    // Apply price filter
+    if (filters.price_min !== undefined) {
+      filtered = filtered.filter(
+        (product) => product.unit_product_price >= filters.price_min!
+      );
+    }
+    if (filters.price_max !== undefined) {
+      filtered = filtered.filter(
+        (product) => product.unit_product_price <= filters.price_max!
+      );
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      const order = filters.sort_order === "asc" ? 1 : -1;
+      switch (filters.sort_by) {
+        case "name":
+          return a.product_name.localeCompare(b.product_name) * order;
+        case "price":
+          return (a.unit_product_price - b.unit_product_price) * order;
+        case "created_at":
+          return (
+            (new Date(a.created_at).getTime() -
+              new Date(b.created_at).getTime()) *
+            order
+          );
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  }, [products, filters]);
+
+  // Paginated products
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (filters.page! - 1) * filters.limit!;
+    const endIndex = startIndex + filters.limit!;
+    return filteredProducts.slice(startIndex, endIndex);
+  }, [filteredProducts, filters.page, filters.limit]);
+
+  // Update pagination when filtered products change
+  useEffect(() => {
+    setPagination((prev) => ({
+      ...prev,
+      total: filteredProducts.length,
+      totalPages: Math.ceil(filteredProducts.length / filters.limit!),
+    }));
+  }, [filteredProducts, filters.limit]);
+
+  // Statistics using useMemo
+  const stats = useMemo(
+    () => ({
+      total: productStats.total_products,
+      active: productStats.active_products,
+      inactive: productStats.inactive_products,
+    }),
+    [productStats]
+  );
 
   // Filter handlers
+  const updateFilters = useCallback((updates: Partial<ProductFiltersState>) => {
+    setFilters((prev) => ({ ...prev, ...updates }));
+  }, []);
+
   const handleSearchChange = useCallback(
     (search: string) => {
-      updateProductFilters({ search, page: 1 });
+      updateFilters({ search, page: 1 });
     },
-    [updateProductFilters]
+    [updateFilters]
   );
 
   const handleCategoryChange = useCallback(
     (category_id: string) => {
-      updateProductFilters({
-        category_id: category_id === "all" ? "" : category_id,
+      updateFilters({
+        category_id: category_id === "all" ? "all" : category_id,
         page: 1,
       });
     },
-    [updateProductFilters]
+    [updateFilters]
   );
 
   const handleStatusChange = useCallback(
     (status: string) => {
-      updateProductFilters({
+      updateFilters({
         status: status === "all" ? "all" : (status as "active" | "inactive"),
         page: 1,
       });
     },
-    [updateProductFilters]
+    [updateFilters]
   );
 
   const handlePriceRangeChange = useCallback(
     (priceRange: { min?: number; max?: number }) => {
-      updateProductFilters({
+      updateFilters({
         price_min: priceRange.min,
         price_max: priceRange.max,
         page: 1,
       });
     },
-    [updateProductFilters]
+    [updateFilters]
   );
+
+  const resetFilters = useCallback(() => {
+    setFilters({
+      search: "",
+      category_id: "all",
+      status: "all",
+      sort_by: "created_at",
+      sort_order: "desc",
+      page: 1,
+      limit: 10,
+    });
+  }, []);
 
   // Pagination handlers
   const handlePageChange = useCallback(
     (page: number) => {
-      changePage(page);
+      updateFilters({ page });
     },
-    [changePage]
+    [updateFilters]
   );
 
   const handleItemsPerPageChange = useCallback(
     (limit: number) => {
-      changeLimit(limit);
+      updateFilters({ limit, page: 1 });
     },
-    [changeLimit]
+    [updateFilters]
   );
 
   const handleSortChange = useCallback(
     (sortBy: string, sortOrder: "asc" | "desc") => {
-      sortProducts(sortBy as any, sortOrder);
+      updateFilters({ sort_by: sortBy as any, sort_order: sortOrder });
     },
-    [sortProducts]
+    [updateFilters]
   );
+
+  // Selection handlers
+  const toggleProductSelection = useCallback((productId: string) => {
+    setSelectedProducts((prev) =>
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId]
+    );
+  }, []);
+
+  const toggleAllProductsSelection = useCallback(() => {
+    const allIds = paginatedProducts.map((p) => p.product_id);
+    setSelectedProducts((prev) =>
+      prev.length === allIds.length ? [] : allIds
+    );
+  }, [paginatedProducts]);
+
+  const clearSelections = useCallback(() => {
+    setSelectedProducts([]);
+  }, []);
+
+  const getSelectedCount = useCallback(() => {
+    return selectedProducts.length;
+  }, [selectedProducts]);
 
   // Action handlers
   const handleViewDetails = useCallback((productId: string) => {
@@ -151,71 +326,120 @@ export default function ProductsManagementPage() {
 
   const handleEditProduct = useCallback(
     (productId: string) => {
-      const product = myProducts.find((p) => p.product_id === productId);
+      const product = products.find((p) => p.product_id === productId);
       if (product) {
-        setProductForEditing(product);
-        openEditModal();
+        setSelectedProduct(product);
+        setProductFormData({
+          product_name: product.product_name,
+          description: product.description || "",
+          usage_instructions: product.usage_instructions || "",
+          unit_product_price: product.unit_product_price,
+          category_ids: product.categories.map((cat) => cat.id),
+          manufacturer_id: product.manufacturer?.id || "",
+          ingredient_ids: product.product_ingredients.map(
+            (ing) => ing.ingredient_id
+          ),
+          disease_ids: product.productDiseases.map((dis) => dis.disease_id),
+          ingredient_id_primary:
+            product.product_ingredients.find((ing) => ing.is_primary)
+              ?.ingredient_id || "",
+          disease_id_primary:
+            product.productDiseases.find((dis) => dis.is_primary)?.disease_id ||
+            "",
+          is_active: product.is_active,
+          product_images: [],
+        });
+        setEditProductModal(true);
       }
     },
-    [myProducts, setProductForEditing, openEditModal]
+    [products]
   );
 
   const handleDeleteProduct = useCallback(
     (productId: string) => {
-      openDeleteModal(productId);
+      const product = products.find((p) => p.product_id === productId);
+      if (product) {
+        setSelectedProduct(product);
+        setDeleteProductModal(true);
+      }
     },
-    [openDeleteModal]
+    [products]
   );
 
   const handleToggleStatus = useCallback(
     async (productId: string) => {
       try {
-        await toggleProductStatus(productId);
-        await getMyProducts(); // Refresh data
+        await productServiceManagement.toggleProductStatus(productId);
+        await fetchProducts();
+        await fetchProductStats();
       } catch (error) {
         showToast.error("Không thể thay đổi trạng thái sản phẩm");
       }
     },
-    [toggleProductStatus, getMyProducts]
+    [fetchProducts, fetchProductStats]
   );
 
   const handleExport = useCallback(() => {
     showToast.info("Tính năng xuất dữ liệu đang được phát triển");
   }, []);
 
+  // Modal handlers
+  const openAddModal = useCallback(() => {
+    setProductFormData({
+      product_name: "",
+      description: "",
+      usage_instructions: "",
+      unit_product_price: 0,
+      category_ids: [],
+      manufacturer_id: "",
+      ingredient_ids: [],
+      disease_ids: [],
+      ingredient_id_primary: "",
+      disease_id_primary: "",
+      is_active: true,
+      product_images: [], // For image uploads
+    });
+    setAddProductModal(true);
+  }, []);
+
+  const closeModals = useCallback(() => {
+    setAddProductModal(false);
+    setEditProductModal(false);
+    setDeleteProductModal(false);
+    setSelectedProduct(null);
+  }, []);
+
   // Form handlers
+  const updateProductForm = useCallback((updates: Partial<ProductFormData>) => {
+    setProductFormData((prev) => ({ ...prev, ...updates }));
+  }, []);
+
   const handleCreateProduct = useCallback(async () => {
     try {
-      await createProduct(productFormData, productImages);
-      await getMyProducts();
-      await getMyProductStats();
-      // setProductImages([]); // Clear images after creation
+      console.log("Creating product with data:", productFormData);
+      await productServiceManagement.createProduct(productFormData);
+      await fetchProducts();
+      await fetchProductStats();
       closeModals();
       return true;
     } catch (error) {
       showToast.error("Không thể tạo sản phẩm mới");
       return false;
     }
-  }, [
-    createProduct,
-    productFormData,
-    getMyProducts,
-    getMyProductStats,
-    closeModals,
-  ]);
+  }, [productFormData, fetchProducts, fetchProductStats, closeModals]);
 
   const handleUpdateProduct = useCallback(async () => {
     if (!selectedProduct?.product_id) return false;
 
     try {
-      await updateProduct(
+      console.log("Updating product with data:", productFormData);
+
+      await productServiceManagement.updateProduct(
         selectedProduct.product_id,
-        productFormData,
-        productImages
+        productFormData
       );
-      await getMyProducts();
-      await getMyProductStats();
-      // setProductImages([]); // Clear images after update
+      await fetchProducts();
+      await fetchProductStats();
       closeModals();
       return true;
     } catch (error) {
@@ -223,11 +447,10 @@ export default function ProductsManagementPage() {
       return false;
     }
   }, [
-    updateProduct,
     selectedProduct,
     productFormData,
-    getMyProducts,
-    getMyProductStats,
+    fetchProducts,
+    fetchProductStats,
     closeModals,
   ]);
 
@@ -235,103 +458,67 @@ export default function ProductsManagementPage() {
     if (!selectedProduct?.product_id) return false;
 
     try {
-      await deleteProduct(selectedProduct.product_id);
-      await getMyProducts();
-      await getMyProductStats();
-      // setProductImages([]); // Clear images after deletion
+      await productServiceManagement.deleteProduct(selectedProduct.product_id);
+      await fetchProducts();
+      await fetchProductStats();
       closeModals();
       return true;
     } catch (error) {
+      showToast.error("Không thể xóa sản phẩm");
       return false;
     }
-  }, [
-    deleteProduct,
-    selectedProduct,
-    getMyProducts,
-    getMyProductStats,
-    closeModals,
-  ]);
+  }, [selectedProduct, fetchProducts, fetchProductStats, closeModals]);
 
   // Batch action handlers
   const handleBatchActivate = useCallback(async () => {
+    setBatchOperationLoading(true);
     try {
-      await batchToggleStatus(selectedProducts, true);
-      await getMyProducts();
-      await getMyProductStats();
+      await productServiceManagement.batchToggleStatus({
+        product_ids: selectedProducts,
+        is_active: true,
+      });
+      await fetchProducts();
+      await fetchProductStats();
       clearSelections();
     } catch (error) {
       showToast.error("Không thể kích hoạt sản phẩm");
+    } finally {
+      setBatchOperationLoading(false);
     }
-  }, [
-    batchToggleStatus,
-    selectedProducts,
-    getMyProducts,
-    getMyProductStats,
-    clearSelections,
-  ]);
+  }, [selectedProducts, fetchProducts, fetchProductStats, clearSelections]);
 
   const handleBatchDeactivate = useCallback(async () => {
+    setBatchOperationLoading(true);
     try {
-      await batchToggleStatus(selectedProducts, false);
-      await getMyProducts();
-      await getMyProductStats();
+      await productServiceManagement.batchToggleStatus({
+        product_ids: selectedProducts,
+        is_active: false,
+      });
+      await fetchProducts();
+      await fetchProductStats();
       clearSelections();
     } catch (error) {
       showToast.error("Không thể tạm dừng sản phẩm");
+    } finally {
+      setBatchOperationLoading(false);
     }
-  }, [
-    batchToggleStatus,
-    selectedProducts,
-    getMyProducts,
-    getMyProductStats,
-    clearSelections,
-  ]);
+  }, [selectedProducts, fetchProducts, fetchProductStats, clearSelections]);
 
   const handleBatchDelete = useCallback(async () => {
+    setBatchOperationLoading(true);
     try {
-      await batchDeleteProducts(selectedProducts);
-      await getMyProducts();
-      await getMyProductStats();
+      await productServiceManagement.batchDeleteProducts({
+        product_ids: selectedProducts,
+      });
+      await fetchProducts();
+      await fetchProductStats();
       clearSelections();
     } catch (error) {
       showToast.error("Không thể xóa sản phẩm");
+    } finally {
+      setBatchOperationLoading(false);
     }
-  }, [
-    batchDeleteProducts,
-    selectedProducts,
-    getMyProducts,
-    getMyProductStats,
-    clearSelections,
-  ]);
-
-  // Statistics
-  const stats = useMemo(
-    () => ({
-      total: myProductStats.total_products,
-      active: myProductStats.active_products,
-      inactive: myProductStats.inactive_products,
-    }),
-    [myProductStats]
-  );
-
-  // Get selected product name for delete modal
-  const selectedProductName = useMemo(() => {
-    return selectedProduct?.product_name;
-  }, [selectedProduct]);
-
-  const handleOpenAddModal = useCallback(() => {
-    resetProductForm();
-    openAddModal();
-  }, [resetProductForm, openAddModal]);
-
-  // console.log("myProducts:", myProducts);
-
-  const handleProductImagesChange = useCallback(
-    (files: File[] | null | undefined) => {
-      setProductImages(files);
-    },
-    []
-  );
+  }, [selectedProducts, fetchProducts, fetchProductStats, clearSelections]);
 
   return (
     <div className="space-y-6">
@@ -351,27 +538,25 @@ export default function ProductsManagementPage() {
             variant="outline"
             onClick={handleExport}
             className="border-[#90c577] text-[#44703d] hover:bg-[#accc8b]/20 bg-transparent"
-            disabled={myProductsLoading}
+            disabled={loading}
           >
             <Download className="h-4 w-4 mr-2" />
             Xuất dữ liệu
           </Button>
           <Button
-            onClick={handleOpenAddModal}
+            onClick={openAddModal}
             className="bg-[#90c577] hover:bg-[#74a65d] text-white"
-            disabled={myProductsLoading}
+            disabled={loading}
           >
             <Plus className="h-4 w-4 mr-2" />
             Thêm sản phẩm
           </Button>
         </div>
       </div>
+
       {/* Statistics Cards */}
-      <StatisticsCards
-        stats={stats}
-        title="sản phẩm"
-        loading={myProductsLoading}
-      />
+      <StatisticsCards stats={stats} title="sản phẩm" loading={loading} />
+
       {/* Filters */}
       <ProductFilters
         search={filters.search || ""}
@@ -383,8 +568,9 @@ export default function ProductsManagementPage() {
         onCategoryChange={handleCategoryChange}
         onStatusChange={handleStatusChange}
         onPriceRangeChange={handlePriceRangeChange}
-        onReset={resetProductFilters}
+        onReset={resetFilters}
       />
+
       {/* Batch Actions */}
       <BatchActions
         selectedCount={getSelectedCount()}
@@ -394,9 +580,10 @@ export default function ProductsManagementPage() {
         loading={batchOperationLoading}
         title="sản phẩm"
       />
+
       {/* Products Table */}
       <ProductTable
-        products={myProducts}
+        products={paginatedProducts}
         selectedProducts={selectedProducts}
         onSelectProduct={toggleProductSelection}
         onSelectAll={toggleAllProductsSelection}
@@ -404,8 +591,9 @@ export default function ProductsManagementPage() {
         onViewDetails={handleViewDetails}
         onEditProduct={handleEditProduct}
         onDeleteProduct={handleDeleteProduct}
-        loading={myProductsLoading}
+        loading={loading}
       />
+
       {/* Pagination */}
       <ProductPagination
         currentPage={filters.page || 1}
@@ -418,6 +606,7 @@ export default function ProductsManagementPage() {
         sortBy={filters.sort_by || "created_at"}
         sortOrder={filters.sort_order || "desc"}
       />
+
       {/* Modals */}
       <ProductFormModal
         open={addProductModal}
@@ -427,8 +616,9 @@ export default function ProductsManagementPage() {
         onUpdateFormData={updateProductForm}
         title="Thêm sản phẩm mới"
         submitText="Tạo sản phẩm"
-        onProductImagesChange={handleProductImagesChange}
+        isEdit={false}
       />
+
       <ProductFormModal
         open={editProductModal}
         onClose={closeModals}
@@ -437,14 +627,16 @@ export default function ProductsManagementPage() {
         onUpdateFormData={updateProductForm}
         title="Chỉnh sửa sản phẩm"
         submitText="Cập nhật"
-        isEdit
+        isEdit={true}
+        currentImages={selectedProduct?.images}
       />
+
       <DeleteModal
         open={deleteProductModal}
         handleConfirm={handleDeleteProductConfirm}
         setOpen={closeModals}
         title="Xoá sản phẩm"
-        nameDelete={selectedProductName}
+        nameDelete={selectedProduct?.product_name}
       />
     </div>
   );

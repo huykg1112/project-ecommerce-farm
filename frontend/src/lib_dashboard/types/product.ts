@@ -79,7 +79,7 @@ export interface CreateProductRequest {
   ingredient_id_primary?: string;
   disease_id_primary?: string;
   is_active?: boolean;
-  // images?: string[]; // For image uploads
+  product_images?: File[]; // For image uploads
 }
 
 export interface UpdateProductRequest {
@@ -94,7 +94,7 @@ export interface UpdateProductRequest {
   is_active?: boolean;
   ingredient_id_primary?: string;
   disease_id_primary?: string;
-  // images?: string[]; // For image uploads
+  product_images?: File[]; // For image uploads
 }
 
 export interface AdvancedProductFilterRequest extends ProductFilters {
@@ -170,7 +170,7 @@ export interface ProductFormData {
   ingredient_id_primary?: string;
   disease_id_primary?: string;
   is_active: boolean;
-  // images: string[]; // For image uploads
+  product_images?: File[]; // For image uploads
 }
 
 export interface ProductFormErrors {

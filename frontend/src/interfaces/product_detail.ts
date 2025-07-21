@@ -1,3 +1,7 @@
+import { BatchProduct } from "@/lib_dashboard/types/batch-product";
+import { Category } from "@/lib_dashboard/types/category";
+import { Manufacturer } from "@/lib_dashboard/types/manufacturer";
+
 export interface ProductImagesProps {
   productImages: string[];
   activeImage: number;
@@ -14,11 +18,11 @@ export interface ProductInfoProps {
   originalPrice?: number;
   discount?: number;
   seller: { id: string; name: string };
-  selectedBatch?: any;
-  differentProductTypes?: any[];
-  setSelectedBatch?: (batch: any) => void;
-  categories?: any[];
-  manufacturer?: any;
+  selectedBatch?: BatchProduct | null;
+  differentProductTypes?: BatchProduct[];
+  setSelectedBatch?: (batch: BatchProduct | null) => void;
+  categories?: Category[];
+  manufacturer?: Manufacturer;
   totalSaled?: number;
 }
 

@@ -129,7 +129,7 @@ export default function Home() {
       <HeroSlider />
       <VouchersSection loading={loading} vouchers={fetchedVouchers} />
       <CategoriesSection loading={loading} categories={fetchedCategories} />
-      <FeaturedProductsSection loading={loading} products={featuredProducts} />
+      <FeaturedProductsSection />
       <BecomePartnerSection />
       <DiscountBannerSection />
       <NewProductsSection loading={loading} products={newProducts} />

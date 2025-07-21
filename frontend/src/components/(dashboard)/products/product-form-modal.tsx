@@ -38,6 +38,11 @@ interface ProductFormModalProps {
   submitText: string;
   isEdit?: boolean;
   onProductImagesChange?: (files: File[] | null | undefined) => void; // Callback for image changes
+  currentImages?: Array<{
+    image_id: string;
+    image_url: string;
+    is_primary: boolean;
+  }>; // Current images for edit mode
 }
 
 interface ImageUpload {
@@ -58,6 +63,7 @@ export function ProductFormModal({
   submitText,
   isEdit = false,
   onProductImagesChange,
+  currentImages = [],
 }: ProductFormModalProps) {
   // Hooks for dropdown
 
@@ -172,12 +178,15 @@ export function ProductFormModal({
       newErrors.category_ids = "Phải chọn ít nhất một danh mục";
     }
 
-    if (images.length === 0) {
-      newErrors.images = "Phải có ít nhất một hình ảnh sản phẩm";
-    }
+    // Image validation - only required for create mode
+    if (!isEdit) {
+      if (images.length === 0) {
+        newErrors.images = "Phải có ít nhất một hình ảnh sản phẩm";
+      }
 
-    if (images.length > 0 && !images.some((img) => img.is_primary)) {
-      newErrors.images = "Phải chọn một hình ảnh làm ảnh chính";
+      if (images.length > 0 && !images.some((img) => img.is_primary)) {
+        newErrors.images = "Phải chọn một hình ảnh làm ảnh chính";
+      }
     }
 
     setErrors(newErrors);
@@ -196,7 +205,9 @@ export function ProductFormModal({
       const success = await onSubmit();
 
       if (success) {
-        onProductImagesChange?.(images.map((img) => img.file).filter(Boolean));
+        onProductImagesChange?.(
+          images.map((img) => img.file).filter(Boolean) as File[]
+        );
         setImages([]);
         setErrors({});
       }
@@ -208,7 +219,9 @@ export function ProductFormModal({
   }, [onSubmit, validateForm]);
 
   const handleClose = useCallback(() => {
-    onProductImagesChange?.(images.map((img) => img.file).filter(Boolean));
+    onProductImagesChange?.(
+      images.map((img) => img.file).filter(Boolean) as File[]
+    );
     setImages([]);
     setErrors({});
     onClose();
@@ -232,6 +245,15 @@ export function ProductFormModal({
       }
       if (updates.category_ids !== undefined) {
         setErrors((prev) => ({ ...prev, category_ids: "" }));
+      }
+      if (updates.manufacturer_id !== undefined) {
+        setErrors((prev) => ({ ...prev, manufacturer_id: "" }));
+      }
+      if (
+        updates.product_images !== undefined &&
+        updates.product_images.length > 0
+      ) {
+        setErrors((prev) => ({ ...prev, images: "" }));
       }
     },
     [onUpdateFormData]
@@ -262,6 +284,12 @@ export function ProductFormModal({
           reader.readAsDataURL(file);
         }
       });
+      updateFormData({
+        product_images: images
+          .map((img) => img.file)
+          .filter((f): f is File => !!f),
+      });
+
       // Notify parent component about image chang
     },
     [images.length]
@@ -334,6 +362,22 @@ export function ProductFormModal({
       updateFormData({ disease_ids: updatedDiseases });
     },
     [formData.disease_ids, updateFormData]
+  );
+
+  // Primary ingredient selection
+  const handleSetPrimaryIngredient = useCallback(
+    (ingredientId: string) => {
+      updateFormData({ ingredient_id_primary: ingredientId });
+    },
+    [updateFormData]
+  );
+
+  // Primary disease selection
+  const handleSetPrimaryDisease = useCallback(
+    (diseaseId: string) => {
+      updateFormData({ disease_id_primary: diseaseId });
+    },
+    [updateFormData]
   );
 
   return (
@@ -497,10 +541,13 @@ export function ProductFormModal({
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">
-                Hình ảnh sản phẩm <span className="text-red-500">*</span>
+                Hình ảnh sản phẩm{" "}
+                {!isEdit && <span className="text-red-500">*</span>}
               </CardTitle>
               <DialogDescription>
-                Tải lên tối đa 5 hình ảnh. Hình ảnh đầu tiên sẽ là ảnh chính.
+                {isEdit
+                  ? "Thêm hình ảnh mới hoặc giữ nguyên hình ảnh hiện tại. Tải lên tối đa 5 hình ảnh."
+                  : "Tải lên tối đa 5 hình ảnh. Hình ảnh đầu tiên sẽ là ảnh chính."}
               </DialogDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -526,51 +573,86 @@ export function ProductFormModal({
                 />
               </div>
 
-              {/* Image Preview Grid */}
-              {images.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                  {images.map((image) => (
-                    <div key={image.id} className="relative group">
-                      <div className="aspect-square relative border-2 rounded-lg overflow-hidden">
-                        <Image
-                          src={image.url}
-                          alt={image.alt_text || "Product image"}
-                          fill
-                          className="object-cover"
-                        />
+              {/* Current Images (Edit Mode) */}
+              {isEdit && currentImages && currentImages.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium text-gray-700">
+                    Hình ảnh hiện tại:
+                  </h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    {currentImages.map((image) => (
+                      <div key={image.image_id} className="relative group">
+                        <div className="aspect-square relative border-2 rounded-lg overflow-hidden">
+                          <Image
+                            src={image.image_url}
+                            alt="Current product image"
+                            fill
+                            className="object-cover"
+                          />
 
-                        {/* Primary indicator */}
-                        {image.is_primary && (
-                          <Badge className="absolute top-2 left-2 bg-yellow-500 text-white">
-                            Ảnh chính
-                          </Badge>
-                        )}
-
-                        {/* Actions */}
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => handleSetPrimaryImage(image.id)}
-                            disabled={image.is_primary}
-                          >
-                            {image.is_primary ? (
-                              <Star className="h-4 w-4" />
-                            ) : (
-                              <StarOff className="h-4 w-4" />
-                            )}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => handleImageRemove(image.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          {/* Primary indicator */}
+                          {image.is_primary && (
+                            <Badge className="absolute top-2 left-2 bg-yellow-500 text-white">
+                              Ảnh chính
+                            </Badge>
+                          )}
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* New Images Upload */}
+              {images.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium text-gray-700">
+                    {isEdit ? "Hình ảnh mới:" : "Hình ảnh được chọn:"}
+                  </h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                    {images.map((image) => (
+                      <div key={image.id} className="relative group">
+                        <div className="aspect-square relative border-2 rounded-lg overflow-hidden">
+                          <Image
+                            src={image.url}
+                            alt={image.alt_text || "Product image"}
+                            fill
+                            className="object-cover"
+                          />
+
+                          {/* Primary indicator */}
+                          {image.is_primary && (
+                            <Badge className="absolute top-2 left-2 bg-yellow-500 text-white">
+                              Ảnh chính
+                            </Badge>
+                          )}
+
+                          {/* Actions */}
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-1">
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => handleSetPrimaryImage(image.id)}
+                              disabled={image.is_primary}
+                            >
+                              {image.is_primary ? (
+                                <Star className="h-4 w-4" />
+                              ) : (
+                                <StarOff className="h-4 w-4" />
+                              )}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => handleImageRemove(image.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -622,6 +704,10 @@ export function ProductFormModal({
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Hoạt chất</CardTitle>
+              <DialogDescription>
+                Chọn các hoạt chất có trong sản phẩm. Có thể chọn một hoạt chất
+                làm hoạt chất chính.
+              </DialogDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {loadingOptions ? (
@@ -629,30 +715,77 @@ export function ProductFormModal({
               ) : !activeIngredients || activeIngredients.length === 0 ? (
                 <div>Không có hoạt chất nào.</div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {activeIngredients.map(
                     (activeIngredient: ActiveIngredient) => (
                       <div
                         key={activeIngredient.ingredient_id}
-                        className="flex gap-3  items-center p-4 border rounded-lg shadow-sm hover:shadow-md"
+                        className={`p-4 border rounded-lg shadow-sm hover:shadow-md transition-shadow ${
+                          formData.ingredient_id_primary ===
+                          activeIngredient.ingredient_id
+                            ? "border-yellow-500 bg-yellow-50"
+                            : ""
+                        }`}
                       >
-                        <Checkbox
-                          id={`ingredient-${activeIngredient.ingredient_id}`}
-                          checked={formData.ingredient_ids?.includes(
-                            activeIngredient.ingredient_id
-                          )}
-                          onCheckedChange={() =>
-                            handleIngredientToggle(
+                        <div className="flex items-center gap-3 mb-2">
+                          <Checkbox
+                            id={`ingredient-${activeIngredient.ingredient_id}`}
+                            checked={formData.ingredient_ids?.includes(
                               activeIngredient.ingredient_id
-                            )
-                          }
-                        />
-                        <Label
-                          htmlFor={`ingredient-${activeIngredient.ingredient_id}`}
-                        >
-                          {activeIngredient.ingredient_name ||
-                            "Chưa có tên hoạt chất"}
-                        </Label>
+                            )}
+                            onCheckedChange={() =>
+                              handleIngredientToggle(
+                                activeIngredient.ingredient_id
+                              )
+                            }
+                          />
+                          <Label
+                            htmlFor={`ingredient-${activeIngredient.ingredient_id}`}
+                            className="flex-1"
+                          >
+                            {activeIngredient.ingredient_name ||
+                              "Chưa có tên hoạt chất"}
+                          </Label>
+                        </div>
+
+                        {formData.ingredient_ids?.includes(
+                          activeIngredient.ingredient_id
+                        ) && (
+                          <div className="flex items-center gap-2 mt-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant={
+                                formData.ingredient_id_primary ===
+                                activeIngredient.ingredient_id
+                                  ? "default"
+                                  : "outline"
+                              }
+                              onClick={() =>
+                                handleSetPrimaryIngredient(
+                                  activeIngredient.ingredient_id
+                                )
+                              }
+                              className={`flex items-center gap-1 ${
+                                formData.ingredient_id_primary ===
+                                activeIngredient.ingredient_id
+                                  ? "bg-yellow-500 hover:bg-yellow-600 text-white"
+                                  : "border-yellow-500 text-yellow-600 hover:bg-yellow-50"
+                              }`}
+                            >
+                              {formData.ingredient_id_primary ===
+                              activeIngredient.ingredient_id ? (
+                                <Star className="h-3 w-3" />
+                              ) : (
+                                <StarOff className="h-3 w-3" />
+                              )}
+                              {formData.ingredient_id_primary ===
+                              activeIngredient.ingredient_id
+                                ? "Hoạt chất chính"
+                                : "Đặt làm chính"}
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     )
                   )}
@@ -665,6 +798,10 @@ export function ProductFormModal({
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Bệnh cây trồng</CardTitle>
+              <DialogDescription>
+                Chọn các bệnh mà sản phẩm có thể điều trị. Có thể chọn một bệnh
+                làm bệnh chính.
+              </DialogDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {loadingOptions ? (
@@ -672,24 +809,65 @@ export function ProductFormModal({
               ) : !diseases || diseases.length === 0 ? (
                 <div>Không có bệnh cây trồng nào.</div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {diseases.map((disease: Disease) => (
                     <div
                       key={disease.disease_id}
-                      className="flex gap-3 items-center p-4 border rounded-lg shadow-sm hover:shadow-md"
+                      className={`p-4 border rounded-lg shadow-sm hover:shadow-md transition-shadow ${
+                        formData.disease_id_primary === disease.disease_id
+                          ? "border-green-500 bg-green-50"
+                          : ""
+                      }`}
                     >
-                      <Checkbox
-                        id={`disease-${disease.disease_id}`}
-                        checked={formData.disease_ids?.includes(
-                          disease.disease_id
-                        )}
-                        onCheckedChange={() =>
-                          handleDiseaseToggle(disease.disease_id)
-                        }
-                      />
-                      <Label htmlFor={`disease-${disease.disease_id}`}>
-                        {disease.disease_name || "Chưa có tên bệnh"}
-                      </Label>
+                      <div className="flex items-center gap-3 mb-2">
+                        <Checkbox
+                          id={`disease-${disease.disease_id}`}
+                          checked={formData.disease_ids?.includes(
+                            disease.disease_id
+                          )}
+                          onCheckedChange={() =>
+                            handleDiseaseToggle(disease.disease_id)
+                          }
+                        />
+                        <Label
+                          htmlFor={`disease-${disease.disease_id}`}
+                          className="flex-1"
+                        >
+                          {disease.disease_name || "Chưa có tên bệnh"}
+                        </Label>
+                      </div>
+
+                      {formData.disease_ids?.includes(disease.disease_id) && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant={
+                              formData.disease_id_primary === disease.disease_id
+                                ? "default"
+                                : "outline"
+                            }
+                            onClick={() =>
+                              handleSetPrimaryDisease(disease.disease_id)
+                            }
+                            className={`flex items-center gap-1 ${
+                              formData.disease_id_primary === disease.disease_id
+                                ? "bg-green-500 hover:bg-green-600 text-white"
+                                : "border-green-500 text-green-600 hover:bg-green-50"
+                            }`}
+                          >
+                            {formData.disease_id_primary ===
+                            disease.disease_id ? (
+                              <Star className="h-3 w-3" />
+                            ) : (
+                              <StarOff className="h-3 w-3" />
+                            )}
+                            {formData.disease_id_primary === disease.disease_id
+                              ? "Bệnh chính"
+                              : "Đặt làm chính"}
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

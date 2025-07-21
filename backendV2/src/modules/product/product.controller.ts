@@ -22,7 +22,6 @@ import {
   BatchToggleStatusDto,
 } from './dto/batch-operation.dto';
 import { CreateProductDto } from './dto/create-product.dto';
-import { ProductFilterDto } from './dto/product-filter.dto';
 import { ProductStatsDto } from './dto/product-stats.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { ProductService } from './product.service';
@@ -45,15 +44,15 @@ export class ProductController {
     return this.productService.create(createProductDto, files || [], req.user);
   }
 
-  @Public()
   @Get()
-  findAll(@Query() filters: ProductFilterDto) {
-    return this.productService.findAll();
+  findAll(@Req() req) {
+    const userId = req.user.user_id;
+    return this.productService.findAll(userId);
   }
 
   @Public()
   @Get('for-users')
-  findAllForUser(@Query() filters: ProductFilterDto) {
+  findAllForUser() {
     return this.productService.findAllForUser();
   }
 
@@ -149,11 +148,7 @@ export class ProductController {
   @Get('my-products')
   getMyProducts(@Req() req) {
     // nếu role là Admin, trả về tất cả sản phẩm của nhà phân phối
-    if (req.user.role?.role_name !== Role.DISTRIBUTOR) {
-      return this.productService.findAll();
-    }
-    console.log('User:', req.user);
-    return this.productService.findByDistributor(req.user.user_id);
+    return this.productService.findAll(req.user.user_id);
   }
 
   //  @Roles(Role.DISTRIBUTOR, Role.ADMIN)
