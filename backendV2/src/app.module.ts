@@ -34,6 +34,8 @@ import { TreatmentPlanModule } from './modules/treatment-plan/treatment-plan.mod
 import { UserModule } from './modules/user/user.module';
 import { VoucherModule } from './modules/voucher/voucher.module';
 
+import { PaymentModule } from './modules/payment/payment.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -84,6 +86,7 @@ import { VoucherModule } from './modules/voucher/voucher.module';
     StoreOwnerRequestModule,
     AuthModule,
     ProductDiseaseModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [
