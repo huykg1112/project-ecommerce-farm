@@ -56,4 +56,10 @@ export class CreateProductDto {
   @IsOptional()
   @IsArray()
   image_ids?: string[];
+
+  @IsOptional()
+  disease_id_primary?: string;
+
+  @IsOptional()
+  ingredient_id_primary?: string;
 }

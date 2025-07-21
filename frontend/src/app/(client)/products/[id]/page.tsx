@@ -6,69 +6,318 @@ import ProductImages from "@/components/product_detail/ProductImages";
 import ProductInfo from "@/components/product_detail/ProductInfo";
 import ProductTabs from "@/components/product_detail/ProductTabs";
 import RelatedProducts from "@/components/products/related-products";
-import { products } from "@/data/products";
 import { useAuthAction } from "@/lib/auth/use-auth-action";
 import { useCartAnimation } from "@/lib/cart/cart-animation-context";
 import { addToCart } from "@/lib/features/cart-slice";
+import {
+  addToWishlist,
+  removeFromWishlist,
+  selectIsInWishlist,
+} from "@/lib/features/wishlist-slice";
 import { showToast } from "@/lib/toast-provider";
+import { useWishlistAnimation } from "@/lib/wishlist/wishlist-animation-context";
+import { productServiceManagement } from "@/lib_dashboard/services/product-service-management";
+import { BatchProduct } from "@/lib_dashboard/types/batch-product";
+import { Product } from "@/lib_dashboard/types/product";
+import { Promotion } from "@/lib_dashboard/types/promotion";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useRef, useState } from "react";
-import { useDispatch } from "react-redux";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+
+const getMaxDiscountForBatch = (batch: BatchProduct): Promotion | null => {
+  if (!batch.promotions || batch.promotions.length === 0) return null;
+  let maxDiscount = 0;
+  let maxPromotion: Promotion | null = null;
+  batch.promotions.forEach((promo) => {
+    if (
+      promo.is_active &&
+      !promo.is_deleted &&
+      promo?.discount_value &&
+      promo?.discount_value > maxDiscount
+    ) {
+      maxDiscount = promo.discount_value;
+      maxPromotion = promo;
+    }
+  });
+  return maxPromotion;
+};
+
+const valueWithDiscount = (
+  batch: BatchProduct,
+  maxPromotion: Promotion | null
+): number => {
+  if (
+    maxPromotion &&
+    maxPromotion.discount_value &&
+    maxPromotion.discount_value > 0
+  ) {
+    return (
+      batch.unit_product_price -
+      (batch.unit_product_price * maxPromotion.discount_value) / 100
+    );
+  }
+  return batch.unit_product_price;
+};
 
 export default function ProductPage() {
   const { id } = useParams();
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const dispatch = useDispatch();
+  const { startAnimation: startWishlistAnimation } = useWishlistAnimation();
   const { requireAuth } = useAuthAction();
   const productRef = useRef<HTMLDivElement>(null);
   const { startAnimation } = useCartAnimation();
+  const [loading, setLoading] = useState(false);
+  const [product, setProduct] = useState<Product>();
+  const [selectedBatch, setSelectedBatch] = useState<BatchProduct | null>(null);
 
-  const product = products.find((p) => p.id === id) || products[0];
-  const productImages = product.images;
+  // Check if product is in wishlist
+  const isInWishlist = useSelector(
+    selectIsInWishlist(product?.product_id || "")
+  );
 
-  const decreaseQuantity = () => {
-    if (quantity > 1) setQuantity(quantity - 1);
-  };
+  // Fetch product data from API
+  useEffect(() => {
+    setLoading(true);
+    const fetchProduct = async () => {
+      try {
+        const productId = Array.isArray(id) ? id[0] : id;
+        const productData =
+          await productServiceManagement.getProductByIdForUser(productId);
+        console.log("Fetched Product:", productData);
+        setProduct(productData);
 
-  const increaseQuantity = () => {
-    setQuantity(quantity + 1);
-  };
-
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    requireAuth(() => {
-      dispatch(
-        addToCart({
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          quantity: 1,
-          image: product.images[0],
-          sellerId: product.seller.id,
-          sellerName: product.seller.name,
-        })
-      );
-      if (productRef.current) {
-        const rect = productRef.current.getBoundingClientRect();
-        const sourcePosition = {
-          x: rect.left + rect.width / 2 - 32,
-          y: rect.top + rect.height / 2 - 32,
-        };
-        startAnimation(product.images[0], product.name, sourcePosition);
+        // Set default batch if available
+        if (
+          productData &&
+          productData.batches &&
+          productData.batches.length > 0
+        ) {
+          setSelectedBatch(productData.batches[0]);
+        }
+      } catch (error) {
+        console.error("Error fetching product:", error);
+      } finally {
+        setLoading(false);
       }
-      showToast.success(`Đã thêm ${product.name} vào giỏ hàng!`);
-    });
-  };
+    };
+    fetchProduct();
+  }, [id]);
 
-  const toggleWishlist = (e: React.MouseEvent) => {
-    e.preventDefault();
-    requireAuth(() => {
-      setIsWishlisted(!isWishlisted);
+  // Memoized product images (max 5 images)
+  const productImages = useMemo(() => {
+    if (!product?.images) return ["/placeholder.svg"];
+    return product.images.slice(0, 5).map((img) => img.image_url);
+  }, [product?.images]);
+
+  // Memoized review statistics
+  const reviewStats = useMemo(() => {
+    if (!product?.reviews || product.reviews.length === 0) {
+      return { averageRating: 0, totalReviews: 0 };
+    }
+    const totalRating = product.reviews.reduce(
+      (sum, review) => sum + review.rating,
+      0
+    );
+    return {
+      averageRating: totalRating / product.reviews.length,
+      totalReviews: product.reviews.length,
+    };
+  }, [product?.reviews]);
+
+  // Handle quantity changes with useCallback
+  const decreaseQuantity = useCallback(() => {
+    setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
+  }, []);
+
+  const increaseQuantity = useCallback(() => {
+    setQuantity((prev) => prev + 1);
+  }, []);
+
+  // Memoized different product types from batches
+  const differentProductTypes = useMemo(() => {
+    if (!product?.batches || product.batches.length === 0) return [];
+
+    const uniqueTypes = new Map<string, BatchProduct>();
+
+    product.batches.forEach((batch) => {
+      if (
+        !batch.is_active ||
+        batch.is_deleted ||
+        !batch.product_types ||
+        !batch.product_types.is_active ||
+        batch.product_types.is_deleted ||
+        batch.quantity <= 0 ||
+        batch.expiry_date <= new Date()
+      ) {
+        return;
+      }
+
+      const existing = uniqueTypes.get(batch.product_types.product_type_id);
+
+      if (
+        !existing ||
+        (batch.expiry_date && batch.expiry_date < existing.expiry_date)
+      ) {
+        uniqueTypes.set(batch.product_types.product_type_id, batch);
+      }
     });
-  };
+
+    const batches = Array.from(uniqueTypes.values());
+    if (batches.length > 0 && !selectedBatch) {
+      setSelectedBatch(batches[0]);
+    }
+    return batches;
+  }, [product?.batches, selectedBatch]);
+
+  // Memoized promotion and price calculations
+  const maxPromotion = useMemo(
+    () => (selectedBatch ? getMaxDiscountForBatch(selectedBatch) : null),
+    [selectedBatch]
+  );
+
+  const discountedPrice = useMemo(() => {
+    if (selectedBatch) {
+      return valueWithDiscount(selectedBatch, maxPromotion);
+    }
+    // Fallback to product base price if no batch
+    return product?.unit_product_price || 0;
+  }, [selectedBatch, maxPromotion, product?.unit_product_price]);
+
+  // Handle add to cart with useCallback
+  const handleAddToCart = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+
+      if (!product) return;
+
+      requireAuth(() => {
+        dispatch(
+          addToCart({
+            id: product.product_id,
+            name: product.product_name,
+            price: discountedPrice,
+            valueDiscount: maxPromotion?.discount_value || 0,
+            quantity: 1,
+            image: product.images[0]?.image_url || "",
+            sellerId:
+              product.distributor?.invenstory?.invenstory_id ||
+              (Math.floor(Math.random() * 999) + 1).toString(),
+            sellerName: product.distributor?.invenstory?.name || "N/A",
+            promotion: maxPromotion,
+            batch: selectedBatch,
+          })
+        );
+
+        if (productRef.current) {
+          const rect = productRef.current.getBoundingClientRect();
+          const sourcePosition = {
+            x: rect.left + rect.width / 2 - 32,
+            y: rect.top + rect.height / 2 - 32,
+          };
+
+          startAnimation(
+            product.images[0]?.image_url || "",
+            product.product_name,
+            sourcePosition
+          );
+        }
+
+        showToast.success(`Đã thêm ${product.product_name} vào giỏ hàng!`);
+      });
+    },
+    [
+      product,
+      discountedPrice,
+      maxPromotion,
+      selectedBatch,
+      dispatch,
+      requireAuth,
+      startAnimation,
+    ]
+  );
+
+  // Handle wishlist toggle with useCallback
+  const toggleWishlist = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+
+      if (!product) return;
+
+      requireAuth(() => {
+        if (isInWishlist) {
+          dispatch(removeFromWishlist(product.product_id));
+          showToast.info(
+            `Đã xóa ${product.product_name} khỏi danh sách yêu thích!`
+          );
+        } else {
+          dispatch(
+            addToWishlist({
+              id: product.product_id,
+              name: product.product_name,
+              price: discountedPrice,
+              image: product.images[0]?.image_url || "",
+              sellerId:
+                product.distributor?.invenstory?.invenstory_id ||
+                (Math.floor(Math.random() * 999) + 1).toString(),
+              sellerName: product.distributor?.invenstory?.name || "N/A",
+              category: product.categories[0]?.name || "N/A",
+              discount: maxPromotion?.discount_value || 0,
+            })
+          );
+
+          if (productRef.current) {
+            const rect = productRef.current.getBoundingClientRect();
+            const sourcePosition = {
+              x: rect.left + rect.width / 2 - 32,
+              y: rect.top + rect.height / 2 - 32,
+            };
+
+            startWishlistAnimation(
+              product.images[0]?.image_url || "",
+              product.product_name,
+              sourcePosition
+            );
+          }
+
+          showToast.success(
+            `Đã thêm ${product.product_name} vào danh sách yêu thích!`
+          );
+        }
+      });
+    },
+    [
+      product,
+      isInWishlist,
+      discountedPrice,
+      maxPromotion,
+      dispatch,
+      requireAuth,
+      startWishlistAnimation,
+    ]
+  );
+
+  if (loading) {
+    return (
+      <div className="container py-8">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-lg">Đang tải...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="container py-8">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-lg">Không tìm thấy sản phẩm</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container py-8">
@@ -78,13 +327,15 @@ export default function ProductPage() {
         </Link>
         <span className="mx-2">/</span>
         <Link
-          href={`/products?category=${encodeURIComponent(product.category)}`}
+          href={`/products?category=${encodeURIComponent(
+            product.categories[0]?.name || ""
+          )}`}
           className="hover:text-primary"
         >
-          {product.category}
+          {product.categories[0]?.name || "Sản phẩm"}
         </Link>
         <span className="mx-2">/</span>
-        <span className="cursor-pointer">{product.name}</span>
+        <span className="cursor-pointer">{product.product_name}</span>
       </div>
       <div className="grid md:grid-cols-2 gap-8 mb-12">
         <div ref={productRef}>
@@ -92,19 +343,30 @@ export default function ProductPage() {
             productImages={productImages}
             activeImage={activeImage}
             setActiveImage={setActiveImage}
-            productName={product.name}
-            discount={product.discount}
+            productName={product.product_name}
+            discount={maxPromotion?.discount_value}
           />
         </div>
         <div>
           <ProductInfo
-            name={product.name}
-            rating={product.rating}
-            ratingCount={product.ratingCount}
-            price={product.price}
-            originalPrice={product.originalPrice}
-            discount={product.discount}
-            seller={product.seller}
+            name={product.product_name}
+            rating={reviewStats.averageRating}
+            ratingCount={reviewStats.totalReviews}
+            price={discountedPrice}
+            originalPrice={
+              selectedBatch?.unit_product_price || product.unit_product_price
+            }
+            discount={maxPromotion?.discount_value}
+            seller={{
+              id: product.distributor?.invenstory?.invenstory_id || "",
+              name: product.distributor?.invenstory?.name || "N/A",
+            }}
+            selectedBatch={selectedBatch}
+            differentProductTypes={differentProductTypes}
+            setSelectedBatch={setSelectedBatch}
+            categories={product.categories}
+            manufacturer={product.manufacturer}
+            totalSaled={product.total_saled}
           />
           <ProductActions
             quantity={quantity}
@@ -112,19 +374,15 @@ export default function ProductPage() {
             increaseQuantity={increaseQuantity}
             handleAddToCart={handleAddToCart}
             toggleWishlist={toggleWishlist}
-            isWishlisted={isWishlisted}
+            isWishlisted={isInWishlist}
           />
           <ProductFeatures />
         </div>
       </div>
-      <ProductTabs
-        name={product.name}
-        rating={product.rating}
-        ratingCount={product.ratingCount}
-      />
+      <ProductTabs product={product} reviewStats={reviewStats} />
       <RelatedProducts
-        category={product.category}
-        currentProductId={product.id}
+        category={product.categories[0]?.name || ""}
+        currentProductId={product.product_id}
       />
     </div>
   );

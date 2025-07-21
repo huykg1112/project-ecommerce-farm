@@ -126,6 +126,10 @@ export const productServiceManagement = {
         formData.append("is_active", String(data.is_active));
       if (data.manufacturer_id)
         formData.append("manufacturer_id", data.manufacturer_id);
+      if (data.ingredient_id_primary)
+        formData.append("ingredient_id_primary", data.ingredient_id_primary);
+      if (data.disease_id_primary)
+        formData.append("disease_id_primary", data.disease_id_primary);
       if (data.ingredient_ids)
         formData.append("ingredient_ids", JSON.stringify(data.ingredient_ids));
       if (data.disease_ids)
@@ -173,6 +177,10 @@ export const productServiceManagement = {
         formData.append("is_active", String(data.is_active));
       if (data.manufacturer_id)
         formData.append("manufacturer_id", data.manufacturer_id);
+      if (data.ingredient_id_primary)
+        formData.append("ingredient_id_primary", data.ingredient_id_primary);
+      if (data.disease_id_primary)
+        formData.append("disease_id_primary", data.disease_id_primary);
       if (data.ingredient_ids)
         formData.append("ingredient_ids", JSON.stringify(data.ingredient_ids));
       if (data.disease_ids)

@@ -14,7 +14,7 @@ export default function FeaturedSellers({
 }: {
   sellers: InvenstoryClient[];
 }) {
-  console.log("Featured Sellers:", sellers);
+  // console.log("Featured Sellers:", sellers);
   const [startIndex, setStartIndex] = useState(0);
   const visibleSellers = 4;
 

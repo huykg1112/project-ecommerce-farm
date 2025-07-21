@@ -1,180 +1,344 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Star } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { ProductTabsProps } from "@/interfaces";
+import { AlertTriangle, Building2, Leaf, Star } from "lucide-react";
+import Image from "next/image";
+import { useState } from "react";
 
 export default function ProductTabs({
-  name,
-  rating,
-  ratingCount,
+  product,
+  reviewStats,
 }: ProductTabsProps) {
+  const [newReview, setNewReview] = useState({ rating: 5, comment: "" });
+
   return (
-    <Tabs defaultValue="details" className="mb-12">
+    <Tabs defaultValue="manufacturer" className="mb-12">
       <TabsList className="w-full justify-start border-b rounded-none bg-transparent h-auto p-0">
         <TabsTrigger
-          value="details"
+          value="manufacturer"
           className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-base py-3 px-4"
         >
-          Chi tiết sản phẩm
+          <Building2 className="w-4 h-4 mr-2" />
+          Thông tin sản phẩm
         </TabsTrigger>
         <TabsTrigger
-          value="specifications"
+          value="diseases"
           className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-base py-3 px-4"
         >
-          Thông số kỹ thuật
+          <Leaf className="w-4 h-4 mr-2" />
+          Công dụng & Thành phần
         </TabsTrigger>
         <TabsTrigger
           value="reviews"
           className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent text-base py-3 px-4"
         >
-          Đánh giá ({ratingCount})
+          <Star className="w-4 h-4 mr-2" />
+          Đánh giá ({reviewStats?.totalReviews || 0})
         </TabsTrigger>
       </TabsList>
-      <TabsContent value="details" className="pt-6">
-        <div className="prose max-w-none">
-          <h3>Mô tả chi tiết sản phẩm</h3>
-          <p>
-            {name} là sản phẩm nông nghiệp chất lượng cao, được trồng và thu
-            hoạch theo tiêu chuẩn VietGAP, đảm bảo an toàn vệ sinh thực phẩm.
-            Sản phẩm tươi ngon, không sử dụng hóa chất độc hại, phù hợp cho mọi
-            gia đình.
-          </p>
-          <p>
-            Được trồng tại các vùng nông nghiệp sạch, sản phẩm của chúng tôi
-            luôn đảm bảo chất lượng và hương vị tự nhiên. Chúng tôi cam kết mang
-            đến cho khách hàng những sản phẩm tươi ngon nhất, góp phần vào việc
-            bảo vệ sức khỏe của gia đình bạn.
-          </p>
-          <h3>Đặc điểm nổi bật</h3>
-          <ul>
-            <li>Sản phẩm tươi ngon, chất lượng cao</li>
-            <li>Được trồng và thu hoạch theo tiêu chuẩn VietGAP</li>
-            <li>Không sử dụng hóa chất độc hại</li>
-            <li>Giàu dinh dưỡng, tốt cho sức khỏe</li>
-            <li>Đóng gói cẩn thận, bảo quản tốt</li>
-          </ul>
-          <h3>Hướng dẫn bảo quản</h3>
-          <p>
-            Để đảm bảo sản phẩm luôn tươi ngon, bạn nên bảo quản trong tủ lạnh ở
-            nhiệt độ 2-5°C. Nên sử dụng trong vòng 5-7 ngày sau khi mua để đảm
-            bảo chất lượng tốt nhất.
-          </p>
-        </div>
-      </TabsContent>
-      <TabsContent value="specifications" className="pt-6">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <tbody className="divide-y divide-gray-200">
-              <tr>
-                <td className="py-3 px-4 text-sm font-medium text-gray-900 bg-gray-50 w-1/3">
-                  Xuất xứ
-                </td>
-                <td className="py-3 px-4 text-sm text-gray-700">Việt Nam</td>
-              </tr>
-              <tr>
-                <td className="py-3 px-4 text-sm font-medium text-gray-900 bg-gray-50">
-                  Vùng trồng
-                </td>
-                <td className="py-3 px-4 text-sm text-gray-700">
-                  Đà Lạt, Lâm Đồng
-                </td>
-              </tr>
-              <tr>
-                <td className="py-3 px-4 text-sm font-medium text-gray-900 bg-gray-50">
-                  Tiêu chuẩn
-                </td>
-                <td className="py-3 px-4 text-sm text-gray-700">VietGAP</td>
-              </tr>
-              <tr>
-                <td className="py-3 px-4 text-sm font-medium text-gray-900 bg-gray-50">
-                  Quy cách đóng gói
-                </td>
-                <td className="py-3 px-4 text-sm text-gray-700">500g/gói</td>
-              </tr>
-              <tr>
-                <td className="py-3 px-4 text-sm font-medium text-gray-900 bg-gray-50">
-                  Hạn sử dụng
-                </td>
-                <td className="py-3 px-4 text-sm text-gray-700">
-                  7 ngày kể từ ngày thu hoạch
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </TabsContent>
-      <TabsContent value="reviews" className="pt-6">
-        <div className="mb-8">
-          <h3 className="text-lg font-semibold mb-4">Đánh giá tổng quan</h3>
-          <div className="flex items-center">
-            <div className="flex-1">
-              <div className="text-4xl font-bold">{rating.toFixed(1)}</div>
-              <div className="flex items-center">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`h-5 w-5 ${
-                      i < Math.floor(rating)
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "text-gray-300"
-                    }`}
-                  />
-                ))}
-              </div>
-              <div className="text-sm text-gray-500">
-                {ratingCount} đánh giá
-              </div>
-            </div>
-            <div className="flex-1">
-              {[5, 4, 3, 2, 1].map((star) => (
-                <div key={star} className="flex items-center mb-1">
-                  <span className="text-sm text-gray-600 w-3">{star}</span>
-                  <Star className="h-4 w-4 text-yellow-400 ml-1 mr-2" />
-                  <Progress value={70} className="h-2 flex-1" />
-                  <span className="text-sm text-gray-600 ml-2">70%</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-        <Separator className="my-6" />
-        <div>
-          <h3 className="text-lg font-semibold mb-4">
-            Đánh giá của khách hàng
-          </h3>
-          <div className="space-y-6">
-            {[...Array(3)].map((_, index) => (
-              <div key={index} className="border-b pb-6">
-                <div className="flex items-center mb-2">
-                  <Avatar className="h-10 w-10 mr-3">
-                    <AvatarFallback>KH</AvatarFallback>
-                  </Avatar>
+
+      {/* Tab 1: Thông tin nhà sản xuất, danh mục, mô tả */}
+      <TabsContent value="manufacturer" className="pt-6">
+        <div className="space-y-6">
+          {/* Nhà sản xuất */}
+          {product?.manufacturer && (
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                <Building2 className="w-5 h-5 mr-2" />
+                Nhà sản xuất
+              </h3>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="flex items-center mb-3">
+                  {product.manufacturer.logo && (
+                    <Image
+                      src={product.manufacturer.logo}
+                      alt={product.manufacturer.name}
+                      width={60}
+                      height={60}
+                      className="mr-4 object-contain"
+                    />
+                  )}
                   <div>
-                    <div className="font-medium">Khách hàng {index + 1}</div>
-                    <div className="text-sm text-gray-500">2 ngày trước</div>
+                    <h4 className="font-semibold text-lg">
+                      {product.manufacturer.name}
+                    </h4>
+                    {product.manufacturer.description && (
+                      <p className="text-gray-600">
+                        {product.manufacturer.description}
+                      </p>
+                    )}
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Danh mục */}
+          {product?.categories && product.categories.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                Danh mục sản phẩm
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {product.categories.map((category: any) => (
+                  <Badge
+                    key={category.id}
+                    variant="outline"
+                    className="text-sm py-1 px-3"
+                  >
+                    {category.name}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Mô tả và hướng dẫn sử dụng */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">
+              Mô tả sản phẩm
+            </h3>
+            <div className="bg-white border rounded-lg p-4">
+              <p className="text-gray-700 mb-3">
+                <strong>Mô tả:</strong>{" "}
+                {product?.description || "Chưa có mô tả"}
+              </p>
+              <p className="text-gray-700">
+                <strong>Hướng dẫn sử dụng:</strong>{" "}
+                {product?.usage_instructions || "Chưa có hướng dẫn"}
+              </p>
+            </div>
+          </div>
+        </div>
+      </TabsContent>
+
+      {/* Tab 2: Bệnh trị được và thành phần */}
+      <TabsContent value="diseases" className="pt-6">
+        <div className="space-y-6">
+          {/* Bệnh trị được */}
+          {product?.productDiseases && product.productDiseases.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                <AlertTriangle className="w-5 h-5 mr-2 text-orange-500" />
+                Bệnh có thể điều trị
+              </h3>
+              <div className="grid gap-4">
+                {product.productDiseases.map(
+                  (productDisease: any, index: number) => (
+                    <div
+                      key={productDisease.disease_id}
+                      className="border rounded-lg p-4 bg-orange-50"
+                    >
+                      <div className="flex items-start">
+                        {productDisease.is_primary && (
+                          <Badge className="mr-2 bg-orange-500">Đặc trị</Badge>
+                        )}
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900 mb-2">
+                            {productDisease.disease?.disease_name}
+                          </h4>
+                          <p className="text-gray-700 text-sm">
+                            {productDisease.disease?.description}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Thành phần */}
+          {product?.product_ingredients &&
+            product.product_ingredients.length > 0 && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                  <Leaf className="w-5 h-5 mr-2 text-green-500" />
+                  Thành phần hoạt chất
+                </h3>
+                <div className="grid gap-3">
+                  {product.product_ingredients.map(
+                    (productIngredient: any, index: number) => (
+                      <div
+                        key={productIngredient.ingredient_id}
+                        className="border rounded-lg p-4 bg-green-50"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center mb-2">
+                              {productIngredient.is_primary && (
+                                <Badge className="mr-2 bg-green-500">
+                                  Thành phần chính
+                                </Badge>
+                              )}
+                              <h4 className="font-semibold text-gray-900">
+                                {productIngredient.ingredient?.ingredient_name}
+                              </h4>
+                            </div>
+                            <p className="text-gray-700 text-sm mb-2">
+                              {productIngredient.ingredient?.description}
+                            </p>
+                            {productIngredient.concentration && (
+                              <p className="text-sm text-gray-600">
+                                <strong>Nồng độ:</strong>{" "}
+                                {productIngredient.concentration}
+                              </p>
+                            )}
+                          </div>
+                          <Badge
+                            variant={
+                              productIngredient.ingredient?.hazard_level ===
+                              "HIGH"
+                                ? "destructive"
+                                : "secondary"
+                            }
+                            className="ml-2"
+                          >
+                            {productIngredient.ingredient?.hazard_level ===
+                            "HIGH"
+                              ? "Độc tính cao"
+                              : "Độc tính thấp"}
+                          </Badge>
+                        </div>
+                      </div>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
+        </div>
+      </TabsContent>
+
+      {/* Tab 3: Reviews */}
+      <TabsContent value="reviews" className="pt-6">
+        <div className="space-y-6">
+          {/* Review Summary */}
+          <div className="bg-gray-50 p-6 rounded-lg">
+            <div className="flex items-center justify-between mb-4">
+              <div>
                 <div className="flex items-center mb-2">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-4 w-4 ${
-                        i < 4
-                          ? "fill-yellow-400 text-yellow-400"
-                          : "text-gray-300"
-                      }`}
-                    />
+                  <div className="text-3xl font-bold text-gray-900 mr-2">
+                    {reviewStats?.averageRating?.toFixed(1) || "0.0"}
+                  </div>
+                  <div className="flex items-center">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`h-5 w-5 ${
+                          i < Math.floor(reviewStats?.averageRating || 0)
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-gray-300"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div className="text-sm text-gray-500">
+                  Dựa trên {reviewStats?.totalReviews || 0} đánh giá
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Add Review Form */}
+          <div className="border rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              Viết đánh giá
+            </h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Đánh giá của bạn
+                </label>
+                <div className="flex items-center space-x-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      onClick={() =>
+                        setNewReview({ ...newReview, rating: star })
+                      }
+                      className="focus:outline-none"
+                    >
+                      <Star
+                        className={`h-6 w-6 ${
+                          star <= newReview.rating
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-gray-300"
+                        }`}
+                      />
+                    </button>
                   ))}
                 </div>
-                <p className="text-gray-700">
-                  Sản phẩm rất tươi ngon, đóng gói cẩn thận. Tôi rất hài lòng
-                  với chất lượng và sẽ mua lại.
-                </p>
               </div>
-            ))}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nhận xét
+                </label>
+                <Textarea
+                  value={newReview.comment}
+                  onChange={(e) =>
+                    setNewReview({ ...newReview, comment: e.target.value })
+                  }
+                  placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."
+                  rows={4}
+                />
+              </div>
+              <Button className="w-full sm:w-auto">Gửi đánh giá</Button>
+            </div>
           </div>
+
+          {/* Existing Reviews */}
+          {product?.reviews && product.reviews.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Đánh giá từ khách hàng
+              </h3>
+              <div className="space-y-4">
+                {product.reviews.map((review: any, index: number) => (
+                  <div key={index} className="border rounded-lg p-4">
+                    <div className="flex items-start space-x-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback>
+                          {review.user?.full_name?.[0] || "U"}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <div className="font-medium text-gray-900">
+                              {review.user?.full_name || "Khách hàng"}
+                            </div>
+                            <div className="flex items-center mt-1">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`h-4 w-4 ${
+                                    i < review.rating
+                                      ? "fill-yellow-400 text-yellow-400"
+                                      : "text-gray-300"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {new Date(review.created_at).toLocaleDateString(
+                              "vi-VN"
+                            )}
+                          </div>
+                        </div>
+                        <p className="text-gray-700">{review.comment}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </TabsContent>
     </Tabs>

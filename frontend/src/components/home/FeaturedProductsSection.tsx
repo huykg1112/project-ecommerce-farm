@@ -8,6 +8,7 @@ export default function FeaturedProductsSection({
   products,
   loading,
 }: FeaturedProductsSectionProps) {
+  // console.log("Featured Products:", products);
   return (
     <section className="py-12">
       <div className="container">

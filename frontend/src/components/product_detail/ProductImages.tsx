@@ -111,7 +111,7 @@ export default function ProductImages({
               src={image || "/placeholder.svg"}
               alt={`${productName} - Hình ${index + 1}`}
               fill
-              className="object-cover"
+              className="object-cover w-50 h-50 transition-transform duration-200"
             />
           </div>
         ))}

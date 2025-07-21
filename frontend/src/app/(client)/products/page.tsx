@@ -101,8 +101,11 @@ export default function ProductsPage() {
   const filteredProducts = fetchedProducts.filter((product) => {
     // Filter by category
     if (
-      filters.categories.length > 0 &&
-      !filters.categories.includes(product.categories?.[0]?.name || "")
+      (filters.categories.length > 0 &&
+        !product.categories?.some((cat) =>
+          filters.categories.includes(cat.name)
+        )) ||
+      ""
     ) {
       return false;
     }

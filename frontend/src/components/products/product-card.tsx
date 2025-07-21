@@ -70,6 +70,7 @@ const valueWithDiscount = (
 };
 
 export default function ProductCard({ product }: ProductCardProps) {
+  console.log("Product Card:", product);
   const isInWishlist = useSelector(selectIsInWishlist(product.product_id));
   const dispatch = useDispatch();
   const { requireAuth } = useAuthAction();
@@ -99,7 +100,6 @@ export default function ProductCard({ product }: ProductCardProps) {
         !batch.product_types ||
         !batch.product_types.is_active ||
         batch.product_types.is_deleted ||
-        !batch.unit_product_price ||
         batch.quantity <= 0 ||
         batch.expiry_date <= new Date()
       ) {
@@ -287,6 +287,12 @@ export default function ProductCard({ product }: ProductCardProps) {
             {product.product_name}
           </h3>
         </Link>
+        {/* số lượng đã bán */}
+        {product.total_saled && (
+          <div className="text-sm text-gray-500 mt-1">
+            Số lượng đã bán: {product.total_saled}
+          </div>
+        )}
         <div className="flex items-center mt-2 mb-1">
           <div className="flex items-center">
             {[...Array(5)].map((_, i) => (
@@ -342,7 +348,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       <CardFooter className="p-4 pt-0 flex items-center justify-between">
         <div className="flex flex-col justify-start items-start">
           <span className="font-bold text-lg">
-            {formatCurrency(discountedPrice)}
+            {formatCurrency(discountedPrice || product.unit_product_price)}
           </span>
           {maxPromotion &&
             maxPromotion.discount_value &&

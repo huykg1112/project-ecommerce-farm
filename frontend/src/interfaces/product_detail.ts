@@ -14,6 +14,12 @@ export interface ProductInfoProps {
   originalPrice?: number;
   discount?: number;
   seller: { id: string; name: string };
+  selectedBatch?: any;
+  differentProductTypes?: any[];
+  setSelectedBatch?: (batch: any) => void;
+  categories?: any[];
+  manufacturer?: any;
+  totalSaled?: number;
 }
 
 export interface ProductActionsProps {
@@ -26,7 +32,6 @@ export interface ProductActionsProps {
 }
 
 export interface ProductTabsProps {
-  name: string;
-  rating: number;
-  ratingCount: number;
+  product?: any;
+  reviewStats?: { averageRating: number; totalReviews: number };
 }

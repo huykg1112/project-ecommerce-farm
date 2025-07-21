@@ -169,9 +169,11 @@ export class ProductService {
           ingredient_id: ingredient.ingredient_id,
           product: savedProduct,
           ingredient: ingredient,
-          //lấy hình ảnh đầu tiên làm primary
+          //lấy hình ảnh disease_id_primary đc chỉ định làm chính ko thì lấy [0]
           is_primary:
-            ingredient.ingredient_id === validatedIngredients[0].ingredient_id,
+            ingredient.ingredient_id === createProductDto.ingredient_id_primary
+              ? true
+              : false,
         }),
       );
       await this.piRepo.save(productIngredients);
@@ -185,7 +187,10 @@ export class ProductService {
           disease_id: disease.disease_id,
           product: savedProduct,
           disease: disease,
-          is_primary: false, // Có thể thêm logic để xác định primary
+          is_primary:
+            disease.disease_id === createProductDto.disease_id_primary
+              ? true
+              : false,
         }),
       );
       await this.productDiseaseRepo.save(productDiseases);

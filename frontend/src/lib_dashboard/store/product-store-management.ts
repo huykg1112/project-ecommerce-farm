@@ -117,7 +117,9 @@ export const productFormDataAtom = atom<ProductFormData>({
   unit_product_price: 0,
   category_ids: [],
   manufacturer_id: "",
+  ingredient_id_primary: "",
   ingredient_ids: [],
+  disease_id_primary: "",
   disease_ids: [],
   is_active: true,
   // images: [],
@@ -231,8 +233,7 @@ export const filteredProductsAtom = atom((get) => {
   // Distributor filter
   if (filters.distributor_id) {
     filtered = filtered.filter(
-      (product) =>
-        product.distributor?.distributor_id === filters.distributor_id
+      (product) => product.distributor?.user_id === filters.distributor_id
     );
   }
 

@@ -1,9 +1,17 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ProductInfoProps } from "@/interfaces";
 import { formatCurrency } from "@/lib/utils";
 import { Star } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
-import { ProductInfoProps } from "@/interfaces";
 
 export default function ProductInfo({
   name,
@@ -13,6 +21,12 @@ export default function ProductInfo({
   originalPrice,
   discount,
   seller,
+  selectedBatch,
+  differentProductTypes = [],
+  setSelectedBatch,
+  categories = [],
+  manufacturer,
+  totalSaled,
 }: ProductInfoProps) {
   return (
     <div>
@@ -33,16 +47,32 @@ export default function ProductInfo({
           ))}
         </div>
         <span className="text-sm text-gray-500 ml-2">
-          {rating} ({ratingCount} đánh giá)
+          {rating.toFixed(1)} ({ratingCount} đánh giá)
         </span>
-        <span className="mx-2 text-gray-300">|</span>
-        <span className="text-sm text-green-600">Đã bán 250+</span>
+        {totalSaled && (
+          <>
+            <span className="mx-2 text-gray-300">|</span>
+            <span className="text-sm text-green-600">Đã bán {totalSaled}+</span>
+          </>
+        )}
       </div>
+
+      {/* Categories */}
+      {categories.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-4">
+          {categories.map((category) => (
+            <Badge key={category.id} variant="secondary">
+              {category.name}
+            </Badge>
+          ))}
+        </div>
+      )}
+
       <div className="flex items-center mb-6">
         <div className="text-3xl font-bold text-gray-900">
           {formatCurrency(price)}
         </div>
-        {originalPrice && (
+        {originalPrice && originalPrice > price && (
           <div className="ml-3 text-lg text-gray-500 line-through">
             {formatCurrency(originalPrice)}
           </div>
@@ -51,14 +81,67 @@ export default function ProductInfo({
           <Badge className="ml-3 bg-red-500">-{discount}%</Badge>
         )}
       </div>
-      <div className="mb-6">
-        <h3 className="text-sm font-medium text-gray-900 mb-2">Mô tả:</h3>
-        <p className="text-gray-600">
-          {name} được trồng và thu hoạch theo tiêu chuẩn VietGAP, đảm bảo an
-          toàn vệ sinh thực phẩm. Sản phẩm tươi ngon, không sử dụng hóa chất độc
-          hại, phù hợp cho mọi gia đình.
-        </p>
-      </div>
+
+      {/* Product Type Selection */}
+      {differentProductTypes.length > 0 && setSelectedBatch && (
+        <div className="mb-6">
+          <h3 className="text-sm font-medium text-gray-900 mb-2">
+            Loại sản phẩm:
+          </h3>
+          <Select
+            value={selectedBatch?.batch_id}
+            onValueChange={(value) => {
+              const batch = differentProductTypes.find(
+                (b) => b.batch_id === value
+              );
+              setSelectedBatch(batch || null);
+            }}
+          >
+            <SelectTrigger className="bg-gray-50 border-gray-200">
+              <SelectValue placeholder="Chọn loại sản phẩm" />
+            </SelectTrigger>
+            <SelectContent>
+              {differentProductTypes.map((batch) => (
+                <SelectItem key={batch.batch_id} value={batch.batch_id}>
+                  {batch.product_types?.type_name || "Không có tên"} (Còn{" "}
+                  {batch.quantity})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {/* Manufacturer */}
+      {manufacturer && (
+        <div className="mb-6">
+          <h3 className="text-sm font-medium text-gray-900 mb-2">
+            Nhà sản xuất:
+          </h3>
+          <div className="flex items-center">
+            {manufacturer.logo && (
+              <Image
+                src={manufacturer.logo}
+                alt={manufacturer.name}
+                width={40}
+                height={40}
+                className="mr-3 object-contain"
+              />
+            )}
+            <div>
+              <div className="font-medium text-gray-900">
+                {manufacturer.name}
+              </div>
+              {manufacturer.description && (
+                <div className="text-sm text-gray-500">
+                  {manufacturer.description}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="mb-6">
         <h3 className="text-sm font-medium text-gray-900 mb-2">Đại lý:</h3>
         <Link href={`/seller/${seller.id}`} className="flex items-center">

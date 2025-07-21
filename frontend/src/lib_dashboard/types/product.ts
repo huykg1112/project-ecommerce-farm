@@ -12,6 +12,7 @@ export interface Product {
   description?: string;
   usage_instructions?: string;
   unit_product_price: number;
+  total_saled?: number; // Số lượng đã bán
   is_active: boolean;
   is_deleted?: boolean;
   created_at: Date;
@@ -75,6 +76,8 @@ export interface CreateProductRequest {
   manufacturer_id?: string;
   ingredient_ids?: string[];
   disease_ids?: string[];
+  ingredient_id_primary?: string;
+  disease_id_primary?: string;
   is_active?: boolean;
   // images?: string[]; // For image uploads
 }
@@ -89,6 +92,8 @@ export interface UpdateProductRequest {
   ingredient_ids?: string[];
   disease_ids?: string[];
   is_active?: boolean;
+  ingredient_id_primary?: string;
+  disease_id_primary?: string;
   // images?: string[]; // For image uploads
 }
 
@@ -162,6 +167,8 @@ export interface ProductFormData {
   manufacturer_id: string;
   ingredient_ids: string[];
   disease_ids: string[];
+  ingredient_id_primary?: string;
+  disease_id_primary?: string;
   is_active: boolean;
   // images: string[]; // For image uploads
 }

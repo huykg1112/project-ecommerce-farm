@@ -32,6 +32,9 @@ export class AuthService {
       );
     if (!user.is_active)
       throw new UnauthorizedException('Tài khoản của bạn đã bị khóa');
+    if (user.is_deleted) {
+      throw new UnauthorizedException('Tài khoản của bạn đã bị xóa');
+    }
     const { password: _, ...result } = user;
     return result;
   }
@@ -134,7 +137,12 @@ export class AuthService {
         where: { email: googleUser.email },
         relations: ['role'],
       });
-
+      if (user && user.is_deleted) {
+        throw new UnauthorizedException('Tài khoản của bạn đã bị xóa');
+      }
+      if (user && !user.is_active) {
+        throw new UnauthorizedException('Tài khoản của bạn đã bị khóa');
+      }
       if (!user) {
         // Nếu chưa tồn tại, tạo user mới
         user = await this.userService.registerUser({
