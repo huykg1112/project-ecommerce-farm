@@ -181,12 +181,70 @@ function CartPage() {
       showToast.error("Vui lòng chọn ít nhất một sản phẩm để thanh toán");
       return;
     }
+
+    // Get selected cart items
+    const selectedCartItems = items.filter((item) =>
+      selectedItems.includes(item.id)
+    );
+
+    // Group items by seller (distributor)
+    const itemsBySeller = selectedCartItems.reduce((acc, item) => {
+      if (!acc[item.sellerId]) {
+        acc[item.sellerId] = {
+          sellerName: item.sellerName,
+          items: [],
+        };
+      }
+      acc[item.sellerId].items.push(item);
+      return acc;
+    }, {} as Record<string, { sellerName: string; items: any[] }>);
+
+    // Calculate totals for checkout
+    const checkoutData = {
+      selectedItems: selectedCartItems,
+      itemsBySeller,
+      selectedVoucher,
+      selectedTotal,
+      shippingFee,
+      voucherDiscount,
+      finalTotal,
+      // Prepare order details for each seller
+      ordersByDistributor: Object.entries(itemsBySeller).map(
+        ([sellerId, { sellerName, items: sellerItems }]) => {
+          const orderDetails = sellerItems.map((item) => ({
+            batch_id: item.batch?.batch_id || "",
+            quantity: item.quantity,
+            unit_price: item.price - (item.promotion?.discount_value || 0), // Use discounted price
+            notes: "",
+          }));
+
+          const sellerTotal = sellerItems.reduce((total, item) => {
+            const finalPrice =
+              item.price - (item.promotion?.discount_value || 0);
+            return total + finalPrice * item.quantity;
+          }, 0);
+
+          return {
+            distributor_id: sellerId,
+            distributor_name: sellerName,
+            order_details: orderDetails,
+            subtotal: sellerTotal,
+          };
+        }
+      ),
+    };
+
+    // Save checkout data to localStorage
+    localStorage.setItem("checkoutData", JSON.stringify(checkoutData));
+
+    // Also keep the old format for backward compatibility if needed
     localStorage.setItem("selectedCartItems", JSON.stringify(selectedItems));
     if (selectedVoucher) {
       localStorage.setItem("selectedVoucher", JSON.stringify(selectedVoucher));
     } else {
       localStorage.removeItem("selectedVoucher");
     }
+
     router.push("/checkout");
   };
 

@@ -59,6 +59,7 @@ export default function OrdersManagementPage() {
       setLoading(true);
       try {
         const data = await orderServiceManagement.getAllOrders();
+        // console.log("Fetched Orders:", data);
         setOrders(data);
         setFilteredOrders(data);
       } catch (error) {
@@ -76,6 +77,7 @@ export default function OrdersManagementPage() {
     const fetchOrderStatuses = async () => {
       try {
         const statuses = await orderServiceManagement.getOrderStatuses();
+        console.log("Fetched Order Statuses:", statuses);
         const transformedStatuses = statuses.map((status) => ({
           ...status,
           is_active: true, // Default value or fetched value

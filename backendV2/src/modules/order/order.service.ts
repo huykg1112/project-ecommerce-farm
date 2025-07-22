@@ -35,7 +35,7 @@ export class OrderService {
     private readonly productRepository: Repository<Product>,
   ) {}
 
-  async create(createOrderDto: CreateOrderDto) {
+  async create(createOrderDto: CreateOrderDto, user_id: string) {
     try {
       // Validate payment method and order status
       const paymentMethod = await this.paymentMethodRepository.findOne({
@@ -54,7 +54,7 @@ export class OrderService {
 
       // find user by id
       const user = await this.userRepository.findOne({
-        where: { user_id: createOrderDto.user_id },
+        where: { user_id: user_id },
       });
       if (!user) {
         throw new BadRequestException('User not found');
@@ -88,13 +88,12 @@ export class OrderService {
         }
       }
 
-      // Generate a random order code Chữ cái Hoa
+      const timestamp = Date.now().toString().slice(-8); // Lấy 8 số cuối cùng
       const randomCode = Math.random()
         .toString(36)
-        .substring(2, 8)
-        .toUpperCase();
-
-      const order_code = `ORDER-${Date.now()}-${randomCode}`;
+        .substring(2, 7)
+        .toUpperCase(); // 5 ký tự
+      const order_code = `ORD-${timestamp}${randomCode}`; // Tổng: 4 (ORD-) + 8 + 5 = 17 ký tự
 
       // Create order first
       const order = this.orderRepository.create({
@@ -223,6 +222,8 @@ export class OrderService {
       where: { is_deleted: false },
       relations: [
         'status',
+        'user',
+        'distributor',
         'payment_method',
         'order_details',
         'order_details.batch_product',
@@ -262,6 +263,19 @@ export class OrderService {
   async findOrdersByDistributor(distributorId: string) {
     const distributor = await this.userRepository.findOne({
       where: { user_id: distributorId },
+      relations: [
+        'status',
+        'user',
+        'distributor',
+        'payment_method',
+        'order_details',
+        'order_details.batch_product',
+        'order_details.batch_product.product',
+        'order_details.batch_product.product.images',
+        'order_details.batch_product.product_types',
+        'order_details.batch_product.promotions',
+        'order_details.batch_product.invenstory',
+      ],
     });
     if (!distributor) {
       throw new NotFoundException('Distributor not found');

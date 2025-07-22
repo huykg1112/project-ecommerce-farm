@@ -126,28 +126,38 @@ export const filteredOrdersAtom = atom((get) => {
 
   // Status filter
   if (filters.status) {
-    filtered = filtered.filter((order) => order.status.status_name === filters.status);
+    filtered = filtered.filter(
+      (order) => order.status.status_name === filters.status
+    );
   }
 
   // Payment method filter
   if (filters.payment_method) {
-    filtered = filtered.filter((order) => order.payment_method.method_name === filters.payment_method);
+    filtered = filtered.filter(
+      (order) => order.payment_method.method_name === filters.payment_method
+    );
   }
 
   // User filter
   if (filters.user_id) {
-    filtered = filtered.filter((order) => order.user.user_id === filters.user_id);
+    filtered = filtered.filter(
+      (order) => order.user.user_id === filters.user_id
+    );
   }
 
   // Distributor filter
   if (filters.distributor_id) {
-    filtered = filtered.filter((order) => order.distributor.user_id === filters.distributor_id);
+    filtered = filtered.filter(
+      (order) => order.distributor.user_id === filters.distributor_id
+    );
   }
 
   // Date filters
   if (filters.date_from) {
     const fromDate = new Date(filters.date_from);
-    filtered = filtered.filter((order) => new Date(order.created_at) >= fromDate);
+    filtered = filtered.filter(
+      (order) => new Date(order.created_at) >= fromDate
+    );
   }
 
   if (filters.date_to) {
@@ -158,11 +168,15 @@ export const filteredOrdersAtom = atom((get) => {
 
   // Amount filters
   if (filters.amount_min !== undefined) {
-    filtered = filtered.filter((order) => order.total_amount >= filters.amount_min!);
+    filtered = filtered.filter(
+      (order) => order.total_amount >= filters.amount_min!
+    );
   }
 
   if (filters.amount_max !== undefined) {
-    filtered = filtered.filter((order) => order.total_amount <= filters.amount_max!);
+    filtered = filtered.filter(
+      (order) => order.total_amount <= filters.amount_max!
+    );
   }
 
   // Sort orders
@@ -220,11 +234,15 @@ export const orderCountsByStatusAtom = atom((get) => {
   return {
     total: orders.length,
     pending: orders.filter((o) => o.status.status_name === "PENDING").length,
-    confirmed: orders.filter((o) => o.status.status_name === "CONFIRMED").length,
+    confirmed: orders.filter((o) => o.status.status_name === "CONFIRMED")
+      .length,
     shipping: orders.filter((o) => o.status.status_name === "SHIPPING").length,
-    delivered: orders.filter((o) => o.status.status_name === "DELIVERED").length,
-    cancelled: orders.filter((o) => o.status.status_name === "CANCELLED").length,
-    completed: orders.filter((o) => o.status.status_name === "COMPLETED").length,
+    delivered: orders.filter((o) => o.status.status_name === "DELIVERED")
+      .length,
+    cancelled: orders.filter((o) => o.status.status_name === "CANCELLED")
+      .length,
+    completed: orders.filter((o) => o.status.status_name === "COMPLETED")
+      .length,
   };
 });
 
@@ -241,7 +259,10 @@ export const fetchOrdersAtom = atom(null, async (get, set) => {
     const orders = await orderServiceManagement.getAllOrders();
     set(ordersDataAtom, orders);
   } catch (error) {
-    set(ordersErrorAtom, error instanceof Error ? error.message : "Unknown error");
+    set(
+      ordersErrorAtom,
+      error instanceof Error ? error.message : "Unknown error"
+    );
   } finally {
     set(ordersLoadingAtom, false);
   }
@@ -257,7 +278,10 @@ export const fetchOrderByIdAtom = atom(null, async (get, set, id: string) => {
     set(selectedOrderAtom, order);
     return order;
   } catch (error) {
-    set(orderDetailErrorAtom, error instanceof Error ? error.message : "Unknown error");
+    set(
+      orderDetailErrorAtom,
+      error instanceof Error ? error.message : "Unknown error"
+    );
     throw error;
   } finally {
     set(orderDetailLoadingAtom, false);
@@ -297,8 +321,11 @@ export const updateOrderStatusAtom = atom(
   null,
   async (get, set, orderId: string, data: UpdateOrderStatusRequest) => {
     try {
-      const response = await orderServiceManagement.updateOrderStatus(orderId, data);
-      
+      const response = await orderServiceManagement.updateOrderStatus(
+        orderId,
+        data
+      );
+
       // Update the order in the list
       const orders = get(ordersDataAtom);
       const updatedOrders = orders.map((order) =>
@@ -325,8 +352,11 @@ export const confirmOrderAtom = atom(
   null,
   async (get, set, orderId: string, notes?: string) => {
     try {
-      const response = await orderServiceManagement.confirmOrder(orderId, notes);
-      
+      const response = await orderServiceManagement.confirmOrder(
+        orderId,
+        notes
+      );
+
       // Update the order in the list
       const orders = get(ordersDataAtom);
       const updatedOrders = orders.map((order) =>
@@ -354,7 +384,7 @@ export const cancelOrderAtom = atom(
   async (get, set, orderId: string, notes?: string) => {
     try {
       const response = await orderServiceManagement.cancelOrder(orderId, notes);
-      
+
       // Update the order in the list
       const orders = get(ordersDataAtom);
       const updatedOrders = orders.map((order) =>
@@ -384,10 +414,10 @@ export const batchUpdateStatusAtom = atom(
 
     try {
       const response = await orderServiceManagement.batchUpdateStatus(request);
-      
+
       // Refresh orders data
       await set(fetchOrdersAtom);
-      
+
       // Clear selections
       set(selectedOrdersAtom, []);
 
@@ -407,11 +437,14 @@ export const batchConfirmOrdersAtom = atom(
     set(batchOperationLoadingAtom, true);
 
     try {
-      const response = await orderServiceManagement.batchConfirmOrders(orderIds, notes);
-      
+      const response = await orderServiceManagement.batchConfirmOrders(
+        orderIds,
+        notes
+      );
+
       // Refresh orders data
       await set(fetchOrdersAtom);
-      
+
       // Clear selections
       set(selectedOrdersAtom, []);
 
@@ -431,11 +464,14 @@ export const batchCancelOrdersAtom = atom(
     set(batchOperationLoadingAtom, true);
 
     try {
-      const response = await orderServiceManagement.batchCancelOrders(orderIds, notes);
-      
+      const response = await orderServiceManagement.batchCancelOrders(
+        orderIds,
+        notes
+      );
+
       // Refresh orders data
       await set(fetchOrdersAtom);
-      
+
       // Clear selections
       set(selectedOrdersAtom, []);
 
@@ -487,7 +523,10 @@ export const toggleOrderSelectionAtom = atom(
     const isSelected = selected.includes(orderId);
 
     if (isSelected) {
-      set(selectedOrdersAtom, selected.filter((id) => id !== orderId));
+      set(
+        selectedOrdersAtom,
+        selected.filter((id) => id !== orderId)
+      );
     } else {
       set(selectedOrdersAtom, [...selected, orderId]);
     }
@@ -499,7 +538,10 @@ export const toggleAllOrdersSelectionAtom = atom(
   (get, set, checked: boolean) => {
     if (checked) {
       const orders = get(filteredOrdersAtom);
-      set(selectedOrdersAtom, orders.map((o) => o.order_id));
+      set(
+        selectedOrdersAtom,
+        orders.map((o) => o.order_id)
+      );
     } else {
       set(selectedOrdersAtom, []);
     }
@@ -526,17 +568,17 @@ export const exportOrdersAtom = atom(null, async (get, set) => {
   try {
     const filters = get(orderFiltersAtom);
     const blob = await orderServiceManagement.exportOrders(filters);
-    
+
     // Create download link
     const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const a = document.createElement("a");
     a.href = url;
-    a.download = `orders-${new Date().toISOString().split('T')[0]}.xlsx`;
+    a.download = `orders-${new Date().toISOString().split("T")[0]}.xlsx`;
     document.body.appendChild(a);
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
-    
+
     showToast.success("Xuất dữ liệu thành công!");
   } catch (error) {
     showToast.error("Lỗi khi xuất dữ liệu");

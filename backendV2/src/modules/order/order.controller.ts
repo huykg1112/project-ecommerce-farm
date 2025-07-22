@@ -27,8 +27,9 @@ export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Post()
-  create(@Body() createOrderDto: CreateOrderDto) {
-    return this.orderService.create(createOrderDto);
+  create(@Req() req, @Body() createOrderDto: CreateOrderDto) {
+    const userId = req.user.id;
+    return this.orderService.create(createOrderDto, userId);
   }
 
   @Get()

@@ -13,9 +13,6 @@ import { CreateOrderDetailDto } from '../../order-detail/dto/create-order-detail
 
 export class CreateOrderDto {
   @IsUUID()
-  user_id: string;
-
-  @IsUUID()
   distributor_id: string;
 
   @IsUUID()

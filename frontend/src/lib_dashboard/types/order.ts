@@ -173,3 +173,20 @@ export interface BatchOperationResponse {
   failed_count: number;
   failed_orders?: string[];
 }
+
+export interface CreateOrderDetailDto {
+  batch_id: string;
+  quantity: number;
+  unit_price: number;
+  notes?: string;
+}
+export interface CreateOrderDto {
+  distributor_id: string;
+  payment_method_id: string;
+  voucher_id?: string;
+  total_amount: number;
+  notes?: string;
+  shipping_address?: string;
+  estimated_delivery_date?: string;
+  order_details: CreateOrderDetailDto[];
+}

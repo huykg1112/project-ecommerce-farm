@@ -7,6 +7,7 @@ import {
   OrderStatusEnum,
   OrderStatusLabels,
 } from "@/lib_dashboard/types/order";
+import Image from "next/image";
 import { useCallback } from "react";
 import DataTable, { TableColumn } from "react-data-table-component";
 
@@ -155,8 +156,8 @@ export function OrderTable({
       sortable: true,
       cell: (row: Order) => (
         <div className="flex items-center gap-3">
-          <img
-            src={row.user.avatar}
+          <Image
+            src={row.user.avatar || "/placeholder.svg"}
             alt={row.user.full_name}
             className="w-8 h-8 rounded-full"
           />

@@ -16,7 +16,9 @@ import type { CartItem } from "@/lib/features/cart-slice";
 import { removeFromCart } from "@/lib/features/cart-slice";
 import type { AppDispatch, RootState } from "@/lib/features/store";
 import { userService } from "@/lib/services/user-service";
+import { showToast } from "@/lib/toast-provider";
 import { formatCurrency } from "@/lib/utils";
+import { orderServiceManagement } from "@/lib_dashboard/services/order-service-management";
 import {
   ChevronLeft,
   CreditCard,
@@ -40,6 +42,8 @@ function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedItems, setSelectedItems] = useState<CartItem[]>([]);
+  const [checkoutData, setCheckoutData] = useState<any>(null);
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     fullName: currentUser?.fullName || "",
     phone: currentUser?.phone || "",
@@ -72,29 +76,65 @@ function CheckoutPage() {
     fetchProfile();
   }, [currentUser]);
 
-  // Lấy danh sách sản phẩm được chọn từ localStorage
+  // Load payment methods
   useEffect(() => {
-    const selectedIds = JSON.parse(
-      localStorage.getItem("selectedCartItems") || "[]"
-    ) as string[];
-    const filteredItems = items.filter((item) => selectedIds.includes(item.id));
-    setSelectedItems(filteredItems);
+    const fetchPaymentMethods = async () => {
+      try {
+        const methods = await orderServiceManagement.getPaymentMethods();
+        setPaymentMethods(methods);
+        if (methods.length > 0) {
+          setPaymentMethod(methods[0].payment_method_id);
+        }
+      } catch (error) {
+        console.error("Error fetching payment methods:", error);
+      }
+    };
 
-    // Nếu không có sản phẩm nào được chọn, chuyển hướng về trang giỏ hàng
-    if (filteredItems.length === 0 && items.length > 0) {
-      router.push("/cart");
+    fetchPaymentMethods();
+  }, []);
+
+  // Load checkout data from localStorage
+  useEffect(() => {
+    const savedCheckoutData = localStorage.getItem("checkoutData");
+    if (savedCheckoutData) {
+      const data = JSON.parse(savedCheckoutData);
+      setCheckoutData(data);
+      setSelectedItems(data.selectedItems);
+    } else {
+      // Fallback to old method
+      const selectedIds = JSON.parse(
+        localStorage.getItem("selectedCartItems") || "[]"
+      ) as string[];
+      const filteredItems = items.filter((item) =>
+        selectedIds.includes(item.id)
+      );
+      setSelectedItems(filteredItems);
+
+      if (filteredItems.length === 0 && items.length > 0) {
+        router.push("/cart");
+      }
     }
   }, [items, router]);
 
-  // Tính toán tổng tiền
-  const totalAmount = selectedItems.reduce(
-    (total, item) => total + item.price * item.quantity,
-    0
-  );
+  // Calculate totals using checkout data or fallback to cart calculation
+  const totalAmount = checkoutData
+    ? checkoutData.selectedTotal
+    : selectedItems.reduce((total, item) => {
+        const originalPrice = item.price;
+        const discountValue = item.promotion?.discount_value || 0;
+        const finalPrice = originalPrice - discountValue;
+        return total + finalPrice * item.quantity;
+      }, 0);
 
-  // Tính phí vận chuyển và tổng thanh toán
-  const shippingFee = totalAmount > 300000 ? 0 : 30000;
-  const finalTotal = totalAmount + shippingFee;
+  const shippingFee = checkoutData
+    ? checkoutData.shippingFee
+    : totalAmount > 300000
+    ? 0
+    : 30000;
+  const voucherDiscount = checkoutData ? checkoutData.voucherDiscount : 0;
+  const finalTotal = checkoutData
+    ? checkoutData.finalTotal
+    : totalAmount + shippingFee;
 
   // Xử lý thay đổi form
   const handleInputChange = (
@@ -117,135 +157,73 @@ function CheckoutPage() {
     }));
   };
 
-  // Lấy IP của người dùng (chỉ hoạt động trên client)
-  const getUserIpAddress = async () => {
-    try {
-      const response = await fetch("https://api.ipify.org?format=json");
-      const data = await response.json();
-      return data.ip;
-    } catch (error) {
-      console.error("Error getting IP address:", error);
-      return "127.0.0.1"; // Fallback IP
-    }
-  };
-
   // Xử lý đặt hàng
   const handlePlaceOrder = async () => {
     // Kiểm tra thông tin bắt buộc
     if (!formData.fullName || !formData.phone || !formData.address) {
-      alert("Vui lòng điền đầy đủ thông tin giao hàng");
+      showToast.error("Vui lòng điền đầy đủ thông tin giao hàng");
+      return;
+    }
+
+    if (!checkoutData) {
+      showToast.error(
+        "Không tìm thấy thông tin đơn hàng. Vui lòng quay lại giỏ hàng."
+      );
+      router.push("/cart");
       return;
     }
 
     try {
       setIsSubmitting(true);
 
-      // Chuẩn bị dữ liệu đơn hàng
-      const orderData = {
-        items: selectedItems,
-        customer: {
-          ...formData,
-        },
-        shipping: {
-          address: formData.address,
-          fee: shippingFee,
-        },
-        payment: {
-          method: paymentMethod,
-          total: finalTotal,
-        },
-        status: "pending",
-        createdAt: new Date().toISOString(),
-      };
+      // Create orders for each distributor
+      const orderPromises = checkoutData.ordersByDistributor.map(
+        async (distributorOrder: any) => {
+          const orderData = {
+            distributor_id: distributorOrder.distributor_id,
+            payment_method_id: paymentMethod,
+            voucher_id: checkoutData.selectedVoucher?.voucher_id,
+            total_amount:
+              distributorOrder.subtotal +
+              checkoutData.shippingFee /
+                checkoutData.ordersByDistributor.length, // Split shipping fee
+            notes: `Đơn hàng từ ${distributorOrder.distributor_name}`,
+            shipping_address: formData.address,
+            estimated_delivery_date: new Date(
+              Date.now() + 3 * 24 * 60 * 60 * 1000
+            ).toISOString(), // 3 days from now
+            order_details: distributorOrder.order_details,
+          };
 
-      // Lưu đơn hàng vào localStorage để demo
-      const orders = JSON.parse(localStorage.getItem("orders") || "[]");
-      const orderId = `ORD${Date.now()}`;
-      const newOrder = {
-        id: orderId,
-        ...orderData,
-      };
-      console.log(formData);
-
-      orders.push(newOrder);
-
-      localStorage.setItem("orders", JSON.stringify(orders));
-
-      // Giả lập API call
-      // await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // // Lưu danh sách sản phẩm đã xóa để xử lý sau khi chuyển hướng
-      // const itemsToRemove = [...selectedItems];
-
-      // // Chuyển hướng đến trang xác nhận đơn hàng trước
-      // router.push(`/checkout/success?orderId=${orderId}`);
-
-      // // Xóa danh sách sản phẩm đã chọn khỏi localStorage
-      // // Đặt trong setTimeout để đảm bảo chuyển hướng đã hoàn tất
-      // setTimeout(() => {
-      //   localStorage.removeItem("selectedCartItems");
-
-      //   // Xóa các sản phẩm đã chọn khỏi giỏ hàng
-      //   itemsToRemove.forEach((item) => {
-      //     dispatch(removeFromCart(item.id));
-      //   });
-      // }, 500);
-
-      if (paymentMethod === "cod") {
-        // Giả lập API call cho COD
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-
-        // Xóa danh sách sản phẩm đã chọn khỏi localStorage và Redux
-        localStorage.removeItem("selectedCartItems");
-        selectedItems.forEach((item) => {
-          dispatch(removeFromCart(item.id));
-        });
-
-        router.push(`/checkout/success?orderId=${orderId}`);
-      } else if (paymentMethod === "vnpay") {
-        console.log("Processing VNPay payment...");
-
-        const ipAddr = await getUserIpAddress();
-        const orderInfo = `Thanh toan don hang ${orderId}`;
-        console.log("Sending request to create VNPay payment URL...");
-        console.log("Request data:", {
-          amount: finalTotal,
-          orderId: orderId,
-          orderInfo: orderInfo,
-          ipAddr: ipAddr,
-        });
-
-        const response = await fetch("/api/vnpay/create-payment", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            amount: finalTotal,
-            orderId: orderId,
-            orderInfo: orderInfo,
-            ipAddr: ipAddr,
-          }),
-        });
-
-        const data = await response.json();
-        console.log("VNPay API response:", data);
-
-        if (response.ok && data.paymentUrl) {
-          console.log("Redirecting to VNPay:", data.paymentUrl);
-
-          // Chuyển hướng đến trang thanh toán VNPay
-          window.location.href = data.paymentUrl;
-        } else {
-          console.error("VNPay API error:", data);
-          alert("Không thể tạo URL thanh toán VNPay. Vui lòng thử lại.");
-          setIsSubmitting(false);
+          return orderServiceManagement.createOrder(orderData);
         }
-      }
+      );
+
+      // Wait for all orders to be created
+      const createdOrders = await Promise.all(orderPromises);
+
+      // Handle successful order creation
+      showToast.success(`Đã tạo thành công ${createdOrders.length} đơn hàng`);
+
+      // Clean up localStorage
+      localStorage.removeItem("selectedCartItems");
+      localStorage.removeItem("checkoutData");
+      localStorage.removeItem("selectedVoucher");
+
+      // Remove items from cart
+      selectedItems.forEach((item) => {
+        dispatch(removeFromCart(item.id));
+      });
+
+      // Redirect to success page with first order ID
+      const firstOrderId = createdOrders[0]?.data?.order_id;
+      router.push(
+        `/checkout/success?orderId=${firstOrderId}&totalOrders=${createdOrders.length}`
+      );
     } catch (error) {
       console.error("Error during checkout:", error);
       setIsSubmitting(false);
-      alert("Đã xảy ra lỗi khi đặt hàng. Vui lòng thử lại.");
+      showToast.error("Đã xảy ra lỗi khi đặt hàng. Vui lòng thử lại.");
     }
   };
 
@@ -403,14 +381,20 @@ function CheckoutPage() {
                 value={paymentMethod}
                 onValueChange={setPaymentMethod}
               >
-                <div className="flex items-center space-x-2 mb-3">
-                  <RadioGroupItem value="cod" id="cod" />
-                  <Label htmlFor="cod">Thanh toán khi nhận hàng (COD)</Label>
-                </div>
-                <div className="flex items-center space-x-2 mb-3">
-                  <RadioGroupItem value="vnpay" id="vnpay" />
-                  <Label htmlFor="vnpay">Thanh toán qua VNPay</Label>
-                </div>
+                {paymentMethods.map((method) => (
+                  <div
+                    key={method.payment_method_id}
+                    className="flex items-center space-x-2 mb-3"
+                  >
+                    <RadioGroupItem
+                      value={method.payment_method_id}
+                      id={method.payment_method_id}
+                    />
+                    <Label htmlFor={method.payment_method_id}>
+                      {method.method_name}
+                    </Label>
+                  </div>
+                ))}
               </RadioGroup>
             </CardContent>
           </Card>
@@ -426,17 +410,42 @@ function CheckoutPage() {
               <div className="space-y-4">
                 {/* Danh sách sản phẩm */}
                 <div className="space-y-3">
-                  {selectedItems.map((item) => (
-                    <div key={item.id} className="flex justify-between">
-                      <div className="flex-1">
-                        <span className="font-medium">{item.name}</span>
-                        <span className="text-gray-500 ml-1">
-                          x{item.quantity}
-                        </span>
+                  {selectedItems.map((item) => {
+                    const originalPrice = item.price;
+                    const discountValue = item.promotion?.discount_value || 0;
+                    const finalPrice = originalPrice - discountValue;
+
+                    return (
+                      <div key={item.id} className="flex justify-between">
+                        <div className="flex-1">
+                          <span className="font-medium">{item.name}</span>
+                          <span className="text-gray-500 ml-1">
+                            x{item.quantity}
+                          </span>
+                          {item.batch?.product_types?.type_name && (
+                            <div className="text-xs text-gray-400">
+                              {item.batch.product_types.type_name}
+                            </div>
+                          )}
+                          {discountValue > 0 && (
+                            <div className="text-xs text-red-500">
+                              Giảm {formatCurrency(discountValue)}/sp
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          {discountValue > 0 && (
+                            <div className="text-xs text-gray-400 line-through">
+                              {formatCurrency(originalPrice * item.quantity)}
+                            </div>
+                          )}
+                          <span>
+                            {formatCurrency(finalPrice * item.quantity)}
+                          </span>
+                        </div>
                       </div>
-                      <span>{formatCurrency(item.price * item.quantity)}</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 <Separator />
@@ -455,6 +464,12 @@ function CheckoutPage() {
                         : "Miễn phí"}
                     </span>
                   </div>
+                  {voucherDiscount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Giảm giá voucher</span>
+                      <span>-{formatCurrency(voucherDiscount)}</span>
+                    </div>
+                  )}
                 </div>
 
                 <Separator />
@@ -466,6 +481,15 @@ function CheckoutPage() {
                     {formatCurrency(finalTotal)}
                   </span>
                 </div>
+
+                {checkoutData &&
+                  checkoutData.ordersByDistributor.length > 1 && (
+                    <div className="text-xs text-gray-500 mt-2">
+                      * Đơn hàng sẽ được tách thành{" "}
+                      {checkoutData.ordersByDistributor.length} đơn theo từng
+                      nhà phân phối
+                    </div>
+                  )}
 
                 <Button
                   className="w-full bg-primary hover:bg-primary-dark"

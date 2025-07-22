@@ -136,18 +136,31 @@ export default function ProductCard({ product }: ProductCardProps) {
     e.preventDefault();
 
     if (!selectedBatch) return;
+    // console.log("Adding to cart:", {
+    //   id: product.product_id + "/" + selectedBatch.batch_id || "",
+    //   name: product.product_name,
+    //   price: discountedPrice,
+    //   valueDiscount: maxPromotion?.discount_value || 0,
+    //   quantity: 1,
+    //   image: product.images[0].image_url,
+    //   sellerId:
+    //     product.distributor?.user_id ||
+    //     (Math.floor(Math.random() * 999) + 1).toString(),
+    //   sellerName: product.distributor?.full_name || "N/A",
+    //   promotion: maxPromotion,
+    // });
 
     requireAuth(() => {
       dispatch(
         addToCart({
-          id: product.product_id + selectedBatch.batch_id || "",
+          id: product.product_id + "/" + selectedBatch.batch_id || "",
           name: product.product_name,
           price: discountedPrice,
           valueDiscount: maxPromotion?.discount_value || 0,
           quantity: 1,
           image: product.images[0].image_url,
           sellerId:
-            product.distributor?.invenstory?.invenstory_id ||
+            product.distributor?.user_id ||
             (Math.floor(Math.random() * 999) + 1).toString(),
           sellerName: product.distributor?.invenstory?.name || "N/A",
           promotion: maxPromotion,

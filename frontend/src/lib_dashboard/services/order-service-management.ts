@@ -5,6 +5,7 @@ import axios from "axios";
 import {
   BatchOperationResponse,
   BatchUpdateStatusRequest,
+  CreateOrderDto,
   Order,
   PaymentMethod,
   UpdateOrderStatusRequest,
@@ -21,6 +22,7 @@ export const orderServiceManagement = {
   async getAllOrders(): Promise<Order[]> {
     try {
       const response = await axiosInstance.get("/order");
+      console.log("Fetched Orders:", response.data);
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi lấy danh sách đơn hàng";
@@ -64,12 +66,29 @@ export const orderServiceManagement = {
     }
   },
 
+  // tạo đơn hàng mới
+  async createOrder(
+    data: CreateOrderDto
+  ): Promise<{ message: string; data: Order }> {
+    try {
+      const response = await axiosInstance.post("/order", data);
+      return response.data;
+    } catch (error) {
+      let msg = "Lỗi khi tạo đơn hàng";
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        msg = error.response.data.message;
+      }
+      showToast.error(msg);
+      throw error;
+    }
+  },
+
   // === Order Status Operations ===
 
   async getOrderStatuses(): Promise<OrderStatus[]> {
     try {
       const response = await axiosInstance.get("/order-status");
-      return response.data;
+      return response.data.data;
     } catch (error) {
       let msg = "Lỗi khi lấy danh sách trạng thái đơn hàng";
       if (axios.isAxiosError(error) && error.response?.data?.message) {
