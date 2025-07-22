@@ -70,7 +70,6 @@ const valueWithDiscount = (
 };
 
 export default function ProductCard({ product }: ProductCardProps) {
-  console.log("Product Card:", product);
   const isInWishlist = useSelector(selectIsInWishlist(product.product_id));
   const dispatch = useDispatch();
   const { requireAuth } = useAuthAction();
@@ -220,7 +219,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <Link href={`/products/${product.product_id}`}>
           <div className="aspect-square overflow-hidden">
             <Image
-              src={product.images[0].image_url || "/placeholder.svg"}
+              src={product?.images?.[0].image_url || "/placeholder.svg"}
               alt={product.product_name}
               width={300}
               height={300}

@@ -7,7 +7,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { In } from 'typeorm/find-options/operator/In';
-import { validate as isUUID } from 'uuid';
 import { Role } from '../../auth/enums/role.enum';
 import { CloudinaryService } from '../../cloudinary/cloudinary.service';
 import { ActiveIngredient } from '../active-ingredient/entities/active-ingredient.entity';
@@ -302,24 +301,29 @@ export class ProductService {
   }
 
   async findByDistributor(distributor_id: string) {
-    if (!isUUID(distributor_id)) {
-      throw new BadRequestException('Invalid distributor ID format');
-    }
-
-    return await this.productRepo
-      .createQueryBuilder('product')
-      .leftJoinAndSelect('product.categories', 'category')
-      .leftJoinAndSelect('product.distributor', 'distributor')
-      .leftJoinAndSelect('distributor.invenstory', 'invenstory')
-      .leftJoinAndSelect('product.manufacturer', 'manufacturer')
-      .leftJoinAndSelect('product.productDiseases', 'productDisease')
-      .leftJoinAndSelect('productDisease.disease', 'disease')
-      .leftJoinAndSelect('product.product_ingredients', 'product_ingredient')
-      .leftJoinAndSelect('product_ingredient.ingredient', 'ingredient')
-      .where('distributor.user_id = :distributor_id', { distributor_id })
-      .andWhere('product.is_deleted = :is_deleted', { is_deleted: false })
-      .orderBy('product.created_at', 'DESC')
-      .getMany();
+    const products = await this.productRepo.find({
+      where: {
+        distributor: { user_id: distributor_id },
+        is_deleted: false,
+        is_active: true,
+      },
+      relations: [
+        'images',
+        'categories',
+        'distributor',
+        'distributor.invenstory',
+        'manufacturer',
+        'batches',
+        'batches.product_types',
+        'batches.promotions',
+        'product_ingredients',
+        'product_ingredients.ingredient',
+        'productDiseases',
+        'productDiseases.disease',
+      ],
+      order: { created_at: 'DESC' },
+    });
+    return products;
   }
 
   async findOne(product_id: string) {

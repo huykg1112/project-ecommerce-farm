@@ -33,8 +33,7 @@ import { TokenModule } from './modules/token/token.module';
 import { TreatmentPlanModule } from './modules/treatment-plan/treatment-plan.module';
 import { UserModule } from './modules/user/user.module';
 import { VoucherModule } from './modules/voucher/voucher.module';
-
-import { PaymentModule } from './modules/payment/payment.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
