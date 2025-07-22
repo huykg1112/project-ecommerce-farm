@@ -8,6 +8,7 @@ import { OrderStatus } from '../order-status/entities/order-status.entity';
 import { OrderStatusModule } from '../order-status/order-status.module';
 import { PaymentMethod } from '../payment-method/entities/payment-method.entity';
 import { PaymentMethodModule } from '../payment-method/payment-method.module';
+import { Product } from '../product/entities/product.entity';
 import { User } from '../user/entities/user.entity';
 import { UserModule } from '../user/user.module';
 import { Order } from './entities/order.entity';
@@ -23,6 +24,7 @@ import { OrderService } from './order.service';
       PaymentMethod,
       User,
       BatchProduct,
+      Product,
     ]),
     forwardRef(() => BatchProductModule),
     forwardRef(() => OrderDetailModule),

@@ -157,19 +157,17 @@ export class OrderDetailService {
         updateOrderDetailDto.quantity,
       );
     }
-
+    let subtotal = orderDetail.subtotal;
     // Recalculate subtotal if quantity or unit_price changes
     if (updateOrderDetailDto.quantity || updateOrderDetailDto.unit_price) {
       const quantity = updateOrderDetailDto.quantity || orderDetail.quantity;
       const unitPrice =
         updateOrderDetailDto.unit_price || orderDetail.unit_price;
-      updateOrderDetailDto.subtotal = this.calculateSubtotal(
-        quantity,
-        unitPrice,
-      );
+      subtotal = this.calculateSubtotal(quantity, unitPrice);
     }
 
     Object.assign(orderDetail, updateOrderDetailDto);
+    orderDetail.subtotal = subtotal;
     const updated = await this.orderDetailRepository.save(orderDetail);
 
     return {

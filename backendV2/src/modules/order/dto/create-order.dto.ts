@@ -19,13 +19,11 @@ export class CreateOrderDto {
   distributor_id: string;
 
   @IsUUID()
-  status_id: string;
-
-  @IsUUID()
   payment_method_id: string;
 
+  @IsOptional()
   @IsUUID()
-  batch_id: string;
+  voucher_id: string;
 
   @IsNumber()
   total_amount: number;

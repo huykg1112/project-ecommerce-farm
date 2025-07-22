@@ -10,10 +10,6 @@ import {
 
 export class CreateOrderDetailDto {
   @IsUUID()
-  @IsOptional()
-  order_id?: string;
-
-  @IsUUID()
   batch_id: string;
 
   @IsInt()
@@ -23,10 +19,6 @@ export class CreateOrderDetailDto {
   @IsNumber()
   @Min(0)
   unit_price: number;
-
-  @IsNumber()
-  @Min(0)
-  subtotal: number;
 
   @IsString()
   @MaxLength(500)

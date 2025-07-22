@@ -9,6 +9,7 @@ import { BatchProduct } from '../batch-product/entities/batch-product.entity';
 import { OrderDetail } from '../order-detail/entities/order-detail.entity';
 import { OrderStatus } from '../order-status/entities/order-status.entity';
 import { PaymentMethod } from '../payment-method/entities/payment-method.entity';
+import { Product } from '../product/entities/product.entity';
 import { User } from '../user/entities/user.entity';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
@@ -30,6 +31,8 @@ export class OrderService {
     private readonly userRepository: Repository<User>,
     @InjectRepository(BatchProduct)
     private readonly batchProductRepository: Repository<BatchProduct>,
+    @InjectRepository(Product)
+    private readonly productRepository: Repository<Product>,
   ) {}
 
   async create(createOrderDto: CreateOrderDto) {
@@ -48,6 +51,7 @@ export class OrderService {
       if (!orderStatus) {
         throw new BadRequestException('Order status not found');
       }
+
       // find user by id
       const user = await this.userRepository.findOne({
         where: { user_id: createOrderDto.user_id },
@@ -55,6 +59,7 @@ export class OrderService {
       if (!user) {
         throw new BadRequestException('User not found');
       }
+
       //find distributor by id
       const distributor = await this.userRepository.findOne({
         where: { user_id: createOrderDto.distributor_id },
@@ -62,13 +67,27 @@ export class OrderService {
       if (!distributor) {
         throw new BadRequestException('Distributor not found');
       }
-      // FindBatchProduct by id
-      const batchProduct = await this.batchProductRepository.findOne({
-        where: { batch_id: createOrderDto.batch_id },
-      });
-      if (!batchProduct) {
-        throw new BadRequestException('Batch product not found');
+
+      // Validate batch products and check inventory
+      for (const detail of createOrderDto.order_details) {
+        const batchProduct = await this.batchProductRepository.findOne({
+          where: { batch_id: detail.batch_id },
+          relations: ['product'],
+        });
+
+        if (!batchProduct) {
+          throw new BadRequestException(
+            `Batch product with ID ${detail.batch_id} not found`,
+          );
+        }
+
+        if (batchProduct.quantity < detail.quantity) {
+          throw new BadRequestException(
+            `Insufficient inventory for batch ${detail.batch_id}. Available: ${batchProduct.quantity}, Requested: ${detail.quantity}`,
+          );
+        }
       }
+
       // Generate a random order code Chữ cái Hoa
       const randomCode = Math.random()
         .toString(36)
@@ -77,7 +96,7 @@ export class OrderService {
 
       const order_code = `ORDER-${Date.now()}-${randomCode}`;
 
-      // Create order
+      // Create order first
       const order = this.orderRepository.create({
         order_code,
         user,
@@ -87,6 +106,67 @@ export class OrderService {
       });
 
       const savedOrder = await this.orderRepository.save(order);
+
+      // Create order details and update inventory
+      const orderDetails: OrderDetail[] = [];
+
+      for (const detail of createOrderDto.order_details) {
+        // Get batch product with current data
+        const batchProduct = await this.batchProductRepository.findOne({
+          where: { batch_id: detail.batch_id },
+          relations: ['product'],
+        });
+
+        if (!batchProduct) {
+          throw new BadRequestException(
+            `Batch product with ID ${detail.batch_id} not found`,
+          );
+        }
+
+        // Create order detail
+        const orderDetail = this.orderDetailRepository.create({
+          order: savedOrder,
+          batch_product: batchProduct,
+          quantity: detail.quantity,
+          unit_price: batchProduct.unit_product_price,
+          subtotal: detail.quantity * batchProduct.unit_product_price,
+          notes: detail.notes,
+        });
+
+        orderDetails.push(orderDetail);
+
+        // Update batch product quantity (inventory)
+        await this.batchProductRepository.update(
+          { batch_id: detail.batch_id },
+          { quantity: batchProduct.quantity - detail.quantity },
+        );
+
+        // Update product total_saled
+        if (batchProduct.product && batchProduct.product.product_id) {
+          // tìm prodtuct theo product_id
+          const product = await this.productRepository.findOne({
+            where: { product_id: batchProduct.product.product_id },
+          });
+
+          if (product) {
+            await this.productRepository.update(
+              { product_id: product.product_id },
+              {
+                total_saled: product.total_saled + detail.quantity,
+              },
+            );
+          }
+        }
+      }
+
+      // Save all order details
+      const savedOrderDetails =
+        await this.orderDetailRepository.save(orderDetails);
+
+      // Update order with order details
+      savedOrder.order_details = savedOrderDetails;
+      await this.orderRepository.save(savedOrder);
+
       return {
         message: 'Order created successfully',
         data: savedOrder,
@@ -321,16 +401,6 @@ export class OrderService {
       order.payment_method = paymentMethod;
     }
 
-    if (updateOrderDto.status_id) {
-      const orderStatus = await this.orderStatusRepository.findOne({
-        where: { status_id: updateOrderDto.status_id },
-      });
-      if (!orderStatus) {
-        throw new BadRequestException('Order status not found');
-      }
-      order.status = orderStatus;
-    }
-
     Object.assign(order, updateOrderDto);
     await this.orderRepository.save(order);
 
@@ -359,11 +429,38 @@ export class OrderService {
   async cancelOrder(id: string, notes?: string) {
     const order = await this.findOne(id);
 
+    // Check if order can be cancelled
+    if (!['PENDING', 'CONFIRMED'].includes(order.status.status_name)) {
+      throw new BadRequestException(
+        'Only pending or confirmed orders can be cancelled',
+      );
+    }
+
     const cancelledStatus = await this.orderStatusRepository.findOne({
       where: { status_name: 'CANCELLED' },
     });
     if (!cancelledStatus) {
       throw new BadRequestException('Cancelled status not found');
+    }
+
+    // Restore inventory and update product total_saled for each order detail
+    for (const orderDetail of order.order_details) {
+      // Restore batch product quantity (inventory)
+      await this.batchProductRepository.update(
+        { batch_id: orderDetail.batch_product.batch_id },
+        { quantity: () => `quantity + ${orderDetail.quantity}` },
+      );
+
+      // Reduce product total_saled
+      if (orderDetail.batch_product.product) {
+        await this.productRepository.update(
+          { product_id: orderDetail.batch_product.product.product_id },
+          {
+            total_saled: () =>
+              `GREATEST(total_saled - ${orderDetail.quantity}, 0)`,
+          },
+        );
+      }
     }
 
     order.status = cancelledStatus;

@@ -1,10 +1,16 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { OrderSummaryProps } from "@/interfaces";
 import { formatCurrency } from "@/lib/utils";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Ticket } from "lucide-react";
 import { Card, CardHeader, CardTitle } from "../ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 export function OrderSummary({
   selectedItemsCount,
@@ -12,12 +18,31 @@ export function OrderSummary({
   shippingFee,
   discount,
   finalTotal,
-  couponCode,
-  isApplyingCoupon,
-  onCouponCodeChange,
-  onApplyCoupon,
+  myVoucher = [],
+  selectedVoucher,
+  onSelectVoucher,
   onCheckout,
 }: OrderSummaryProps) {
+  // Check if voucher is available based on min_order_value
+  const isVoucherAvailable = (voucher: any) => {
+    return (
+      voucher.is_active &&
+      (!voucher.min_order_value || selectedTotal >= voucher.min_order_value)
+    );
+  };
+
+  const handleVoucherChange = (value: string) => {
+    if (value === "none") {
+      onSelectVoucher(null);
+    } else {
+      const voucher = myVoucher.find((v) => v.voucher_id === value);
+      // Only allow selection if voucher is available
+      if (voucher && isVoucherAvailable(voucher)) {
+        onSelectVoucher(voucher);
+      }
+    }
+  };
+
   return (
     <Card className="sticky top-24 h-fit">
       <div className="p-6">
@@ -41,7 +66,7 @@ export function OrderSummary({
           </div>
           {discount > 0 && (
             <div className="flex justify-between text-green-600">
-              <span>Giảm giá</span>
+              <span>Giảm giá voucher</span>
               <span>-{formatCurrency(discount)}</span>
             </div>
           )}
@@ -51,25 +76,83 @@ export function OrderSummary({
           <span>Tổng cộng</span>
           <span className="text-primary">{formatCurrency(finalTotal)}</span>
         </div>
+
+        {/* Voucher Selection */}
         <div className="mb-6">
-          <div className="flex gap-2">
-            <Input
-              placeholder="Nhập mã giảm giá"
-              value={couponCode}
-              onChange={(e) => onCouponCodeChange(e.target.value)}
-            />
-            <Button
-              variant="outline"
-              onClick={onApplyCoupon}
-              disabled={isApplyingCoupon || !couponCode.trim()}
-            >
-              {isApplyingCoupon ? "Đang áp dụng..." : "Áp dụng"}
-            </Button>
-          </div>
-          <p className="text-xs text-gray-500 mt-2">
-            * Thử mã "WELCOME10" để được giảm 10%
-          </p>
+          <label className="text-sm font-medium mb-2 flex items-center gap-2">
+            <Ticket className="h-4 w-4" />
+            Chọn voucher giảm giá
+          </label>
+          <Select
+            value={selectedVoucher?.voucher_id || "none"}
+            onValueChange={handleVoucherChange}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Chọn voucher" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Không sử dụng voucher</SelectItem>
+              {myVoucher.map((voucher) => {
+                const isAvailable = isVoucherAvailable(voucher);
+                return (
+                  <SelectItem
+                    key={voucher.voucher_id}
+                    value={voucher.voucher_id}
+                    disabled={!isAvailable}
+                    className={
+                      !isAvailable ? "opacity-50 cursor-not-allowed" : ""
+                    }
+                  >
+                    <div className="flex flex-col">
+                      <span
+                        className={`font-medium ${
+                          !isAvailable ? "text-gray-400" : ""
+                        }`}
+                      >
+                        {voucher.voucher_code}
+                      </span>
+                      <span
+                        className={`text-xs ${
+                          !isAvailable ? "text-gray-300" : "text-gray-500"
+                        }`}
+                      >
+                        Giảm tối đa:{" "}
+                        {formatCurrency(voucher.max_discount_value || 0)}
+                        {voucher.min_order_value &&
+                          ` - Đơn tối thiểu: ${formatCurrency(
+                            voucher.min_order_value
+                          )}`}
+                      </span>
+                      {!isAvailable && voucher.min_order_value && (
+                        <span className="text-xs text-red-400">
+                          Thiếu{" "}
+                          {formatCurrency(
+                            voucher.min_order_value - selectedTotal
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
+          {myVoucher.length > 0 && (
+            <div className="mt-2">
+              {myVoucher.filter((v) => !isVoucherAvailable(v)).length > 0 && (
+                <p className="text-xs text-orange-500">
+                  * Một số voucher chưa đủ điều kiện sử dụng
+                </p>
+              )}
+            </div>
+          )}
+          {myVoucher.length === 0 && (
+            <p className="text-xs text-gray-500 mt-2">
+              * Bạn chưa có voucher nào
+            </p>
+          )}
         </div>
+
         <Button
           className="w-full bg-primary hover:bg-primary-dark gap-2"
           onClick={onCheckout}

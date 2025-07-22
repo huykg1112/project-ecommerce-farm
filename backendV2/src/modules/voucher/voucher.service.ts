@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { isUUID } from 'class-validator';
-import { Repository } from 'typeorm';
+import { MoreThan, Repository } from 'typeorm';
 import { User } from '../user/entities/user.entity';
 import { CreateVoucherDto } from './dto/create-voucher.dto';
 import { UpdateVoucherDto } from './dto/update-voucher.dto';
@@ -107,22 +107,24 @@ export class VoucherService {
     userId: string,
     distributorId?: string,
   ): Promise<Voucher[]> {
-    const user = await this.userRepository.findOne({
-      where: { user_id: userId },
+    // lấy toàn bộ voucher có trạng thái is_active = true và is_deleted = false và end_date > now
+    let vouchers = await this.voucherRepository.find({
+      where: {
+        is_active: true,
+        is_deleted: false,
+        end_date: MoreThan(new Date()),
+      },
+      relations: ['distributor', 'users'],
     });
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    let vouchers = user.vouchers.filter((v) => !v.is_deleted);
-
+    // Lấy voucher đã được người dùng thu thập
+    vouchers = vouchers.filter((voucher) =>
+      voucher.users.some((user) => user.user_id === userId),
+    );
     if (distributorId) {
       vouchers = vouchers.filter(
         (v) => v.distributor.user_id === distributorId,
       );
     }
-
     return vouchers;
   }
 

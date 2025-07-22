@@ -13,6 +13,12 @@ export function CartItem({
   onQuantityChange,
   onRemoveItem,
 }: CartItemProps) {
+  // Calculate discounted price if promotion exists
+  const originalPrice = item.price;
+  const discountValue = item.promotion?.discount_value || 0;
+  const discountedPrice = originalPrice - discountValue;
+  const finalPrice = discountValue > 0 ? discountedPrice : originalPrice;
+
   return (
     <div className="p-4 flex flex-col sm:flex-row gap-4">
       <div className="flex items-start gap-3">
@@ -40,9 +46,37 @@ export function CartItem({
             >
               {item.name}
             </Link>
+            {/* Display product type */}
+            {item.batch?.product_types?.type_name && (
+              <p className="text-sm text-gray-500 mt-1">
+                Loại: {item.batch.product_types.type_name}
+              </p>
+            )}
+            {/* Display discount if exists */}
+            {discountValue > 0 && (
+              <div className="mt-1">
+                <span className="text-sm text-red-500 bg-red-50 px-2 py-1 rounded-md">
+                  Giảm giá: {formatCurrency(discountValue)}
+                </span>
+              </div>
+            )}
           </div>
-          <div className="font-bold mt-2 sm:mt-0">
-            {formatCurrency(item.price * item.quantity)}
+          <div className="mt-2 sm:mt-0">
+            {/* Show original and discounted price */}
+            {discountValue > 0 ? (
+              <div className="text-right">
+                <div className="text-sm text-gray-400 line-through">
+                  {formatCurrency(originalPrice * item.quantity)}
+                </div>
+                <div className="font-bold text-red-600">
+                  {formatCurrency(finalPrice * item.quantity)}
+                </div>
+              </div>
+            ) : (
+              <div className="font-bold">
+                {formatCurrency(finalPrice * item.quantity)}
+              </div>
+            )}
           </div>
         </div>
         <div className="flex justify-between items-center mt-4">

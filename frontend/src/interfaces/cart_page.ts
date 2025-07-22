@@ -1,4 +1,5 @@
 import { CartItem as CartItemType } from "@/lib/features/cart-slice";
+import { Voucher } from "@/types/entities";
 
 export interface CartHeaderProps {
   totalItems: number;
@@ -21,10 +22,9 @@ export interface OrderSummaryProps {
   shippingFee: number;
   discount: number;
   finalTotal: number;
-  couponCode: string;
-  isApplyingCoupon: boolean;
-  onCouponCodeChange: (value: string) => void;
-  onApplyCoupon: () => void;
+  myVoucher?: Voucher[];
+  selectedVoucher?: Voucher | null;
+  onSelectVoucher: (voucher: Voucher | null) => void;
   onCheckout: () => void;
 }
 

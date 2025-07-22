@@ -50,7 +50,10 @@ export class VoucherController {
 
   //lấy voucher đã được người dùng thu thập của một nhà phân phối
   @Get('my-collected')
-  findMyCollectedVouchers(@Request() req, @Body() distributorId?: string) {
+  findMyCollectedVouchers(
+    @Request() req,
+    @Query('distributorId') distributorId?: string,
+  ) {
     const userId = req.user?.user_id;
     return this.voucherService.findMyCollectedVouchers(userId, distributorId);
   }

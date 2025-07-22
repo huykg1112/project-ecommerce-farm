@@ -9,7 +9,7 @@ export interface CartItem {
   name: string;
   price: number;
   valueDiscount?: number; // Optional value for discount
-  quantity: number;
+  quantity: number; // Số lượng sản phẩm trong giỏ hàng
   image: string;
   sellerId: string;
   sellerName: string;
@@ -27,6 +27,19 @@ const initialState: CartState = {
   items: [],
   totalItems: 0,
   totalAmount: 0,
+};
+
+const calculateTotals = (state: CartState) => {
+  state.totalItems = state.items.reduce(
+    (total, item) => total + item.quantity,
+    0
+  );
+  state.totalAmount = state.items.reduce((total, item) => {
+    const originalPrice = item.price;
+    const discountValue = item.promotion?.discount_value || 0;
+    const finalPrice = originalPrice - discountValue;
+    return total + finalPrice * item.quantity;
+  }, 0);
 };
 
 const cartSlice = createSlice({
@@ -47,25 +60,11 @@ const cartSlice = createSlice({
         state.items.push(action.payload);
       }
 
-      state.totalItems = state.items.reduce(
-        (total, item) => total + item.quantity,
-        0
-      );
-      state.totalAmount = state.items.reduce(
-        (total, item) => total + item.price * item.quantity,
-        0
-      );
+      calculateTotals(state);
     },
     removeFromCart: (state, action: PayloadAction<string>) => {
       state.items = state.items.filter((item) => item.id !== action.payload);
-      state.totalItems = state.items.reduce(
-        (total, item) => total + item.quantity,
-        0
-      );
-      state.totalAmount = state.items.reduce(
-        (total, item) => total + item.price * item.quantity,
-        0
-      );
+      calculateTotals(state);
     },
     updateQuantity: (
       state,
@@ -75,14 +74,7 @@ const cartSlice = createSlice({
       if (item) {
         item.quantity = action.payload.quantity;
       }
-      state.totalItems = state.items.reduce(
-        (total, item) => total + item.quantity,
-        0
-      );
-      state.totalAmount = state.items.reduce(
-        (total, item) => total + item.price * item.quantity,
-        0
-      );
+      calculateTotals(state);
     },
     clearCart: (state) => {
       state.items = [];

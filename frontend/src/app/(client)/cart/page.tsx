@@ -17,7 +17,9 @@ import {
 import type { AppDispatch, RootState } from "@/lib/features/store";
 import { showToast } from "@/lib/toast-provider";
 import { productServiceManagement } from "@/lib_dashboard/services/product-service-management";
+import { voucherService } from "@/lib_dashboard/services/voucher-service";
 import { Product } from "@/lib_dashboard/types/product";
+import { Voucher } from "@/types/entities";
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -30,12 +32,11 @@ function CartPage() {
   );
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
-  const [couponCode, setCouponCode] = useState("");
-  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
-  const [discount, setDiscount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [expandedSellers, setExpandedSellers] = useState<string[]>([]);
+  const [myVoucher, setMyVoucher] = useState<Voucher[]>([]);
+  const [selectedVoucher, setSelectedVoucher] = useState<Voucher | null>(null);
 
   const [recommendedProducts, setRecommendedProducts] = useState<Product[]>([]);
 
@@ -47,6 +48,18 @@ function CartPage() {
       setRecommendedProducts(response.slice(0, 8));
     };
 
+    // fetch my voucher
+    const fetchMyVoucher = async () => {
+      try {
+        const response = await voucherService.getMyCollectedVouchers();
+        console.log("My collected vouchers:", response);
+        setMyVoucher(response);
+      } catch (error) {
+        console.error("Error fetching my voucher:", error);
+        showToast.error("Lỗi khi lấy voucher của bạn");
+      }
+    };
+    fetchMyVoucher();
     fetchRecommendedProducts();
     setLoading(false);
   }, []);
@@ -63,15 +76,25 @@ function CartPage() {
     setExpandedSellers(Object.keys(itemsBySeller));
   }, [items]);
 
+  // Calculate selected total with discounted prices
   const calculateSelectedTotal = () =>
     items
       .filter((item) => selectedItems.includes(item.id))
-      .reduce((total, item) => total + item.price * item.quantity, 0);
+      .reduce((total, item) => {
+        const originalPrice = item.price;
+        const discountValue = item.promotion?.discount_value || 0;
+        const finalPrice = originalPrice - discountValue;
+        return total + finalPrice * item.quantity;
+      }, 0);
 
   const selectedTotal = calculateSelectedTotal();
   const shippingFee =
     selectedTotal > 300000 ? 0 : selectedTotal > 0 ? 30000 : 0;
-  const finalTotal = selectedTotal + shippingFee - discount;
+
+  // Calculate voucher discount
+  const voucherDiscount = selectedVoucher?.max_discount_value || 0;
+  const finalTotal = selectedTotal + shippingFee - voucherDiscount;
+
   const selectedItemsCount = items
     .filter((item) => selectedItems.includes(item.id))
     .reduce((count, item) => count + item.quantity, 0);
@@ -99,22 +122,11 @@ function CartPage() {
     }
   };
 
-  const handleApplyCoupon = () => {
-    if (!couponCode.trim()) return;
-    setIsApplyingCoupon(true);
-    setTimeout(() => {
-      if (couponCode.toUpperCase() === "WELCOME10") {
-        const discountAmount = Math.round(totalAmount * 0.1);
-        setDiscount(discountAmount);
-        showToast.success(
-          `Đã áp dụng mã giảm giá WELCOME10: -${discountAmount}`
-        );
-      } else {
-        showToast.error("Mã giảm giá không hợp lệ");
-        setDiscount(0);
-      }
-      setIsApplyingCoupon(false);
-    }, 1000);
+  const handleSelectVoucher = (voucher: Voucher | null) => {
+    setSelectedVoucher(voucher);
+    if (voucher) {
+      showToast.success(`Đã áp dụng voucher ${voucher.voucher_code}`);
+    }
   };
 
   const handleSelectItem = (id: string) => {
@@ -170,6 +182,11 @@ function CartPage() {
       return;
     }
     localStorage.setItem("selectedCartItems", JSON.stringify(selectedItems));
+    if (selectedVoucher) {
+      localStorage.setItem("selectedVoucher", JSON.stringify(selectedVoucher));
+    } else {
+      localStorage.removeItem("selectedVoucher");
+    }
     router.push("/checkout");
   };
 
@@ -241,12 +258,11 @@ function CartPage() {
           selectedItemsCount={selectedItemsCount}
           selectedTotal={selectedTotal}
           shippingFee={shippingFee}
-          discount={discount}
+          discount={voucherDiscount}
           finalTotal={finalTotal}
-          couponCode={couponCode}
-          isApplyingCoupon={isApplyingCoupon}
-          onCouponCodeChange={setCouponCode}
-          onApplyCoupon={handleApplyCoupon}
+          myVoucher={myVoucher}
+          selectedVoucher={selectedVoucher}
+          onSelectVoucher={handleSelectVoucher}
           onCheckout={handleCheckout}
         />
       </div>

@@ -69,9 +69,12 @@ export const voucherService = {
     }
   },
 
-  async getMyCollectedVouchers(): Promise<Voucher[]> {
+  async getMyCollectedVouchers(distributorId?: string): Promise<Voucher[]> {
     try {
-      const response = await axiosInstance.get(`/voucher/my-vouchers-for-user`);
+      const params = distributorId ? { distributor_id: distributorId } : {};
+      const response = await axiosInstance.get(`/voucher/my-collected`, {
+        params,
+      });
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi lấy danh sách voucher đã thu thập";
