@@ -10,6 +10,7 @@ import {
   PaymentMethod,
   UpdateOrderStatusRequest,
   UpdateOrderStatusResponse,
+  VNPayParams,
 } from "../types/order";
 import { axiosInstance } from "./axios-instance";
 
@@ -228,6 +229,25 @@ export const orderServiceManagement = {
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi hủy đơn hàng hàng loạt";
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        msg = error.response.data.message;
+      }
+      showToast.error(msg);
+      throw error;
+    }
+  },
+
+  // === VNPay Operations ===
+  async createVNPayParams(params: VNPayParams): Promise<string> {
+    try {
+      const response = await axiosInstance.post(
+        "payment/vnpay/create-payment-url",
+        params
+      );
+      console.log("VNPay Payment URL:", response.data);
+      return response.data.data.paymentUrl;
+    } catch (error) {
+      let msg = "Lỗi khi tạo tham số VNPay";
       if (axios.isAxiosError(error) && error.response?.data?.message) {
         msg = error.response.data.message;
       }

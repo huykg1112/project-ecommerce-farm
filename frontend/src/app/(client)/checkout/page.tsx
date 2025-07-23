@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
+import { UserProfile } from "@/interfaces";
 import { withAuth } from "@/lib/auth/with-auth";
 import type { CartItem } from "@/lib/features/cart-slice";
 import { removeFromCart } from "@/lib/features/cart-slice";
@@ -19,6 +20,7 @@ import { userService } from "@/lib/services/user-service";
 import { showToast } from "@/lib/toast-provider";
 import { formatCurrency } from "@/lib/utils";
 import { orderServiceManagement } from "@/lib_dashboard/services/order-service-management";
+import { PaymentMethod } from "@/lib_dashboard/types/order";
 import {
   ChevronLeft,
   CreditCard,
@@ -30,41 +32,49 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 function CheckoutPage() {
   const { items } = useSelector((state: RootState) => state.cart);
-  const { currentUser } = useSelector((state: RootState) => state.user);
   const dispatch = useDispatch<AppDispatch>();
   const router = useRouter();
+  const [user, setUser] = useState<UserProfile>();
 
-  const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedItems, setSelectedItems] = useState<CartItem[]>([]);
   const [checkoutData, setCheckoutData] = useState<any>(null);
-  const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [formData, setFormData] = useState({
-    fullName: currentUser?.fullName || "",
-    phone: currentUser?.phone || "",
-    email: currentUser?.email || "",
-    address: currentUser?.address || "",
-    lat: currentUser?.lat || 0,
-    lng: currentUser?.lng || 0,
+    fullName: "",
+    phone: "",
+    email: "",
+    address: "",
+    lat: 0,
+    lng: 0,
   });
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         const data = await userService.getProfile();
-        const lat = data.lat && !isNaN(Number(data.lat)) ? Number(data.lat) : 0;
-        const lng = data.lng && !isNaN(Number(data.lng)) ? Number(data.lng) : 0;
-
+        setUser(data);
+        const addressDefaul = data.addresses.find((addr) => addr.is_default);
+        const address = addressDefaul?.address_detail;
+        const lat =
+          addressDefaul?.latitude && !isNaN(Number(addressDefaul.latitude))
+            ? Number(addressDefaul.latitude)
+            : 0;
+        const lng =
+          addressDefaul?.longitude && !isNaN(Number(addressDefaul.longitude))
+            ? Number(addressDefaul.longitude)
+            : 0;
         setFormData({
           fullName: data.full_name || "",
           phone: data.phone_number || "",
           email: data.email || "",
-          address: data.address || "",
+          address: address || "",
           lat: lat,
           lng: lng,
         });
@@ -74,7 +84,7 @@ function CheckoutPage() {
     };
 
     fetchProfile();
-  }, [currentUser]);
+  }, []);
 
   // Load payment methods
   useEffect(() => {
@@ -83,7 +93,7 @@ function CheckoutPage() {
         const methods = await orderServiceManagement.getPaymentMethods();
         setPaymentMethods(methods);
         if (methods.length > 0) {
-          setPaymentMethod(methods[0].payment_method_id);
+          setPaymentMethod(methods[0]);
         }
       } catch (error) {
         console.error("Error fetching payment methods:", error);
@@ -181,7 +191,7 @@ function CheckoutPage() {
         async (distributorOrder: any) => {
           const orderData = {
             distributor_id: distributorOrder.distributor_id,
-            payment_method_id: paymentMethod,
+            payment_method_id: paymentMethod?.payment_method_id || "",
             voucher_id: checkoutData.selectedVoucher?.voucher_id,
             total_amount:
               distributorOrder.subtotal +
@@ -215,17 +225,51 @@ function CheckoutPage() {
         dispatch(removeFromCart(item.id));
       });
 
-      // Redirect to success page with first order ID
-      const firstOrderId = createdOrders[0]?.data?.order_id;
-      router.push(
-        `/checkout/success?orderId=${firstOrderId}&totalOrders=${createdOrders.length}`
-      );
+      if (paymentMethod?.method_name == "COD") {
+        // Redirect to success page with first order ID
+        const firstOrderId = createdOrders[0]?.data?.order_id;
+        router.push(
+          `/checkout/success?orderId=${firstOrderId}&totalOrders=${createdOrders.length}`
+        );
+      } else {
+        // Round the amount to ensure no decimal places
+        const roundedAmount = Math.round(finalTotal);
+
+        const paymentUrl = await orderServiceManagement.createVNPayParams({
+          amount: roundedAmount, // Amount in VND (already rounded)
+          orderId: createdOrders[0]?.data?.order_id || "",
+          orderInfo: `Đơn hàng từ ${createdOrders[0]?.data?.distributor?.full_name}`,
+          bankCode: "NCB", // Default bank code
+        });
+
+        console.log("Payment URL:", paymentUrl);
+
+        // Redirect to VNPay payment URL
+        if (paymentUrl) {
+          window.location.href = paymentUrl;
+        } else {
+          showToast.error(
+            "Không thể tạo liên kết thanh toán. Vui lòng thử lại."
+          );
+          setIsSubmitting(false);
+        }
+      }
     } catch (error) {
       console.error("Error during checkout:", error);
       setIsSubmitting(false);
       showToast.error("Đã xảy ra lỗi khi đặt hàng. Vui lòng thử lại.");
     }
   };
+
+  const handleChangePaymentMethod = useCallback(
+    (value: string) => {
+      const selectedMethod = paymentMethods.find(
+        (method) => method.payment_method_id === value
+      );
+      setPaymentMethod(selectedMethod);
+    },
+    [paymentMethods]
+  );
 
   // Nếu không có sản phẩm nào được chọn, chuyển hướng về trang giỏ hàng
   if (selectedItems.length === 0) {
@@ -378,8 +422,8 @@ function CheckoutPage() {
             </CardHeader>
             <CardContent>
               <RadioGroup
-                value={paymentMethod}
-                onValueChange={setPaymentMethod}
+                value={paymentMethod?.payment_method_id || ""}
+                onValueChange={handleChangePaymentMethod}
               >
                 {paymentMethods.map((method) => (
                   <div

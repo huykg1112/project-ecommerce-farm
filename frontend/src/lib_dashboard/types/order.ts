@@ -202,3 +202,10 @@ export interface CreateOrderDto {
   estimated_delivery_date?: string;
   order_details: CreateOrderDetailDto[];
 }
+
+export interface VNPayParams {
+  amount: number; // giá tiền VND (đã làm tròn, không có số thập phân)
+  orderId: string; // mã đơn hàng order_code
+  orderInfo: string; // thông tin đơn hàng
+  bankCode?: "NCB"; // mã ngân hàng mật định ko đc đổi
+}

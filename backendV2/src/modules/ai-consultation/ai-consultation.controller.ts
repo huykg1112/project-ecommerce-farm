@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Req,
 } from '@nestjs/common';
 import { AiConsultationService } from './ai-consultation.service';
 import { CreateAiConsultationDto } from './dto/create-ai-consultation.dto';
@@ -19,8 +20,9 @@ export class AiConsultationController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  create(@Body() createAiConsultationDto: CreateAiConsultationDto) {
-    return this.aiConsultationService.create(createAiConsultationDto);
+  create(@Body() createAiConsultationDto: CreateAiConsultationDto, @Req() req) {
+    const userId = req.user.id; // Assuming the user ID is available in the request object
+    return this.aiConsultationService.create(createAiConsultationDto, userId);
   }
 
   @Get()
@@ -66,9 +68,15 @@ export class AiConsultationController {
   @Patch(':id')
   update(
     @Param('id') id: string,
+    @Req() req,
     @Body() updateAiConsultationDto: UpdateAiConsultationDto,
   ) {
-    return this.aiConsultationService.update(id, updateAiConsultationDto);
+    const userId = req.user.id; // Assuming the user ID is available in the request object
+    return this.aiConsultationService.update(
+      id,
+      userId,
+      updateAiConsultationDto,
+    );
   }
 
   @Delete(':id')

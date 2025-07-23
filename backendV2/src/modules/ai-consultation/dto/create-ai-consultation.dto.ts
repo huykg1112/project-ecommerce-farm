@@ -1,4 +1,6 @@
-import { IsOptional, IsString, IsUUID } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { CreateTreatmentPlanDto } from '../../treatment-plan/dto/create-treatment-plan.dto';
 
 export class CreateAiConsultationDto {
   @IsString()
@@ -17,10 +19,11 @@ export class CreateAiConsultationDto {
   @IsOptional()
   recommended_treatment?: string;
 
-  @IsUUID()
-  @IsOptional()
-  user_id?: string;
-
   @IsOptional()
   disease_name?: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateTreatmentPlanDto)
+  treatment_plans?: CreateTreatmentPlanDto[];
 }

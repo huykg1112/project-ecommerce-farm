@@ -1,8 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateTreatmentPlanDto } from './dto/create-treatment-plan.dto';
-import { UpdateTreatmentPlanDto } from './dto/update-treatment-plan.dto';
 import { TreatmentPlan } from './entities/treatment-plan.entity';
 
 @Injectable()
@@ -12,173 +10,173 @@ export class TreatmentPlanService {
     private readonly treatmentPlanRepository: Repository<TreatmentPlan>,
   ) {}
 
-  async create(createTreatmentPlanDto: CreateTreatmentPlanDto): Promise<TreatmentPlan> {
-    const treatmentPlan = this.treatmentPlanRepository.create({
-      ...createTreatmentPlanDto,
-      consultation: createTreatmentPlanDto.consultation_id ? { consultation_id: createTreatmentPlanDto.consultation_id } as any : undefined,
-      product: createTreatmentPlanDto.product_id ? { product_id: createTreatmentPlanDto.product_id } as any : undefined,
-    });
-    
-    return await this.treatmentPlanRepository.save(treatmentPlan);
-  }
+  // async create(createTreatmentPlanDto: CreateTreatmentPlanDto): Promise<TreatmentPlan> {
+  //   const treatmentPlan = this.treatmentPlanRepository.create({
+  //     ...createTreatmentPlanDto,
+  //     consultation: createTreatmentPlanDto.consultation_id ? { consultation_id: createTreatmentPlanDto.consultation_id } as any : undefined,
+  //     product: createTreatmentPlanDto.product_id ? { product_id: createTreatmentPlanDto.product_id } as any : undefined,
+  //   });
 
-  async findAll(): Promise<TreatmentPlan[]> {
-    return await this.treatmentPlanRepository.find({
-      where: { is_deleted: false },
-      relations: ['consultation', 'product'],
-      order: { day_number: 'ASC', created_at: 'DESC' },
-    });
-  }
+  //   return await this.treatmentPlanRepository.save(treatmentPlan);
+  // }
 
-  async findOne(id: string): Promise<TreatmentPlan> {
-    const treatmentPlan = await this.treatmentPlanRepository.findOne({
-      where: { treatment_plan_id: id, is_deleted: false },
-      relations: ['consultation', 'product'],
-    });
+  // async findAll(): Promise<TreatmentPlan[]> {
+  //   return await this.treatmentPlanRepository.find({
+  //     where: { is_deleted: false },
+  //     relations: ['consultation', 'product'],
+  //     order: { day_number: 'ASC', created_at: 'DESC' },
+  //   });
+  // }
 
-    if (!treatmentPlan) {
-      throw new NotFoundException(`Treatment Plan with ID ${id} not found`);
-    }
+  // async findOne(id: string): Promise<TreatmentPlan> {
+  //   const treatmentPlan = await this.treatmentPlanRepository.findOne({
+  //     where: { treatment_plan_id: id, is_deleted: false },
+  //     relations: ['consultation', 'product'],
+  //   });
 
-    return treatmentPlan;
-  }
+  //   if (!treatmentPlan) {
+  //     throw new NotFoundException(`Treatment Plan with ID ${id} not found`);
+  //   }
 
-  async findByConsultation(consultationId: string): Promise<TreatmentPlan[]> {
-    return await this.treatmentPlanRepository.find({
-      where: { 
-        consultation: { consultation_id: consultationId },
-        is_deleted: false 
-      },
-      relations: ['consultation', 'product'],
-      order: { day_number: 'ASC' },
-    });
-  }
+  //   return treatmentPlan;
+  // }
 
-  async findByProduct(productId: string): Promise<TreatmentPlan[]> {
-    return await this.treatmentPlanRepository.find({
-      where: { 
-        product: { product_id: productId },
-        is_deleted: false 
-      },
-      relations: ['consultation', 'product'],
-      order: { day_number: 'ASC', created_at: 'DESC' },
-    });
-  }
+  // async findByConsultation(consultationId: string): Promise<TreatmentPlan[]> {
+  //   return await this.treatmentPlanRepository.find({
+  //     where: {
+  //       consultation: { consultation_id: consultationId },
+  //       is_deleted: false
+  //     },
+  //     relations: ['consultation', 'product'],
+  //     order: { day_number: 'ASC' },
+  //   });
+  // }
 
-  async findByDay(dayNumber: number): Promise<TreatmentPlan[]> {
-    return await this.treatmentPlanRepository.find({
-      where: { 
-        day_number: dayNumber,
-        is_deleted: false 
-      },
-      relations: ['consultation', 'product'],
-      order: { created_at: 'DESC' },
-    });
-  }
+  // async findByProduct(productId: string): Promise<TreatmentPlan[]> {
+  //   return await this.treatmentPlanRepository.find({
+  //     where: {
+  //       product: { product_id: productId },
+  //       is_deleted: false
+  //     },
+  //     relations: ['consultation', 'product'],
+  //     order: { day_number: 'ASC', created_at: 'DESC' },
+  //   });
+  // }
 
-  async update(id: string, updateTreatmentPlanDto: UpdateTreatmentPlanDto): Promise<TreatmentPlan> {
-    const treatmentPlan = await this.findOne(id);
-    
-    const updateData = {
-      ...updateTreatmentPlanDto,
-      updated_at: new Date(),
-    };
+  // async findByDay(dayNumber: number): Promise<TreatmentPlan[]> {
+  //   return await this.treatmentPlanRepository.find({
+  //     where: {
+  //       day_number: dayNumber,
+  //       is_deleted: false
+  //     },
+  //     relations: ['consultation', 'product'],
+  //     order: { created_at: 'DESC' },
+  //   });
+  // }
 
-    if (updateTreatmentPlanDto.consultation_id) {
-      updateData['consultation'] = { consultation_id: updateTreatmentPlanDto.consultation_id } as any;
-    }
+  // async update(id: string, updateTreatmentPlanDto: UpdateTreatmentPlanDto): Promise<TreatmentPlan> {
+  //   const treatmentPlan = await this.findOne(id);
 
-    if (updateTreatmentPlanDto.product_id) {
-      updateData['product'] = { product_id: updateTreatmentPlanDto.product_id } as any;
-    }
+  //   const updateData = {
+  //     ...updateTreatmentPlanDto,
+  //     updated_at: new Date(),
+  //   };
 
-    await this.treatmentPlanRepository.update(id, updateData);
-    return await this.findOne(id);
-  }
+  //   if (updateTreatmentPlanDto.consultation_id) {
+  //     updateData['consultation'] = { consultation_id: updateTreatmentPlanDto.consultation_id } as any;
+  //   }
 
-  async remove(id: string): Promise<void> {
-    const treatmentPlan = await this.findOne(id);
-    
-    await this.treatmentPlanRepository.update(id, {
-      is_deleted: true,
-      updated_at: new Date(),
-    });
-  }
+  //   if (updateTreatmentPlanDto.product_id) {
+  //     updateData['product'] = { product_id: updateTreatmentPlanDto.product_id } as any;
+  //   }
 
-  async hardDelete(id: string): Promise<void> {
-    const treatmentPlan = await this.findOne(id);
-    await this.treatmentPlanRepository.delete(id);
-  }
+  //   await this.treatmentPlanRepository.update(id, updateData);
+  //   return await this.findOne(id);
+  // }
 
-  async findByFrequency(frequency: string): Promise<TreatmentPlan[]> {
-    return await this.treatmentPlanRepository.find({
-      where: { 
-        frequency: frequency,
-        is_deleted: false 
-      },
-      relations: ['consultation', 'product'],
-      order: { day_number: 'ASC', created_at: 'DESC' },
-    });
-  }
+  // async remove(id: string): Promise<void> {
+  //   const treatmentPlan = await this.findOne(id);
 
-  async getStatistics(): Promise<any> {
-    const total = await this.treatmentPlanRepository.count({
-      where: { is_deleted: false }
-    });
+  //   await this.treatmentPlanRepository.update(id, {
+  //     is_deleted: true,
+  //     updated_at: new Date(),
+  //   });
+  // }
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayCount = await this.treatmentPlanRepository.count({
-      where: { 
-        is_deleted: false,
-        created_at: today
-      }
-    });
+  // async hardDelete(id: string): Promise<void> {
+  //   const treatmentPlan = await this.findOne(id);
+  //   await this.treatmentPlanRepository.delete(id);
+  // }
 
-    const frequencyStats = await this.treatmentPlanRepository
-      .createQueryBuilder('plan')
-      .select('plan.frequency', 'frequency')
-      .addSelect('COUNT(*)', 'count')
-      .where('plan.is_deleted = :isDeleted', { isDeleted: false })
-      .groupBy('plan.frequency')
-      .getRawMany();
+  // async findByFrequency(frequency: string): Promise<TreatmentPlan[]> {
+  //   return await this.treatmentPlanRepository.find({
+  //     where: {
+  //       frequency: frequency,
+  //       is_deleted: false
+  //     },
+  //     relations: ['consultation', 'product'],
+  //     order: { day_number: 'ASC', created_at: 'DESC' },
+  //   });
+  // }
 
-    const dayStats = await this.treatmentPlanRepository
-      .createQueryBuilder('plan')
-      .select('plan.day_number', 'day_number')
-      .addSelect('COUNT(*)', 'count')
-      .where('plan.is_deleted = :isDeleted', { isDeleted: false })
-      .groupBy('plan.day_number')
-      .orderBy('plan.day_number', 'ASC')
-      .getRawMany();
+  // async getStatistics(): Promise<any> {
+  //   const total = await this.treatmentPlanRepository.count({
+  //     where: { is_deleted: false }
+  //   });
 
-    const productUsageStats = await this.treatmentPlanRepository
-      .createQueryBuilder('plan')
-      .leftJoin('plan.product', 'product')
-      .select('product.product_name', 'product_name')
-      .addSelect('COUNT(*)', 'usage_count')
-      .where('plan.is_deleted = :isDeleted', { isDeleted: false })
-      .andWhere('product.product_id IS NOT NULL')
-      .groupBy('product.product_id')
-      .orderBy('usage_count', 'DESC')
-      .getRawMany();
+  //   const today = new Date();
+  //   today.setHours(0, 0, 0, 0);
+  //   const todayCount = await this.treatmentPlanRepository.count({
+  //     where: {
+  //       is_deleted: false,
+  //       created_at: today
+  //     }
+  //   });
 
-    return {
-      total,
-      todayCount,
-      frequencyStats,
-      dayStats,
-      productUsageStats,
-    };
-  }
+  //   const frequencyStats = await this.treatmentPlanRepository
+  //     .createQueryBuilder('plan')
+  //     .select('plan.frequency', 'frequency')
+  //     .addSelect('COUNT(*)', 'count')
+  //     .where('plan.is_deleted = :isDeleted', { isDeleted: false })
+  //     .groupBy('plan.frequency')
+  //     .getRawMany();
 
-  async createBulk(treatmentPlans: CreateTreatmentPlanDto[]): Promise<TreatmentPlan[]> {
-    const plans = treatmentPlans.map(dto => this.treatmentPlanRepository.create({
-      ...dto,
-      consultation: dto.consultation_id ? { consultation_id: dto.consultation_id } as any : undefined,
-      product: dto.product_id ? { product_id: dto.product_id } as any : undefined,
-    }));
-    
-    return await this.treatmentPlanRepository.save(plans);
-  }
+  //   const dayStats = await this.treatmentPlanRepository
+  //     .createQueryBuilder('plan')
+  //     .select('plan.day_number', 'day_number')
+  //     .addSelect('COUNT(*)', 'count')
+  //     .where('plan.is_deleted = :isDeleted', { isDeleted: false })
+  //     .groupBy('plan.day_number')
+  //     .orderBy('plan.day_number', 'ASC')
+  //     .getRawMany();
+
+  //   const productUsageStats = await this.treatmentPlanRepository
+  //     .createQueryBuilder('plan')
+  //     .leftJoin('plan.product', 'product')
+  //     .select('product.product_name', 'product_name')
+  //     .addSelect('COUNT(*)', 'usage_count')
+  //     .where('plan.is_deleted = :isDeleted', { isDeleted: false })
+  //     .andWhere('product.product_id IS NOT NULL')
+  //     .groupBy('product.product_id')
+  //     .orderBy('usage_count', 'DESC')
+  //     .getRawMany();
+
+  //   return {
+  //     total,
+  //     todayCount,
+  //     frequencyStats,
+  //     dayStats,
+  //     productUsageStats,
+  //   };
+  // }
+
+  // async createBulk(treatmentPlans: CreateTreatmentPlanDto[]): Promise<TreatmentPlan[]> {
+  //   const plans = treatmentPlans.map(dto => this.treatmentPlanRepository.create({
+  //     ...dto,
+  //     consultation: dto.consultation_id ? { consultation_id: dto.consultation_id } as any : undefined,
+  //     product: dto.product_id ? { product_id: dto.product_id } as any : undefined,
+  //   }));
+
+  //   return await this.treatmentPlanRepository.save(plans);
+  // }
 }

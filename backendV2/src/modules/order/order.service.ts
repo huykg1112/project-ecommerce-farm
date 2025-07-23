@@ -103,6 +103,10 @@ export class OrderService {
         distributor,
         payment_method: paymentMethod,
         status: orderStatus,
+        shipping_address: createOrderDto.shipping_address,
+        total_amount: createOrderDto.total_amount,
+        notes: createOrderDto.notes,
+        estimated_delivery_date: createOrderDto.estimated_delivery_date,
       });
 
       const savedOrder = await this.orderRepository.save(order);

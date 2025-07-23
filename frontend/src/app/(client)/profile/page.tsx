@@ -108,7 +108,6 @@ function ProfilePage() {
     const fetchProfile = async () => {
       try {
         const data = await userService.getProfile();
-        console.log("Fetched profile data:", data);
         let address = [
           {
             address_detail: "",

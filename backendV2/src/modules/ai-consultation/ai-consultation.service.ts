@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Disease } from '../disease/entities/disease.entity';
+import { TreatmentPlan } from '../treatment-plan/entities/treatment-plan.entity';
+import { User } from '../user/entities/user.entity';
 import { CreateAiConsultationDto } from './dto/create-ai-consultation.dto';
 import { UpdateAiConsultationDto } from './dto/update-ai-consultation.dto';
 import { AiConsultation } from './entities/ai-consultation.entity';
@@ -13,29 +15,95 @@ export class AiConsultationService {
     private readonly aiConsultationRepository: Repository<AiConsultation>,
     @InjectRepository(Disease)
     private readonly diseaseRepository: Repository<Disease>,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    @InjectRepository(TreatmentPlan)
+    private readonly treatmentPlanRepository: Repository<TreatmentPlan>,
   ) {}
 
   async create(
     createAiConsultationDto: CreateAiConsultationDto,
-  ): Promise<AiConsultation> {
-    let diseaseId: string | undefined;
-    if (createAiConsultationDto.disease_name) {
-      const disease = await this.diseaseRepository.findOne({
-        where: { disease_name: createAiConsultationDto.disease_name },
-      });
-      if (disease) {
-        diseaseId = disease.disease_id;
-      }
+    user_id: string,
+  ): Promise<{ AiConsultation: AiConsultation; existing: boolean }> {
+    // tìm AI Consultation theo disease name
+    const existingConsultation = await this.aiConsultationRepository.findOne({
+      where: {
+        crop_type: createAiConsultationDto.crop_type,
+        growth_stage: createAiConsultationDto.growth_stage,
+        disease: {
+          disease_name: createAiConsultationDto.disease_name,
+          is_deleted: false,
+        },
+        is_deleted: false,
+      },
+      relations: ['user', 'disease', 'treatment_plans'],
+    });
+    if (existingConsultation) {
+      // Nếu đã tồn tại thì trả về luôn
+      return {
+        AiConsultation: existingConsultation,
+        existing: true,
+      };
     }
-    const consultation = this.aiConsultationRepository.create({
-      ...createAiConsultationDto,
-      user: createAiConsultationDto.user_id
-        ? ({ user_id: createAiConsultationDto.user_id } as any)
-        : undefined,
-      disease: diseaseId ? ({ disease_id: diseaseId } as any) : undefined,
+    // tìm và kiểm tra user
+    const user = await this.userRepository.findOne({
+      where: { user_id },
+    });
+    if (!user) {
+      throw new NotFoundException(`User with ID ${user_id} not found`);
+    }
+    // tìm theo tên disease nếu có
+    const disease = await this.diseaseRepository.findOne({
+      where: { disease_name: createAiConsultationDto.disease_name },
+    });
+    // nếu ko có thì tạo bênh
+    let newDisease;
+    if (disease) {
+      newDisease = disease;
+    } else {
+      newDisease = this.diseaseRepository.create({
+        disease_name: createAiConsultationDto.disease_name,
+        description: createAiConsultationDto.symptom_description,
+      });
+      await this.diseaseRepository.save(newDisease);
+    }
+    // tạo mới AI Consultation và liên kết với user và disease nếu có
+    const aiConsultation = this.aiConsultationRepository.create({
+      crop_type: createAiConsultationDto.crop_type,
+      symptom_description: createAiConsultationDto.symptom_description,
+      growth_stage: createAiConsultationDto.growth_stage,
+      recommended_treatment: createAiConsultationDto.recommended_treatment,
+      user,
+      disease: newDisease,
     });
 
-    return await this.aiConsultationRepository.save(consultation);
+    // Lưu AI Consultation trước để có ID
+    const savedAiConsultation =
+      await this.aiConsultationRepository.save(aiConsultation);
+
+    // tạo các TreatmentPlan nếu có trong DTO
+    if (
+      createAiConsultationDto.treatment_plans &&
+      createAiConsultationDto.treatment_plans.length > 0
+    ) {
+      for (const treatmentPlanDto of createAiConsultationDto.treatment_plans) {
+        const treatmentPlan = this.treatmentPlanRepository.create({
+          day_number: treatmentPlanDto.day_number,
+          treatment_instruction: treatmentPlanDto.treatment_instruction,
+          dosage_instruction: treatmentPlanDto.dosage_instruction,
+          frequency: treatmentPlanDto.frequency,
+          consultation: savedAiConsultation,
+        });
+
+        await this.treatmentPlanRepository.save(treatmentPlan);
+      }
+    }
+
+    // trả về AiConsultation đã được lưu với đầy đủ relations
+    const fullConsultation = await this.findOne(
+      savedAiConsultation.consultation_id,
+    );
+    return { AiConsultation: fullConsultation, existing: false };
   }
 
   async findAll(): Promise<AiConsultation[]> {
@@ -72,6 +140,7 @@ export class AiConsultationService {
 
   async update(
     id: string,
+    userId: string,
     updateAiConsultationDto: UpdateAiConsultationDto,
   ): Promise<AiConsultation> {
     const consultation = await this.findOne(id);
@@ -81,8 +150,8 @@ export class AiConsultationService {
       updated_at: new Date(),
     };
 
-    if (updateAiConsultationDto.user_id) {
-      updateData['user'] = { user_id: updateAiConsultationDto.user_id } as any;
+    if (userId) {
+      updateData['user'] = { user_id: userId } as any;
     }
 
     await this.aiConsultationRepository.update(id, updateData);

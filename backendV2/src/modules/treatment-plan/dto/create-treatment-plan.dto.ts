@@ -1,10 +1,6 @@
-import { IsString, IsOptional, IsUUID, IsNumber, IsPositive } from 'class-validator';
+import { IsNumber, IsOptional, IsPositive, IsString } from 'class-validator';
 
 export class CreateTreatmentPlanDto {
-  @IsUUID()
-  @IsOptional()
-  consultation_id?: string;
-
   @IsNumber()
   @IsPositive()
   @IsOptional()
@@ -20,8 +16,4 @@ export class CreateTreatmentPlanDto {
   @IsString()
   @IsOptional()
   frequency?: string;
-
-  @IsUUID()
-  @IsOptional()
-  product_id?: string;
 }
