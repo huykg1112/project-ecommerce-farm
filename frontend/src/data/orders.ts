@@ -23,7 +23,7 @@ export interface Order {
   date: string;
   items: OrderItem[];
   totalAmount: number;
-  status: "pending" | "processing" | "shipping" | "delivered" | "cancelled";
+  status: "PENDING" | "PROCESSING" | "SHIPPING" | "DELIVERED" | "CANCELLED";
   paymentMethod: string;
   shippingAddress: {
     fullName: string;

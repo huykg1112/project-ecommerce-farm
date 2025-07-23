@@ -10,8 +10,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getOrdersByUserId, type Order } from "@/data/orders";
 import { withAuth } from "@/lib/auth/with-auth";
+import { orderServiceManagement } from "@/lib_dashboard/services/order-service-management";
+import { Order, OrderStatus, PaymentMethod } from "@/lib_dashboard/types/order";
 import { Package, Search, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -23,7 +24,12 @@ function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [orderStatus, setOrderStatus] = useState<OrderStatus[]>();
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [statusFilter, setStatusFilter] = useState<
+    OrderStatus | undefined | null
+  >();
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>("");
   const [sortOrder, setSortOrder] = useState("newest");
   const [loading, setLoading] = useState(true);
 
@@ -31,24 +37,44 @@ function OrdersPage() {
   useEffect(() => {
     // In a real app, we would fetch from API
     // For now, we'll use our mock data
+    setLoading(true);
     const fetchOrders = async () => {
       try {
-        setLoading(true);
         // Simulate API call delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
+        const orderFetched = await orderServiceManagement.getOrdersByUser();
 
-        // Get orders for the current user
-        const userOrders = getOrdersByUserId("user1");
-        setOrders(userOrders);
-        setFilteredOrders(userOrders);
+        setOrders(orderFetched);
+        setFilteredOrders(orderFetched);
       } catch (error) {
         console.error("Error fetching orders:", error);
-      } finally {
-        setLoading(false);
       }
     };
 
+    const fetchOrderStatus = async () => {
+      try {
+        const orderStatusFetched =
+          await orderServiceManagement.getOrderStatuses();
+        setOrderStatus(orderStatusFetched as OrderStatus[]);
+      } catch (error) {
+        console.error("Error fetching order statuses:", error);
+      }
+    };
+
+    const fetchPaymentMethods = async () => {
+      try {
+        const paymentMethodsFetched =
+          await orderServiceManagement.getPaymentMethods();
+        setPaymentMethods(paymentMethodsFetched);
+      } catch (error) {
+        console.error("Error fetching payment methods:", error);
+      }
+    };
+
+    fetchOrderStatus();
+    fetchPaymentMethods();
+
     fetchOrders();
+    setLoading(false);
   }, []);
 
   // Filter and sort orders
@@ -56,27 +82,39 @@ function OrdersPage() {
     let result = [...orders];
 
     // Apply status filter
-    if (statusFilter !== "all") {
-      result = result.filter((order) => order.status === statusFilter);
+    if (statusFilter && statusFilter.status_name) {
+      result = result.filter(
+        (order) => order.status.status_name === statusFilter.status_name
+      );
+    }
+
+    // Apply payment method filter
+    if (paymentMethodFilter) {
+      result = result.filter(
+        (order) =>
+          order.payment_method.payment_method_id === paymentMethodFilter
+      );
     }
 
     // Apply search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       result = result.filter((order) => {
-        // Search in order number
-        if (order.orderNumber.toLowerCase().includes(term)) return true;
+        // Search in order code
+        if (order.order_code.toLowerCase().includes(term)) return true;
 
         // Search in product names
-        if (order.items.some((item) => item.name.toLowerCase().includes(term)))
-          return true;
-
-        // Search in seller names
         if (
-          order.items.some((item) =>
-            item.sellerName.toLowerCase().includes(term)
+          order.order_details.some((detail) =>
+            detail.batch_product.product.product_name
+              .toLowerCase()
+              .includes(term)
           )
         )
+          return true;
+
+        // Search in distributor names
+        if (order.distributor?.full_name?.toLowerCase().includes(term))
           return true;
 
         return false;
@@ -85,8 +123,8 @@ function OrdersPage() {
 
     // Apply sorting
     result.sort((a, b) => {
-      const dateA = new Date(a.date).getTime();
-      const dateB = new Date(b.date).getTime();
+      const dateA = new Date(a.created_at).getTime();
+      const dateB = new Date(b.created_at).getTime();
 
       if (sortOrder === "newest") {
         return dateB - dateA;
@@ -96,7 +134,7 @@ function OrdersPage() {
     });
 
     setFilteredOrders(result);
-  }, [orders, statusFilter, searchTerm, sortOrder]);
+  }, [orders, statusFilter, paymentMethodFilter, searchTerm, sortOrder]);
 
   // If loading
   if (loading) {
@@ -157,28 +195,64 @@ function OrdersPage() {
 
       {/* Filters */}
       <div className="bg-white p-4 rounded-lg shadow-sm border mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Tìm kiếm theo tên sản phẩm, đại lý..."
+              placeholder="Tìm kiếm theo mã đơn, sản phẩm, đại lý..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
             />
           </div>
 
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <Select
+            value={statusFilter?.status_id || "all"}
+            onValueChange={(value) => {
+              if (value === "all") {
+                setStatusFilter(null);
+              } else {
+                const status = orderStatus?.find((s) => s.status_id === value);
+                setStatusFilter(status);
+              }
+            }}
+          >
             <SelectTrigger>
               <SelectValue placeholder="Lọc theo trạng thái" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Tất cả trạng thái</SelectItem>
-              <SelectItem value="pending">Chờ xác nhận</SelectItem>
-              <SelectItem value="processing">Đang xử lý</SelectItem>
-              <SelectItem value="shipping">Đang giao hàng</SelectItem>
-              <SelectItem value="delivered">Đã giao hàng</SelectItem>
-              <SelectItem value="cancelled">Đã hủy</SelectItem>
+              {orderStatus?.map((status) => (
+                <SelectItem key={status.status_id} value={status.status_id}>
+                  {status.description}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={paymentMethodFilter || "all"}
+            onValueChange={(value) => {
+              if (value === "all") {
+                setPaymentMethodFilter("");
+              } else {
+                setPaymentMethodFilter(value);
+              }
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Lọc theo thanh toán" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tất cả phương thức</SelectItem>
+              {paymentMethods.map((method) => (
+                <SelectItem
+                  key={method.payment_method_id}
+                  value={method.payment_method_id}
+                >
+                  {method.method_name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
@@ -198,7 +272,7 @@ function OrdersPage() {
       {filteredOrders.length > 0 ? (
         <div className="space-y-6">
           {filteredOrders.map((order) => (
-            <OrderCard key={order.id} order={order} />
+            <OrderCard key={order.order_id} order={order} />
           ))}
         </div>
       ) : (
@@ -220,10 +294,11 @@ function OrdersPage() {
             variant="outline"
             onClick={() => {
               setSearchTerm("");
-              setStatusFilter("all");
+              setStatusFilter(null);
+              setPaymentMethodFilter("");
             }}
           >
-            Xóa b�� lọc
+            Xóa bộ lọc
           </Button>
         </div>
       )}

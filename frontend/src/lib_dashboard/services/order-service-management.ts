@@ -52,9 +52,8 @@ export const orderServiceManagement = {
   // dùng cho role client để lấy đơn hàng của người dùng
   async getOrdersByUser(): Promise<Order[]> {
     try {
-      const response = await axiosInstance.get(`/order/my-orders`, {
-        params: { user_id: userId },
-      });
+      const response = await axiosInstance.get(`/order/my-orders`);
+      console.log("Fetched User Orders:", response.data);
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi lấy danh sách đơn hàng của người dùng";

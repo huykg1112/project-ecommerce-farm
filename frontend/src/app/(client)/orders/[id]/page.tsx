@@ -1,6 +1,7 @@
 "use client";
 
-import { getOrderById, type Order } from "@/data/orders";
+import { orderServiceManagement } from "@/lib_dashboard/services/order-service-management";
+import type { Order } from "@/lib_dashboard/types/order";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -18,13 +19,11 @@ import {
   MapPin,
   MessageSquare,
   Package,
-  Phone,
   Truck,
   User,
 } from "lucide-react";
 
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
-import { ShippingTimeline } from "@/components/orders/shipping-timeline";
 import dynamic from "next/dynamic";
 
 const PrintInvoice = dynamic(
@@ -45,15 +44,13 @@ function OrderDetailPage() {
     const fetchOrder = async () => {
       try {
         setLoading(true);
-        // Simulate API call delay
-        await new Promise((resolve) => setTimeout(resolve, 1000));
 
         if (typeof params.id !== "string") {
           router.push("/orders");
           return;
         }
 
-        const orderData = getOrderById(params.id);
+        const orderData = await orderServiceManagement.getOrderById(params.id);
         if (!orderData) {
           router.push("/orders");
           return;
@@ -134,9 +131,11 @@ function OrderDetailPage() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold">
-            Chi tiết đơn hàng #{order.orderNumber}
+            Chi tiết đơn hàng #{order.order_code}
           </h1>
-          <p className="text-gray-500">Đặt ngày {formatDate(order.date)}</p>
+          <p className="text-gray-500">
+            Đặt ngày {formatDate(order?.created_at.toString())}
+          </p>
         </div>
         <div className="flex items-center gap-4">
           <Button asChild variant="outline">
@@ -157,17 +156,24 @@ function OrderDetailPage() {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center justify-between">
                 <span>Trạng thái đơn hàng</span>
-                <OrderStatusBadge status={order.status} />
+                <OrderStatusBadge status={order.status.status_name as any} />
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {order.shippingUpdates && order.shippingUpdates.length > 0 ? (
-                <ShippingTimeline updates={order.shippingUpdates} />
-              ) : (
-                <p className="text-gray-500 italic">
-                  Chưa có cập nhật vận chuyển
+              <div className="space-y-2">
+                <p className="text-sm text-gray-600">
+                  <strong>Trạng thái:</strong> {order.status.description}
                 </p>
-              )}
+                <p className="text-sm text-gray-600">
+                  <strong>Ngày cập nhật:</strong>{" "}
+                  {formatDate(order.updated_at.toString())}
+                </p>
+                {order.notes && (
+                  <p className="text-sm text-gray-600">
+                    <strong>Ghi chú:</strong> {order.notes}
+                  </p>
+                )}
+              </div>
             </CardContent>
           </Card>
 
@@ -181,37 +187,46 @@ function OrderDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {order.items.map((item) => (
+                {order.order_details.map((detail) => (
                   <div
-                    key={item.id}
+                    key={detail.order_detail_id}
                     className="flex gap-4 pb-4 border-b last:border-0"
                   >
                     <div className="relative h-20 w-20 flex-shrink-0 rounded-md overflow-hidden">
                       <Image
-                        src={item.image || "/placeholder.svg"}
-                        alt={item.name}
+                        src={
+                          detail.batch_product.product.images?.[0]?.image_url ||
+                          "/placeholder.svg"
+                        }
+                        alt={detail.batch_product.product.product_name}
                         fill
                         className="object-cover"
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <Link
-                        href={`/products/${item.productId}`}
-                        className="font-medium hover:text-primary"
-                      >
-                        {item.name}
-                      </Link>
+                      <div className="font-medium hover:text-primary">
+                        {detail.batch_product.product.product_name}
+                      </div>
                       <p className="text-sm text-gray-500">
-                        Đại lý: {item.sellerName}
+                        Đại lý: {order.distributor?.invenstory?.name || "N/A"}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        Lô: {detail.batch_product.batch_number}
                       </p>
                       <div className="flex justify-between mt-2">
                         <p className="text-sm">
-                          {formatCurrency(item.price)} x {item.quantity}
+                          {formatCurrency(Number(detail.unit_price))} x{" "}
+                          {detail.quantity}
                         </p>
                         <p className="font-medium">
-                          {formatCurrency(item.price * item.quantity)}
+                          {formatCurrency(Number(detail.subtotal))}
                         </p>
                       </div>
+                      {detail.notes && (
+                        <p className="text-xs text-gray-400 mt-1">
+                          Ghi chú: {detail.notes}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -230,20 +245,27 @@ function OrderDetailPage() {
             <CardContent>
               <div className="space-y-3">
                 <div className="flex justify-between">
-                  <span className="text-gray-500">Tạm tính</span>
+                  <span className="text-gray-500">Tổng tiền sản phẩm</span>
                   <span>
-                    {formatCurrency(order.totalAmount - order.shippingFee)}
+                    {formatCurrency(
+                      order.order_details.reduce(
+                        (sum, detail) => sum + Number(detail.subtotal),
+                        0
+                      )
+                    )}
                   </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Phí vận chuyển</span>
-                  <span>{formatCurrency(order.shippingFee)}</span>
                 </div>
                 <Separator />
                 <div className="flex justify-between font-bold">
                   <span>Tổng cộng</span>
                   <span className="text-primary">
-                    {formatCurrency(order.totalAmount)}
+                    {formatCurrency(
+                      order.total_amount ||
+                        order.order_details.reduce(
+                          (sum, detail) => sum + Number(detail.subtotal),
+                          0
+                        )
+                    )}
                   </span>
                 </div>
               </div>
@@ -253,32 +275,34 @@ function OrderDetailPage() {
                   <CreditCard className="h-5 w-5 text-gray-500 mt-0.5" />
                   <div>
                     <p className="font-medium">Phương thức thanh toán</p>
-                    <p className="text-gray-500">{order.paymentMethod}</p>
+                    <p className="text-gray-500">
+                      {order.payment_method.method_name}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {order.payment_method.description}
+                    </p>
                   </div>
                 </div>
-                <div className="flex items-start gap-2">
-                  <Truck className="h-5 w-5 text-gray-500 mt-0.5" />
-                  <div>
-                    <p className="font-medium">Phương thức vận chuyển</p>
-                    <p className="text-gray-500">{order.shippingMethod}</p>
-                  </div>
-                </div>
-                {order.trackingNumber && (
-                  <div className="flex items-start gap-2">
-                    <Package className="h-5 w-5 text-gray-500 mt-0.5" />
-                    <div>
-                      <p className="font-medium">Mã vận đơn</p>
-                      <p className="text-gray-500">{order.trackingNumber}</p>
-                    </div>
-                  </div>
-                )}
                 <div className="flex items-start gap-2">
                   <Calendar className="h-5 w-5 text-gray-500 mt-0.5" />
                   <div>
                     <p className="font-medium">Ngày đặt hàng</p>
-                    <p className="text-gray-500">{formatDate(order.date)}</p>
+                    <p className="text-gray-500">
+                      {formatDate(order.created_at.toString())}
+                    </p>
                   </div>
                 </div>
+                {order.estimated_delivery_date && (
+                  <div className="flex items-start gap-2">
+                    <Truck className="h-5 w-5 text-gray-500 mt-0.5" />
+                    <div>
+                      <p className="font-medium">Ngày giao hàng dự kiến</p>
+                      <p className="text-gray-500">
+                        {formatDate(order.estimated_delivery_date.toString())}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -296,39 +320,36 @@ function OrderDetailPage() {
                 <div className="flex items-start gap-2">
                   <User className="h-5 w-5 text-gray-500 mt-0.5" />
                   <div>
-                    <p className="font-medium">Người nhận</p>
+                    <p className="font-medium">Người đặt hàng</p>
                     <p className="text-gray-500">
-                      {order.shippingAddress.fullName}
+                      {order.user?.full_name || "N/A"}
                     </p>
                   </div>
                 </div>
                 <div className="flex items-start gap-2">
-                  <Phone className="h-5 w-5 text-gray-500 mt-0.5" />
+                  <User className="h-5 w-5 text-gray-500 mt-0.5" />
                   <div>
-                    <p className="font-medium">Số điện thoại</p>
+                    <p className="font-medium">Nhà phân phối</p>
                     <p className="text-gray-500">
-                      {order.shippingAddress.phone}
+                      {order.distributor?.invenstory?.name || "N/A"}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-start gap-2">
-                  <MapPin className="h-5 w-5 text-gray-500 mt-0.5" />
-                  <div>
-                    <p className="font-medium">Địa chỉ giao hàng</p>
-                    <p className="text-gray-500">
-                      {order.shippingAddress.address},{" "}
-                      {order.shippingAddress.ward},{" "}
-                      {order.shippingAddress.district},{" "}
-                      {order.shippingAddress.city}
-                    </p>
+                {order.shipping_address && (
+                  <div className="flex items-start gap-2">
+                    <MapPin className="h-5 w-5 text-gray-500 mt-0.5" />
+                    <div>
+                      <p className="font-medium">Địa chỉ giao hàng</p>
+                      <p className="text-gray-500">{order.shipping_address}</p>
+                    </div>
                   </div>
-                </div>
-                {order.note && (
+                )}
+                {order.notes && (
                   <div className="flex items-start gap-2">
                     <MessageSquare className="h-5 w-5 text-gray-500 mt-0.5" />
                     <div>
                       <p className="font-medium">Ghi chú</p>
-                      <p className="text-gray-500">{order.note}</p>
+                      <p className="text-gray-500">{order.notes}</p>
                     </div>
                   </div>
                 )}

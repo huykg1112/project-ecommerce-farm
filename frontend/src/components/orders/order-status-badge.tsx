@@ -1,11 +1,11 @@
 import {
-  getOrderStatusColor,
-  getOrderStatusText,
-  type Order,
-} from "@/data/orders";
+  OrderStatus,
+  OrderStatusColors,
+  OrderStatusLabels,
+} from "@/lib_dashboard/types/order";
 
 interface OrderStatusBadgeProps {
-  status: Order["status"];
+  status: OrderStatus;
   className?: string;
 }
 
@@ -13,8 +13,10 @@ export function OrderStatusBadge({
   status,
   className = "",
 }: OrderStatusBadgeProps) {
-  const statusText = getOrderStatusText(status);
-  const statusColor = getOrderStatusColor(status);
+  const statusText =
+    OrderStatusLabels[status.status_name as keyof typeof OrderStatusLabels];
+  const statusColor =
+    OrderStatusColors[status.status_name as keyof typeof OrderStatusColors];
 
   return (
     <span

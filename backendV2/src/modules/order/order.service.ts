@@ -88,12 +88,13 @@ export class OrderService {
         }
       }
 
-      const timestamp = Date.now().toString().slice(-8); // Lấy 8 số cuối cùng
+      // Generate a random order code - max 20 characters
+      const timestamp = Date.now().toString().slice(-8); // Last 8 digits of timestamp
       const randomCode = Math.random()
         .toString(36)
-        .substring(2, 7)
-        .toUpperCase(); // 5 ký tự
-      const order_code = `ORD-${timestamp}${randomCode}`; // Tổng: 4 (ORD-) + 8 + 5 = 17 ký tự
+        .substring(2, 8)
+        .toUpperCase(); // 6 characters
+      const order_code = `ORD-${timestamp}-${randomCode}`; // Total: 4 + 8 + 1 + 6 = 19 characters
 
       // Create order first
       const order = this.orderRepository.create({
@@ -224,6 +225,7 @@ export class OrderService {
         'status',
         'user',
         'distributor',
+        'distributor.invenstory',
         'payment_method',
         'order_details',
         'order_details.batch_product',
@@ -245,10 +247,13 @@ export class OrderService {
     }
 
     return this.orderRepository.find({
-      where: { user, is_deleted: false },
+      where: { user: { user_id: userId }, is_deleted: false },
       relations: [
         'status',
         'payment_method',
+        'user',
+        'distributor',
+        'distributor.invenstory',
         'order_details',
         'order_details.batch_product',
         'order_details.batch_product.product',
@@ -267,6 +272,7 @@ export class OrderService {
         'status',
         'user',
         'distributor',
+        'distributor.invenstory',
         'payment_method',
         'order_details',
         'order_details.batch_product',
@@ -285,6 +291,9 @@ export class OrderService {
       where: { distributor, is_deleted: false },
       relations: [
         'status',
+        'user',
+        'distributor',
+        'distributor.invenstory',
         'payment_method',
         'order_details',
         'order_details.batch_product',
@@ -302,6 +311,9 @@ export class OrderService {
       where: { order_id: id, user: { user_id: userId }, is_deleted: false },
       relations: [
         'status',
+        'user',
+        'distributor',
+        'distributor.invenstory',
         'payment_method',
         'order_details',
         'order_details.batch_product',
@@ -384,6 +396,9 @@ export class OrderService {
       where: { order_id: id },
       relations: [
         'status',
+        'user',
+        'distributor',
+        'distributor.invenstory',
         'payment_method',
         'order_details',
         'order_details.batch_product',

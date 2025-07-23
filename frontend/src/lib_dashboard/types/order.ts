@@ -26,6 +26,18 @@ export const OrderStatusLabels = {
   [OrderStatusEnum.COMPLETED]: "Hoàn thành",
 };
 
+export const OrderStatusColors = {
+  [OrderStatusEnum.PENDING]: "bg-yellow-100 text-yellow-800",
+  [OrderStatusEnum.CONFIRMED]: "bg-blue-100 text-blue-800",
+  [OrderStatusEnum.SHIPPING]: "bg-purple-100 text-purple-800",
+  [OrderStatusEnum.DELIVERED]: "bg-green-100 text-green-800",
+  [OrderStatusEnum.CANCELLED]: "bg-red-100 text-red-800",
+  [OrderStatusEnum.RETURNED]: "bg-orange-100 text-orange-800",
+  [OrderStatusEnum.FAILED]: "bg-gray-100 text-gray-800",
+  [OrderStatusEnum.REFUNDED]: "bg-pink-100 text-pink-800",
+  [OrderStatusEnum.COMPLETED]: "bg-teal-100 text-teal-800",
+};
+
 // Core Order interfaces
 export interface OrderStatus {
   status_id: string;

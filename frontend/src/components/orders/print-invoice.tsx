@@ -10,8 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { Order } from "@/data/orders";
 import { formatCurrency } from "@/lib/utils";
+import type { Order } from "@/lib_dashboard/types/order";
 import { Printer } from "lucide-react";
 import { MouseEvent, useRef } from "react";
 import { useReactToPrint } from "react-to-print";
@@ -24,8 +24,8 @@ export function PrintInvoice({ order }: PrintInvoiceProps) {
   const invoiceRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = useReactToPrint({
-    //     content: () => invoiceRef.current as HTMLElement,
-    documentTitle: `Hóa đơn #${order.orderNumber}`,
+    contentRef: invoiceRef,
+    documentTitle: `Hóa đơn #${order?.order_code}`,
     onAfterPrint: () => console.log("In hóa đơn thành công"),
     pageStyle: `
       @page {
@@ -51,7 +51,7 @@ export function PrintInvoice({ order }: PrintInvoiceProps) {
   };
 
   // Format date
-  const orderDate = new Date(order.date);
+  const orderDate = new Date(order.created_at);
   const formattedDate = new Intl.DateTimeFormat("vi-VN", {
     year: "numeric",
     month: "long",
@@ -89,7 +89,7 @@ export function PrintInvoice({ order }: PrintInvoiceProps) {
             <div className="flex-1">
               <p className="font-medium">
                 Mã đơn hàng:{" "}
-                <span className="font-normal">{order.orderNumber}</span>
+                <span className="font-normal">{order.order_code}</span>
               </p>
               <p className="font-medium">
                 Ngày đặt hàng:{" "}
@@ -97,35 +97,30 @@ export function PrintInvoice({ order }: PrintInvoiceProps) {
               </p>
               <p className="font-medium">
                 Phương thức thanh toán:{" "}
-                <span className="font-normal">{order.paymentMethod}</span>
+                <span className="font-normal">
+                  {order.payment_method.method_name}
+                </span>
               </p>
-              {order.trackingNumber && (
-                <p className="font-medium">
-                  Mã vận đơn:{" "}
-                  <span className="font-normal">{order.trackingNumber}</span>
-                </p>
-              )}
             </div>
             <div className="flex-1">
               <p className="font-medium">
                 Khách hàng:{" "}
                 <span className="font-normal">
-                  {order.shippingAddress.fullName}
+                  {order.user?.full_name || "N/A"}
                 </span>
               </p>
               <p className="font-medium">
-                Số điện thoại:{" "}
+                Nhà phân phối:{" "}
                 <span className="font-normal">
-                  {order.shippingAddress.phone}
+                  {order.distributor?.full_name || "N/A"}
                 </span>
               </p>
-              <p className="font-medium">
-                Địa chỉ:{" "}
-                <span className="font-normal">
-                  {order.shippingAddress.address}, {order.shippingAddress.ward},{" "}
-                  {order.shippingAddress.district}, {order.shippingAddress.city}
-                </span>
-              </p>
+              {order.shipping_address && (
+                <p className="font-medium">
+                  Địa chỉ:{" "}
+                  <span className="font-normal">{order.shipping_address}</span>
+                </p>
+              )}
             </div>
           </div>
 
@@ -141,50 +136,38 @@ export function PrintInvoice({ order }: PrintInvoiceProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {order.items.map((item, index) => (
-                <TableRow key={item.id}>
+              {order.order_details.map((detail, index) => (
+                <TableRow key={detail.order_detail_id}>
                   <TableCell className="border">{index + 1}</TableCell>
-                  <TableCell className="border">{item.name}</TableCell>
-                  <TableCell className="border">{item.sellerName}</TableCell>
                   <TableCell className="border">
-                    {formatCurrency(item.price)}
+                    {detail.batch_product.product.product_name}
                   </TableCell>
-                  <TableCell className="border">{item.quantity}</TableCell>
                   <TableCell className="border">
-                    {formatCurrency(item.price * item.quantity)}
+                    {order.distributor?.full_name || "N/A"}
+                  </TableCell>
+                  <TableCell className="border">
+                    {formatCurrency(Number(detail.unit_price))}
+                  </TableCell>
+                  <TableCell className="border">{detail.quantity}</TableCell>
+                  <TableCell className="border">
+                    {formatCurrency(Number(detail.subtotal))}
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
             <TableFooter>
-              <TableRow>
-                <TableCell
-                  colSpan={5}
-                  className="border text-right font-medium"
-                >
-                  Tạm tính:
-                </TableCell>
-                <TableCell className="border">
-                  {formatCurrency(order.totalAmount - order.shippingFee)}
-                </TableCell>
-              </TableRow>
-              <TableRow>
-                <TableCell
-                  colSpan={5}
-                  className="border text-right font-medium"
-                >
-                  Phí vận chuyển:
-                </TableCell>
-                <TableCell className="border">
-                  {formatCurrency(order.shippingFee)}
-                </TableCell>
-              </TableRow>
               <TableRow className="font-bold">
                 <TableCell colSpan={5} className="border text-right">
                   Tổng cộng:
                 </TableCell>
                 <TableCell className="border">
-                  {formatCurrency(order.totalAmount)}
+                  {formatCurrency(
+                    order.total_amount ||
+                      order.order_details.reduce(
+                        (sum, detail) => sum + Number(detail.subtotal),
+                        0
+                      )
+                  )}
                 </TableCell>
               </TableRow>
             </TableFooter>

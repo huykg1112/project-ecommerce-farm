@@ -44,15 +44,14 @@ export class OrderController {
   }
 
   @Get('my-orders')
-  findMyOrders(@Query('user_id', ParseUUIDPipe) userId: string) {
+  findMyOrders(@Req() req) {
+    const userId = req.user.id;
     return this.orderService.findOrdersByUser(userId);
   }
 
   @Get('my-orders/:id')
-  findMyOrder(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Query('user_id', ParseUUIDPipe) userId: string,
-  ) {
+  findMyOrder(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
+    const userId = req.user.id;
     return this.orderService.findOrderByUser(id, userId);
   }
 
