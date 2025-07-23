@@ -1,14 +1,21 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { formatCurrency } from "@/lib/utils";
 import {
   Order,
   OrderStatusEnum,
   OrderStatusLabels,
 } from "@/lib_dashboard/types/order";
+import { MoreHorizontal } from "lucide-react";
 import Image from "next/image";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import DataTable, { TableColumn } from "react-data-table-component";
 
 interface OrderTableProps {
@@ -136,70 +143,74 @@ export function OrderTable({
   }, []);
 
   // Define columns
-  const columns: TableColumn<Order>[] = [
-    // Order Code
-    {
-      name: "Mã đơn hàng",
-      selector: (row: Order) => row.order_code,
-      sortable: true,
-      width: "150px",
-      cell: (row: Order) => (
-        <div className="font-mono text-sm font-medium text-[#44703d]">
-          {row.order_code}
-        </div>
-      ),
-    },
-    // Customer
-    {
-      name: "Người mua",
-      selector: (row: Order) => row.user.full_name,
-      sortable: true,
-      cell: (row: Order) => (
-        <div className="flex items-center gap-3">
-          <Image
-            src={row.user.avatar || "/placeholder.svg"}
-            alt={row.user.full_name}
-            className="w-8 h-8 rounded-full"
-          />
-          <span className="text-sm text-[#44703d]">{row.user.full_name}</span>
-        </div>
-      ),
-    },
-    // Created Date
-    {
-      name: "Ngày đặt hàng",
-      selector: (row: Order) =>
-        new Date(row.created_at).toLocaleDateString("vi-VN", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        }),
-      sortable: true,
-      cell: (row: Order) => (
-        <span className="text-sm text-[#44703d]">
-          {new Date(row.created_at).toLocaleDateString("vi-VN", {
+  const columns: TableColumn<Order>[] = useMemo(
+    () => [
+      // Order Code
+      {
+        name: "Mã đơn hàng",
+        selector: (row: Order) => row.order_code,
+        sortable: true,
+        width: "200px",
+        cell: (row: Order) => (
+          <div className="font-mono text-sm font-medium text-[#44703d]">
+            {row.order_code}
+          </div>
+        ),
+      },
+      // Customer
+      {
+        name: "Người mua",
+        selector: (row: Order) => row.user.full_name,
+        width: "220px",
+        sortable: true,
+        cell: (row: Order) => (
+          <div className="flex items-center gap-3">
+            {row.user.avatar ? (
+              <Image
+                src={row.user.avatar}
+                alt={row.user.full_name}
+                width={32}
+                height={32}
+                className="w-8 h-8 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                <span className="text-gray-500 text-xs font-medium">
+                  {row.user.full_name.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )}
+            <span className="text-sm text-[#44703d]">{row.user.full_name}</span>
+          </div>
+        ),
+      },
+      // Created Date
+      {
+        name: "Ngày đặt hàng",
+        width: "180px",
+        selector: (row: Order) =>
+          new Date(row.created_at).toLocaleDateString("vi-VN", {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
-          })}
-        </span>
-      ),
-    },
-    // Estimated Delivery Date
-    {
-      name: "Ngày giao dự kiến",
-      selector: (row: Order) =>
-        row.estimated_delivery_date
-          ? new Date(row.estimated_delivery_date).toLocaleDateString("vi-VN", {
+          }),
+        sortable: true,
+        cell: (row: Order) => (
+          <span className="text-sm text-[#44703d]">
+            {new Date(row.created_at).toLocaleDateString("vi-VN", {
               day: "2-digit",
               month: "2-digit",
               year: "numeric",
-            })
-          : "Chưa xác định",
-      sortable: true,
-      cell: (row: Order) => (
-        <span className="text-sm text-[#44703d]">
-          {row.estimated_delivery_date
+            })}
+          </span>
+        ),
+      },
+      // Estimated Delivery Date
+      {
+        name: "Ngày giao dự kiến",
+        width: "220px",
+        selector: (row: Order) =>
+          row.estimated_delivery_date
             ? new Date(row.estimated_delivery_date).toLocaleDateString(
                 "vi-VN",
                 {
@@ -208,157 +219,201 @@ export function OrderTable({
                   year: "numeric",
                 }
               )
-            : "Chưa xác định"}
-        </span>
-      ),
-    },
-    // Status
-    {
-      name: "Trạng thái",
-      selector: (row) => row.status.status_name,
-      sortable: true,
-      width: "150px",
-      cell: (row) => getStatusBadge(row.status.status_name),
-    },
-    // Payment Method
-    {
-      name: "Thanh toán",
-      selector: (row) => row.payment_method.method_name,
-      sortable: true,
-      width: "120px",
-      cell: (row) => getPaymentMethodBadge(row.payment_method.method_name),
-    },
-    // Total Amount
-    {
-      name: "Tổng tiền",
-      selector: (row) => row.total_amount,
-      sortable: true,
-      width: "130px",
-      cell: (row) => (
-        <div className="font-semibold text-[#44703d]">
-          {formatCurrency(row.total_amount)}
-        </div>
-      ),
-      right: true,
-    },
-    // Actions
-    {
-      name: "Thao tác",
-      cell: (row: Order) => (
-        <div className="flex gap-2">
-          <button
-            onClick={() => onViewDetails(row)}
-            className="text-sm text-blue-600 hover:underline"
-          >
-            Xem hóa đơn
-          </button>
-          {row.status.status_name === OrderStatusEnum.PENDING && (
-            <button
-              onClick={() => onConfirmOrder(row)}
-              className="text-sm text-green-600 hover:underline"
-            >
-              Xác nhận đơn
-            </button>
-          )}
-          <button
-            onClick={() => onUpdateStatus(row)}
-            className="text-sm text-green-600 hover:underline"
-          >
-            Cập nhật đơn
-          </button>
-          <button
-            onClick={() => onCancelOrder(row)}
-            className="text-sm text-red-600 hover:underline"
-          >
-            Hủy đơn
-          </button>
-        </div>
-      ),
-      width: "80px",
-      right: true,
-    },
-  ];
+            : "Chưa xác định",
+        sortable: true,
+        cell: (row: Order) => (
+          <span className="text-sm text-[#44703d]">
+            {row.estimated_delivery_date
+              ? new Date(row.estimated_delivery_date).toLocaleDateString(
+                  "vi-VN",
+                  {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  }
+                )
+              : "Chưa xác định"}
+          </span>
+        ),
+      },
+      // Status
+      {
+        name: "Trạng thái",
+        selector: (row) => row.status.status_name,
+        sortable: true,
+        width: "150px",
+        cell: (row) => getStatusBadge(row.status.status_name),
+      },
+      // Payment Method
+      {
+        name: "Thanh toán",
+        selector: (row) => row.payment_method.method_name,
+        sortable: true,
+        width: "160px",
+        cell: (row) => getPaymentMethodBadge(row.payment_method.method_name),
+      },
+      // Total Amount
+      {
+        name: "Tổng tiền",
+        selector: (row) => row.total_amount,
+        sortable: true,
+        width: "200px",
+        cell: (row) => (
+          <div className="font-semibold text-[#44703d]">
+            {formatCurrency(row.total_amount)}
+          </div>
+        ),
+        right: true,
+      },
+      // Actions
+      {
+        cell: (row: Order) => (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200">
+                <MoreHorizontal className="w-4 h-4 text-gray-600" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem
+                onClick={() => onViewDetails(row)}
+                className="cursor-pointer"
+              >
+                <span className="text-blue-600">📄 Xem hóa đơn</span>
+              </DropdownMenuItem>
+
+              {row.status.status_name === OrderStatusEnum.PENDING && (
+                <DropdownMenuItem
+                  onClick={() => onConfirmOrder(row)}
+                  className="cursor-pointer"
+                >
+                  <span className="text-green-600">✅ Xác nhận đơn</span>
+                </DropdownMenuItem>
+              )}
+
+              <DropdownMenuItem
+                onClick={() => onUpdateStatus(row)}
+                className="cursor-pointer"
+              >
+                <span className="text-amber-600">🔄 Cập nhật trạng thái</span>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem
+                onClick={() => onCancelOrder(row)}
+                className="cursor-pointer"
+              >
+                <span className="text-red-600">❌ Hủy đơn hàng</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ),
+        width: "80px",
+        center: true,
+      },
+    ],
+    [
+      getStatusBadge,
+      getPaymentMethodBadge,
+      onViewDetails,
+      onConfirmOrder,
+      onUpdateStatus,
+      onCancelOrder,
+    ]
+  );
 
   // Custom styles for the table
-  const customStyles = {
-    header: {
-      style: {
-        backgroundColor: "#f8f9fa",
-        borderBottom: "1px solid #e9ecef",
-        minHeight: "56px",
-      },
-    },
-    headRow: {
-      style: {
-        backgroundColor: "#f8f9fa",
-        borderBottom: "1px solid #e9ecef",
-        fontSize: "14px",
-        fontWeight: "600",
-        color: "#44703d",
-      },
-    },
-    headCells: {
-      style: {
-        paddingLeft: "12px",
-        paddingRight: "12px",
-        fontSize: "14px",
-        fontWeight: "600",
-        color: "#44703d",
-      },
-    },
-    cells: {
-      style: {
-        paddingLeft: "12px",
-        paddingRight: "12px",
-        fontSize: "14px",
-        color: "#374151",
-      },
-    },
-    rows: {
-      style: {
-        minHeight: "60px",
-        borderBottom: "1px solid #f3f4f6",
-        "&:hover": {
-          backgroundColor: "#f9fafb",
+  const customStyles = useMemo(
+    () => ({
+      header: {
+        style: {
+          backgroundColor: "#f8f9fa",
+          borderBottom: "1px solid #e9ecef",
+          minHeight: "56px",
         },
       },
-      highlightOnHoverStyle: {
-        backgroundColor: "#f0f9ff",
-        borderBottomColor: "#e0e7ff",
-        outline: "1px solid #e0e7ff",
+      headRow: {
+        style: {
+          backgroundColor: "#f8f9fa",
+          borderBottom: "1px solid #e9ecef",
+          fontSize: "16px",
+          fontWeight: "600",
+          color: "#44703d",
+        },
       },
-    },
-    pagination: {
-      style: {
-        backgroundColor: "#f8f9fa",
-        borderTop: "1px solid #e9ecef",
-        minHeight: "56px",
+      headCells: {
+        style: {
+          paddingLeft: "12px",
+          paddingRight: "12px",
+          fontSize: "16px",
+          fontWeight: "600",
+          color: "#44703d",
+        },
       },
-    },
-  };
+      cells: {
+        style: {
+          paddingLeft: "12px",
+          paddingRight: "12px",
+          fontSize: "14px",
+          color: "#374151",
+        },
+      },
+      rows: {
+        style: {
+          minHeight: "60px",
+          borderBottom: "1px solid #f3f4f6",
+          "&:hover": {
+            backgroundColor: "#f9fafb",
+          },
+        },
+        highlightOnHoverStyle: {
+          backgroundColor: "#f0f9ff",
+          borderBottomColor: "#e0e7ff",
+          outline: "1px solid #e0e7ff",
+        },
+      },
+      pagination: {
+        style: {
+          backgroundColor: "#f8f9fa",
+          borderTop: "1px solid #e9ecef",
+          minHeight: "56px",
+        },
+      },
+    }),
+    []
+  );
 
   // No data component
-  const NoDataComponent = () => (
-    <div className="flex flex-col items-center justify-center py-12">
-      <div className="text-6xl mb-4">📋</div>
-      <div className="text-lg font-medium text-gray-600 mb-2">
-        Không có đơn hàng nào
-      </div>
-      <div className="text-sm text-gray-500">
-        Chưa có đơn hàng nào được tạo hoặc không có đơn hàng nào phù hợp với bộ
-        lọc
-      </div>
-    </div>
+  const NoDataComponent = useMemo(
+    () => () =>
+      (
+        <div className="flex flex-col items-center justify-center py-12">
+          <div className="text-6xl mb-4">📋</div>
+          <div className="text-lg font-medium text-gray-600 mb-2">
+            Không có đơn hàng nào
+          </div>
+          <div className="text-sm text-gray-500">
+            Chưa có đơn hàng nào được tạo hoặc không có đơn hàng nào phù hợp với
+            bộ lọc
+          </div>
+        </div>
+      ),
+    []
   );
 
   // Progress component
-  const ProgressComponent = () => (
-    <div className="flex items-center justify-center py-12">
-      <div className="flex items-center space-x-3">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#44703d]"></div>
-        <div className="text-[#44703d] font-medium">Đang tải dữ liệu...</div>
-      </div>
-    </div>
+  const ProgressComponent = useMemo(
+    () => () =>
+      (
+        <div className="flex items-center justify-center py-12">
+          <div className="flex items-center space-x-3">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#44703d]"></div>
+            <div className="text-[#44703d] font-medium">
+              Đang tải dữ liệu...
+            </div>
+          </div>
+        </div>
+      ),
+    []
   );
 
   return (
@@ -377,7 +432,7 @@ export function OrderTable({
         fixedHeaderScrollHeight="600px"
         pagination
         paginationPerPage={10}
-        paginationRowsPerPageOptions={[10, 25, 50, 100]}
+        paginationRowsPerPageOptions={[5, 10, 25, 50, 100]}
         paginationComponentOptions={{
           rowsPerPageText: "Hiển thị:",
           rangeSeparatorText: "của",

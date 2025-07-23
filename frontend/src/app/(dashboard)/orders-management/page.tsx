@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
 import { orderServiceManagement } from "@/lib_dashboard/services/order-service-management";
 import {
   OrderFilters,
@@ -9,15 +10,24 @@ import {
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 // Import the correct Order type
+import { OrderCancelModal } from "@/components/(dashboard)/orders/order-cancel-modal";
+import { OrderConfirmModal } from "@/components/(dashboard)/orders/order-confirm-modal";
+import { OrderDetailModal } from "@/components/(dashboard)/orders/order-detail-modal";
+import { OrderExport } from "@/components/(dashboard)/orders/order-export";
 import { OrderFiltersComponent } from "@/components/(dashboard)/orders/order-filters";
 import { OrderStatisticsCards } from "@/components/(dashboard)/orders/order-statistics-cards";
 import { OrderTable } from "@/components/(dashboard)/orders/order-table";
+import { OrderUpdateStatusModal } from "@/components/(dashboard)/orders/order-update-status-modal";
+import { useToast } from "@/hooks/use-toast";
+import { showToast } from "@/lib/toast-provider";
 import type {
   Order as ImportedOrder,
   Order,
 } from "@/lib_dashboard/types/order";
 
 export default function OrdersManagementPage() {
+  const { toast } = useToast();
+
   // State management
   const [orders, setOrders] = useState<ImportedOrder[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<ImportedOrder[]>([]);
@@ -50,6 +60,7 @@ export default function OrdersManagementPage() {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [updateStatusModalOpen, setUpdateStatusModalOpen] = useState(false);
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [orderStatuses, setOrderStatuses] = useState<OrderStatus[]>([]);
   const [pymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
 
@@ -210,37 +221,60 @@ export default function OrdersManagementPage() {
     setConfirmModalOpen(false);
   }, []);
 
+  const handleOpenCancelModal = useCallback((order: ImportedOrder) => {
+    setSelectedOrder(order);
+    setCancelModalOpen(true);
+  }, []);
+
+  const handleCloseCancelModal = useCallback(() => {
+    setCancelModalOpen(false);
+  }, []);
+
   // Handle update order status
   const handleUpdateOrderStatus = useCallback(
-    async (orderId: string, statusId: string, notes?: string) => {
+    async (statusId: string, notes?: string) => {
+      if (!selectedOrder) return;
+
       setLoadingOperations(true);
       try {
-        await orderServiceManagement.updateOrderStatus(orderId, {
+        await orderServiceManagement.updateOrderStatus(selectedOrder.order_id, {
           status_id: statusId,
           notes,
         });
         const updatedOrders = orders.map((order) =>
-          order.order_id === orderId
+          order.order_id === selectedOrder.order_id
             ? {
                 ...order,
-                id: orderId,
+                id: selectedOrder.order_id,
                 status: { ...order.status, status_id: statusId },
               }
             : order
         );
         setOrders(updatedOrders);
         setFilteredOrders(updatedOrders);
+        showToast.success(
+          `Cập nhật trạng thái đơn hàng ${selectedOrder.order_code} thành công!`
+        );
+
+        // toast({
+        //   title: "Thành công",
+        //   description: `Cập nhật trạng thái đơn hàng ${selectedOrder.order_code} thành công!`,
+        //   variant: "default",
+        // });
       } catch (error) {
         console.error("Error updating order status", error);
+        showToast.error(
+          "Không thể cập nhật trạng thái đơn hàng. Vui lòng thử lại!"
+        );
       } finally {
         setLoadingOperations(false);
       }
     },
-    [orders]
+    [orders, selectedOrder, toast]
   );
 
   const handleConfirmOrder = useCallback(
-    async (order: Order) => {
+    async (order: Order, notes?: string) => {
       setLoadingOperations(true);
       try {
         await orderServiceManagement.confirmOrder(order.order_id);
@@ -251,8 +285,11 @@ export default function OrdersManagementPage() {
         );
         setOrders(updatedOrders);
         setFilteredOrders(updatedOrders);
+
+        showToast.success(`Xác nhận đơn hàng ${order.order_code} thành công!`);
       } catch (error) {
         console.error("Error confirming order", error);
+        showToast.error("Không thể xác nhận đơn hàng. Vui lòng thử lại!");
       } finally {
         setLoadingOperations(false);
       }
@@ -261,7 +298,7 @@ export default function OrdersManagementPage() {
   );
 
   const handleCancelOrder = useCallback(
-    async (order: Order) => {
+    async (order: Order, reason: string, notes?: string) => {
       setLoadingOperations(true);
       try {
         await orderServiceManagement.cancelOrder(order.order_id);
@@ -272,13 +309,16 @@ export default function OrdersManagementPage() {
         );
         setOrders(updatedOrders);
         setFilteredOrders(updatedOrders);
+
+        showToast.success(`Hủy đơn hàng ${order.order_code} thành công!`);
       } catch (error) {
         console.error("Error cancelling order", error);
+        showToast.error("Không thể hủy đơn hàng. Vui lòng thử lại!");
       } finally {
         setLoadingOperations(false);
       }
     },
-    [orders]
+    [orders, showToast]
   );
 
   // Handle batch update statuses
@@ -313,6 +353,33 @@ export default function OrdersManagementPage() {
 
   return (
     <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-[#44703d]">
+            Quản lý đơn hàng
+          </h1>
+          <p className="text-gray-600 mt-1">
+            Quản lý và theo dõi tất cả đơn hàng của cửa hàng
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="text-sm text-gray-500">
+            Tổng:{" "}
+            <span className="font-semibold text-[#44703d]">{stats.total}</span>{" "}
+            đơn hàng
+          </div>
+          <OrderExport orders={filteredOrders} loading={loading} />
+          <Button
+            onClick={() => window.location.reload()}
+            variant="outline"
+            size="sm"
+          >
+            🔄 Làm mới
+          </Button>
+        </div>
+      </div>
+
       {/* Statistics Cards */}
       <OrderStatisticsCards orders={orders} loading={loading} />
 
@@ -330,31 +397,46 @@ export default function OrdersManagementPage() {
         orders={filteredOrders}
         onViewDetails={handleOpenDetailModal}
         onUpdateStatus={handleOpenUpdateStatusModal}
-        onConfirmOrder={handleConfirmOrder}
-        onCancelOrder={handleCancelOrder}
+        onConfirmOrder={handleOpenConfirmModal}
+        onCancelOrder={handleOpenCancelModal}
         loading={loading}
       />
 
       {/* Detail Modal */}
-      {/* <OrderDetailModal
+      <OrderDetailModal
         order={selectedOrder}
         open={detailModalOpen}
         onClose={handleCloseDetailModal}
-      /> */}
+        loading={loadingOperations}
+      />
 
       {/* Update Status Modal */}
-      {/* <OrderUpdateStatusModal
+      <OrderUpdateStatusModal
         order={selectedOrder}
         open={updateStatusModalOpen}
         onClose={handleCloseUpdateStatusModal}
-      /> */}
+        onSubmit={handleUpdateOrderStatus}
+        loading={loadingOperations}
+        orderStatuses={orderStatuses}
+      />
 
       {/* Confirm Modal */}
-      {/* <ConfirmModal
+      <OrderConfirmModal
         order={selectedOrder}
         open={confirmModalOpen}
         onClose={handleCloseConfirmModal}
-      /> */}
+        onConfirm={handleConfirmOrder}
+        loading={loadingOperations}
+      />
+
+      {/* Cancel Modal */}
+      <OrderCancelModal
+        order={selectedOrder}
+        open={cancelModalOpen}
+        onClose={handleCloseCancelModal}
+        onCancel={handleCancelOrder}
+        loading={loadingOperations}
+      />
     </div>
   );
 }
