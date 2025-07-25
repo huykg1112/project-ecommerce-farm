@@ -73,6 +73,12 @@ export class AiConsultationService {
       symptom_description: createAiConsultationDto.symptom_description,
       growth_stage: createAiConsultationDto.growth_stage,
       recommended_treatment: createAiConsultationDto.recommended_treatment,
+      severity_level: createAiConsultationDto.severity_level,
+      recommended_name_products:
+        createAiConsultationDto.recommended_name_products,
+      treatment_duration: createAiConsultationDto.treatment_duration,
+      prevention_tips: createAiConsultationDto.prevention_tips,
+      monitoring_signs: createAiConsultationDto.monitoring_signs,
       user,
       disease: newDisease,
     });

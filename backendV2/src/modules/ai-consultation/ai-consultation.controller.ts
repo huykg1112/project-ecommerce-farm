@@ -30,6 +30,12 @@ export class AiConsultationController {
     return this.aiConsultationService.findAll();
   }
 
+  @Get('my-consultations')
+  findMyConsultations(@Req() req) {
+    const userId = req.user.id; // Assuming the user ID is available in the request object
+    return this.aiConsultationService.findByUser(userId);
+  }
+
   @Get('statistics')
   getStatistics() {
     return this.aiConsultationService.getStatistics();

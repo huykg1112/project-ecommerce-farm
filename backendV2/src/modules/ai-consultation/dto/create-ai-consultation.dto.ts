@@ -1,5 +1,12 @@
 import { Type } from 'class-transformer';
-import { IsArray, IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+  IsArray,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { CreateTreatmentPlanDto } from '../../treatment-plan/dto/create-treatment-plan.dto';
 
 export class CreateAiConsultationDto {
@@ -18,6 +25,27 @@ export class CreateAiConsultationDto {
   @IsString()
   @IsOptional()
   recommended_treatment?: string;
+
+  @IsNumber()
+  @IsPositive()
+  @IsOptional()
+  treatment_duration?: number;
+
+  @IsString()
+  @IsOptional()
+  severity_level?: string;
+
+  @IsString()
+  @IsOptional()
+  recommended_name_products?: string;
+
+  @IsString()
+  @IsOptional()
+  prevention_tips?: string;
+
+  @IsString()
+  @IsOptional()
+  monitoring_signs?: string;
 
   @IsOptional()
   disease_name?: string;
