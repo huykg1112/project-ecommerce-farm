@@ -12,10 +12,14 @@ import {
 import { ImageUpload } from "@/components/ui/image-upload";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getCookie } from "@/lib/utils";
+import { ai_ConsultationServiceManagement } from "@/lib_dashboard/services/ai-consultation-service";
+import { AIConsultationCreateRequest } from "@/lib_dashboard/types/ai-consultation";
 import {
   AIConsultationInfo,
   PestAnalysisRequest,
 } from "@/lib_dashboard/types/pest-analysis";
+import { saveConsultationToHistory } from "@/lib_dashboard/utils/consultation-history";
 import { fileToBase64 } from "@/lib_dashboard/utils/image";
 import {
   PestAnalysisFormData,
@@ -31,17 +35,23 @@ import {
   Leaf,
   Shield,
 } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { CropTypeController } from "../organisms/crop-type-controller";
 import { GrowthStageController } from "../organisms/growth-stage-controller";
 import { SymptomsController } from "../organisms/symptoms-controller";
+import { ConsultationHistoryModal } from "./consultation-history-modal";
 
 export function PestAnalysisForm() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AIConsultationInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loadingTextIndex, setLoadingTextIndex] = useState(0);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [lowConfidenceWarning, setLowConfidenceWarning] = useState(false);
+
+  const userId = getCookie("user_id");
 
   const loadingWords = [
     "🔍 Đang phân tích hình ảnh...",
@@ -49,6 +59,7 @@ export function PestAnalysisForm() {
     "🌿 Nhận diện triệu chứng...",
     "📋 Đang tạo chẩn đoán...",
     "💊 Chuẩn bị phác đồ điều trị...",
+    "💾 Đang lưu kết quả...",
     "✅ Hoàn thành phân tích!",
   ];
 
@@ -72,13 +83,59 @@ export function PestAnalysisForm() {
 
   const analysisType = watch("analysisType");
 
+  // Helper function to convert AIConsultationInfo to AIConsultationCreateRequest
+  const convertToCreateRequest = useCallback(
+    (consultationInfo: AIConsultationInfo): AIConsultationCreateRequest => {
+      // Convert recommended products array to comma-separated string
+      const recommendedProductsString =
+        consultationInfo.recommended_products
+          ?.map((product) => product.name)
+          .join(", ") || "";
+
+      // Convert prevention tips array to comma-separated string
+      const preventionTipsString =
+        consultationInfo.prevention_tips?.join(", ") || "";
+
+      // Convert monitoring signs array to comma-separated string
+      const monitoringSignsString =
+        consultationInfo.monitoring_signs?.join(", ") || "";
+
+      // Convert treatment plans to the required format
+      const treatmentPlans =
+        consultationInfo.treatment_plans?.map((plan) => ({
+          day_number: plan.day_number,
+          treatment_instruction: plan.treatment_instruction,
+          dosage_instruction: plan.dosage_instruction,
+          frequency: plan.frequency,
+        })) || [];
+
+      return {
+        crop_type: consultationInfo.crop_type,
+        symptom_description: consultationInfo.symptom_description,
+        growth_stage: consultationInfo.growth_stage,
+        disease_name: consultationInfo.disease_name,
+        recommended_treatment: consultationInfo.recommended_treatment,
+        treatment_duration: consultationInfo.treatment_duration,
+        severity_level: consultationInfo.severity_level,
+        recommended_name_products: recommendedProductsString,
+        prevention_tips: preventionTipsString,
+        monitoring_signs: monitoringSignsString,
+        treatment_plans: treatmentPlans,
+      };
+    },
+    []
+  );
+
   const onSubmit = useCallback(
     async (data: PestAnalysisFormData) => {
       setLoading(true);
       setError(null);
       setResult(null);
+      setSaveSuccess(false);
+      setLowConfidenceWarning(false);
 
       try {
+        // Step 1: Get pest analysis from AI
         const requestData: PestAnalysisRequest = {
           cropType: data.cropType,
           symptoms: data.symptoms || "",
@@ -96,6 +153,35 @@ export function PestAnalysisForm() {
 
         const response = await getPestAnalysis(requestData);
         setResult(response);
+
+        // Save to localStorage regardless of confidence score
+        if (userId) {
+          saveConsultationToHistory(userId, response);
+        }
+
+        // Step 2: Automatically save to database only if confidence score >= 60
+        if (response.confidence_score && response.confidence_score >= 60) {
+          try {
+            const createRequest = convertToCreateRequest(response);
+            await ai_ConsultationServiceManagement.createAIConsultation(
+              createRequest
+            );
+
+            setSaveSuccess(true);
+            console.log(
+              "✅ Đã lưu kết quả tư vấn vào cơ sở dữ liệu thành công!"
+            );
+          } catch (saveError) {
+            // Log the error but don't interrupt the user experience
+            console.error("❌ Lỗi khi lưu kết quả tư vấn:", saveError);
+            // The analysis result is still shown to user even if save fails
+          }
+        } else {
+          setLowConfidenceWarning(true);
+          console.log(
+            `⚠️ Kết quả không được lưu tự động vì độ tin cậy (${response.confidence_score}%) thấp hơn 60%`
+          );
+        }
       } catch (error) {
         setError(
           error instanceof Error
@@ -106,7 +192,14 @@ export function PestAnalysisForm() {
         setLoading(false);
       }
     },
-    [setLoading, setError, setResult]
+    [
+      setLoading,
+      setError,
+      setResult,
+      setSaveSuccess,
+      setLowConfidenceWarning,
+      convertToCreateRequest,
+    ]
   );
 
   const handleTabChange = useCallback(
@@ -119,8 +212,10 @@ export function PestAnalysisForm() {
       setValue("imageMimeType", "");
       setError(null);
       setResult(null);
+      setSaveSuccess(false);
+      setLowConfidenceWarning(false);
     },
-    [setValue, setError, setResult]
+    [setValue, setError, setResult, setSaveSuccess, setLowConfidenceWarning]
   );
 
   const handleImageSelect = useCallback(
@@ -180,6 +275,13 @@ export function PestAnalysisForm() {
             <span>Hỗ trợ AI</span>
           </div>
         </div>
+
+        {/* History Button */}
+        {userId && (
+          <div className="mt-6 flex justify-center">
+            <ConsultationHistoryModal />
+          </div>
+        )}
       </div>
 
       <Card className="mb-6 shadow-lg border-0 bg-white">
@@ -313,6 +415,66 @@ export function PestAnalysisForm() {
 
       {result && (
         <div className="space-y-6">
+          {/* Success notification for saved data */}
+          {saveSuccess && (
+            <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-300">
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-3 text-green-700">
+                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                    <svg
+                      className="w-5 h-5 text-green-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-semibold">
+                      Đã lưu kết quả tư vấn thành công!
+                    </p>
+                    <p className="text-sm text-green-600">
+                      Kết quả phân tích đã được lưu vào hệ thống để bạn có thể
+                      xem lại sau.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Low confidence warning */}
+          {lowConfidenceWarning &&
+            result &&
+            result.confidence_score &&
+            result.confidence_score < 60 && (
+              <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 border-yellow-300">
+                <CardContent className="pt-4">
+                  <div className="flex items-center gap-3 text-yellow-700">
+                    <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                      <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                    </div>
+                    <div>
+                      <p className="font-semibold">
+                        Độ tin cậy thấp - Chưa lưu tự động
+                      </p>
+                      <p className="text-sm text-yellow-600">
+                        Kết quả có độ tin cậy {result.confidence_score}% (dưới
+                        60%), không được lưu tự động. Vui lòng xem xét kỹ kết
+                        quả và có thể thử lại với thông tin chi tiết hơn.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
           {/* Header Card - Thông tin tổng quan */}
           <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
             <CardHeader>
@@ -430,29 +592,33 @@ export function PestAnalysisForm() {
                       </h4>
                       <div className="flex flex-wrap gap-2">
                         {result.recommended_products.map((product, index) => (
-                          <div
+                          <Link
                             key={index}
-                            className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg p-3 min-w-[200px]"
+                            href={`/products?search=${encodeURIComponent(
+                              product.name.trim()
+                            )}`}
                           >
-                            <div className="font-medium text-blue-800 text-sm">
-                              {product.name}
+                            <div className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg p-3 min-w-[200px] hover:shadow-md transition-shadow cursor-pointer">
+                              <div className="font-medium text-blue-800 text-sm">
+                                {product.name}
+                              </div>
+                              {product.active_ingredient && (
+                                <div className="text-xs text-gray-600 mt-1">
+                                  Hoạt chất: {product.active_ingredient}
+                                </div>
+                              )}
+                              {product.concentration && (
+                                <div className="text-xs text-green-700 font-medium">
+                                  {product.concentration}
+                                </div>
+                              )}
+                              {product.usage_note && (
+                                <div className="text-xs text-gray-500 mt-1 italic">
+                                  {product.usage_note}
+                                </div>
+                              )}
                             </div>
-                            {product.active_ingredient && (
-                              <div className="text-xs text-gray-600 mt-1">
-                                Hoạt chất: {product.active_ingredient}
-                              </div>
-                            )}
-                            {product.concentration && (
-                              <div className="text-xs text-green-700 font-medium">
-                                {product.concentration}
-                              </div>
-                            )}
-                            {product.usage_note && (
-                              <div className="text-xs text-gray-500 mt-1 italic">
-                                {product.usage_note}
-                              </div>
-                            )}
-                          </div>
+                          </Link>
                         ))}
                       </div>
                     </div>
@@ -542,12 +708,19 @@ export function PestAnalysisForm() {
                               <div className="flex flex-wrap gap-2">
                                 {plan.products_used.map(
                                   (product, productIndex) => (
-                                    <span
+                                    <Link
                                       key={productIndex}
-                                      className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium"
+                                      href={`/products?search=${encodeURIComponent(
+                                        product.trim()
+                                      )}`}
                                     >
-                                      💊 {product}
-                                    </span>
+                                      <span
+                                        key={productIndex}
+                                        className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium"
+                                      >
+                                        💊 {product}
+                                      </span>
+                                    </Link>
                                   )
                                 )}
                               </div>
