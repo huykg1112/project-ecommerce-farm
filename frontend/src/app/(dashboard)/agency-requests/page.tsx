@@ -224,22 +224,11 @@ export default function AgencyRequestsPage() {
         loading={loading}
       />
 
-      {/* Pagination */}
-      {/* <RequestPagination
-        currentPage={filters.page || 1}
-        totalPages={pagination.totalPages}
-        totalItems={pagination.total}
-        itemsPerPage={filters.limit || 10}
-        onPageChange={handlePageChange}
-        onItemsPerPageChange={handleItemsPerPageChange}
-      /> */}
-
       {/* Modals */}
       <RequestModals
         viewModalOpen={viewModalOpen}
         selectedRequestId={selectedRequestId}
         requests={filteredRequests as StoreOwnerRequest[]}
-        onClose={closeModals}
         approveModalOpen={approveModalOpen}
         onApprove={handleApprove}
         rejectModalOpen={rejectModalOpen}

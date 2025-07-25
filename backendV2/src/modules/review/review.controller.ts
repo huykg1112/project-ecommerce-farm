@@ -48,7 +48,7 @@ export class ReviewController {
     const parentReview = await this.reviewService.findOne(
       createResponseDto.parent_review_id,
     );
-    createReviewDto.product_id = parentReview.product_id;
+    createReviewDto.product_id = parentReview.product.product_id;
 
     return this.reviewService.create(createReviewDto);
   }
@@ -77,6 +77,13 @@ export class ReviewController {
     return this.reviewService.findMyClientAll(userId);
   }
 
+  // lấy toàn bộ review của một sản phẩm
+  @Public()
+  @Get('product/:productId')
+  async findAllByProduct(@Param('productId') productId: string) {
+    return this.reviewService.findAllByProduct(productId);
+  }
+
   //kiểm tra người dùng đã đánh giá sản phẩm hay chưa
   @Get('check-review')
   async checkReview(@Req() req: any, @Query('product_id') productId: string) {
@@ -86,12 +93,6 @@ export class ReviewController {
       throw new Error('Vui lòng đăng nhập để kiểm tra đánh giá');
     }
     return this.reviewService.hasReviewedProduct(userId, productId);
-  }
-
-  @Public()
-  @Get('stats')
-  async getStats(@Query('product_id') productId?: string) {
-    return this.reviewService.getReviewStats(productId);
   }
 
   @Public()

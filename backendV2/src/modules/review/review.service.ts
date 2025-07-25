@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -10,7 +9,6 @@ import { Product } from '../product/entities/product.entity';
 import { User } from '../user/entities/user.entity';
 import { CreateReviewDto } from './dto/create-review.dto';
 import { DeleteReviewDto } from './dto/delete-review.dto';
-import { ReviewResponseDto } from './dto/review-response.dto';
 import { Review } from './entities/review.entity';
 
 @Injectable()
@@ -24,7 +22,7 @@ export class ReviewService {
     private userRepository: Repository<User>,
   ) {}
 
-  async create(createReviewDto: CreateReviewDto): Promise<ReviewResponseDto> {
+  async create(createReviewDto: CreateReviewDto) {
     const {
       product_id,
       user_id,
@@ -132,12 +130,13 @@ export class ReviewService {
         'product',
         'user',
         'distributor',
+        'distributor.invenstory',
         'parent_review',
         'distributor_response_review',
       ],
     });
 
-    return this.mapToResponseDto(completeReview!);
+    return completeReview;
   }
 
   async findAll() {
@@ -185,7 +184,7 @@ export class ReviewService {
     return reviews;
   }
 
-  async findOne(id: string): Promise<ReviewResponseDto> {
+  async findOne(id: string) {
     const review = await this.reviewRepository.findOne({
       where: { review_id: id },
       relations: [
@@ -201,7 +200,24 @@ export class ReviewService {
       throw new NotFoundException('Review not found');
     }
 
-    return this.mapToResponseDto(review);
+    return review;
+  }
+
+  async findAllByProduct(productId: string): Promise<Review[]> {
+    const reviews = await this.reviewRepository.find({
+      where: { product: { product_id: productId }, is_deleted: false },
+      relations: [
+        'product',
+        'user',
+        'distributor',
+        'distributor.invenstory',
+        'parent_review',
+        'distributor_response_review',
+      ],
+      order: { created_at: 'DESC' },
+    });
+
+    return reviews;
   }
 
   // kiểm tra user đã review sản phẩm chưa
@@ -241,106 +257,106 @@ export class ReviewService {
     return { message: 'Review deleted successfully' };
   }
 
-  async getReviewStats(productId?: string): Promise<{
-    total_reviews: number;
-    average_rating: number;
-    rating_distribution: { rating: number; count: number }[];
-    total_responses: number;
-  }> {
-    const queryBuilder = this.reviewRepository
-      .createQueryBuilder('review')
-      .where('review.is_deleted = :is_deleted', { is_deleted: false })
-      .andWhere('review.parent_review_id IS NULL') // Only count main reviews
-      .andWhere('review.rating IS NOT NULL'); // Only reviews with ratings
+  // async getReviewStats(productId?: string): Promise<{
+  //   total_reviews: number;
+  //   average_rating: number;
+  //   rating_distribution: { rating: number; count: number }[];
+  //   total_responses: number;
+  // }> {
+  //   const queryBuilder = this.reviewRepository
+  //     .createQueryBuilder('review')
+  //     .where('review.is_deleted = :is_deleted', { is_deleted: false })
+  //     .andWhere('review.parent_review_id IS NULL') // Only count main reviews
+  //     .andWhere('review.rating IS NOT NULL'); // Only reviews with ratings
 
-    if (productId) {
-      queryBuilder.andWhere('review.product_id = :productId', { productId });
-    }
+  //   if (productId) {
+  //     queryBuilder.andWhere('review.product_id = :productId', { productId });
+  //   }
 
-    const totalReviews = await queryBuilder.getCount();
+  //   const totalReviews = await queryBuilder.getCount();
 
-    const avgResult = await queryBuilder
-      .select('AVG(review.rating)', 'avg')
-      .getRawOne();
+  //   const avgResult = await queryBuilder
+  //     .select('AVG(review.rating)', 'avg')
+  //     .getRawOne();
 
-    const ratingDistribution = await this.reviewRepository
-      .createQueryBuilder('review')
-      .select('review.rating', 'rating')
-      .addSelect('COUNT(*)', 'count')
-      .where('review.is_deleted = :is_deleted', { is_deleted: false })
-      .andWhere('review.parent_review_id IS NULL')
-      .andWhere('review.rating IS NOT NULL')
-      .andWhere(
-        productId ? 'review.product_id = :productId' : '1=1',
-        productId ? { productId } : {},
-      )
-      .groupBy('review.rating')
-      .orderBy('review.rating', 'ASC')
-      .getRawMany();
+  //   const ratingDistribution = await this.reviewRepository
+  //     .createQueryBuilder('review')
+  //     .select('review.rating', 'rating')
+  //     .addSelect('COUNT(*)', 'count')
+  //     .where('review.is_deleted = :is_deleted', { is_deleted: false })
+  //     .andWhere('review.parent_review_id IS NULL')
+  //     .andWhere('review.rating IS NOT NULL')
+  //     .andWhere(
+  //       productId ? 'review.product_id = :productId' : '1=1',
+  //       productId ? { productId } : {},
+  //     )
+  //     .groupBy('review.rating')
+  //     .orderBy('review.rating', 'ASC')
+  //     .getRawMany();
 
-    const totalResponses = await this.reviewRepository
-      .createQueryBuilder('review')
-      .where('review.is_deleted = :is_deleted', { is_deleted: false })
-      .andWhere('review.parent_review_id IS NOT NULL') // Only count responses
-      .andWhere(
-        productId ? 'review.product_id = :productId' : '1=1',
-        productId ? { productId } : {},
-      )
-      .getCount();
+  //   const totalResponses = await this.reviewRepository
+  //     .createQueryBuilder('review')
+  //     .where('review.is_deleted = :is_deleted', { is_deleted: false })
+  //     .andWhere('review.parent_review_id IS NOT NULL') // Only count responses
+  //     .andWhere(
+  //       productId ? 'review.product_id = :productId' : '1=1',
+  //       productId ? { productId } : {},
+  //     )
+  //     .getCount();
 
-    return {
-      total_reviews: totalReviews,
-      average_rating: parseFloat(avgResult?.avg || '0'),
-      rating_distribution: ratingDistribution.map((item) => ({
-        rating: parseInt(item.rating),
-        count: parseInt(item.count),
-      })),
-      total_responses: totalResponses,
-    };
-  }
+  //   return {
+  //     total_reviews: totalReviews,
+  //     average_rating: parseFloat(avgResult?.avg || '0'),
+  //     rating_distribution: ratingDistribution.map((item) => ({
+  //       rating: parseInt(item.rating),
+  //       count: parseInt(item.count),
+  //     })),
+  //     total_responses: totalResponses,
+  //   };
+  // }
 
-  private mapToResponseDto(review: Review): ReviewResponseDto {
-    return {
-      review_id: review.review_id,
-      product_id: review.product?.product_id || '',
-      user_id: review.user?.user_id,
-      distributor_id: review.distributor?.user_id,
-      parent_review_id: review.parent_review?.review_id,
-      rating: review.rating,
-      comment: review.comment,
-      created_at: review.created_at,
-      updated_at: review.updated_at,
-      is_deleted: review.is_deleted,
-      product: review.product
-        ? {
-            product_id: review.product.product_id,
-            product_name: review.product.product_name,
-            // product_image will be fetched separately if needed
-          }
-        : undefined,
-      user: review.user
-        ? {
-            user_id: review.user.user_id,
-            fullname: review.user.full_name,
-            email: review.user.email,
-            avatar: review.user.avatar,
-          }
-        : undefined,
-      distributor: review.distributor
-        ? {
-            user_id: review.distributor.user_id,
-            fullname: review.distributor.full_name,
-            // company_name is not in User entity - remove this field
-          }
-        : undefined,
-      parent_review: review.parent_review
-        ? this.mapToResponseDto(review.parent_review)
-        : undefined,
-      distributor_response_review: review.distributor_response_review
-        ? this.mapToResponseDto(review.distributor_response_review)
-        : undefined,
-      has_response: !!review.distributor_response_review,
-      response_count: review.distributor_response_review ? 1 : 0,
-    };
-  }
+  // private mapToResponseDto(review: Review): ReviewResponseDto {
+  //   return {
+  //     review_id: review.review_id,
+  //     product_id: review.product?.product_id || '',
+  //     user_id: review.user?.user_id,
+  //     distributor_id: review.distributor?.user_id,
+  //     parent_review_id: review.parent_review?.review_id,
+  //     rating: review.rating,
+  //     comment: review.comment,
+  //     created_at: review.created_at,
+  //     updated_at: review.updated_at,
+  //     is_deleted: review.is_deleted,
+  //     product: review.product
+  //       ? {
+  //           product_id: review.product.product_id,
+  //           product_name: review.product.product_name,
+  //           // product_image will be fetched separately if needed
+  //         }
+  //       : undefined,
+  //     user: review.user
+  //       ? {
+  //           user_id: review.user.user_id,
+  //           fullname: review.user.full_name,
+  //           email: review.user.email,
+  //           avatar: review.user.avatar,
+  //         }
+  //       : undefined,
+  //     distributor: review.distributor
+  //       ? {
+  //           user_id: review.distributor.user_id,
+  //           fullname: review.distributor.full_name,
+  //           // company_name is not in User entity - remove this field
+  //         }
+  //       : undefined,
+  //     parent_review: review.parent_review
+  //       ? this.mapToResponseDto(review.parent_review)
+  //       : undefined,
+  //     distributor_response_review: review.distributor_response_review
+  //       ? this.mapToResponseDto(review.distributor_response_review)
+  //       : undefined,
+  //     has_response: !!review.distributor_response_review,
+  //     response_count: review.distributor_response_review ? 1 : 0,
+  //   };
+  // }
 }
