@@ -273,27 +273,13 @@ export class OrderService {
   async findOrdersByDistributor(distributorId: string) {
     const distributor = await this.userRepository.findOne({
       where: { user_id: distributorId },
-      relations: [
-        'status',
-        'user',
-        'distributor',
-        'distributor.invenstory',
-        'payment_method',
-        'order_details',
-        'order_details.batch_product',
-        'order_details.batch_product.product',
-        'order_details.batch_product.product.images',
-        'order_details.batch_product.product_types',
-        'order_details.batch_product.promotions',
-        'order_details.batch_product.invenstory',
-      ],
     });
     if (!distributor) {
       throw new NotFoundException('Distributor not found');
     }
 
     return this.orderRepository.find({
-      where: { distributor, is_deleted: false },
+      where: { distributor: { user_id: distributorId }, is_deleted: false },
       relations: [
         'status',
         'user',

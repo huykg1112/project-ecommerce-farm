@@ -196,16 +196,16 @@ export function RevenueFiltersComponent({
           <div className="space-y-2">
             <Label htmlFor="status">Trạng thái đơn hàng</Label>
             <Select
-              value={filters.status || ""}
+              value={filters.status || "all"}
               onValueChange={(value) =>
-                onFilterChange({ status: value || undefined })
+                onFilterChange({ status: value === "all" ? undefined : value })
               }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Tất cả trạng thái" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tất cả trạng thái</SelectItem>
+                <SelectItem value="all">Tất cả trạng thái</SelectItem>
                 {orderStatuses.map((status) => (
                   <SelectItem key={status.status_id} value={status.status_name}>
                     {status.status_name}
@@ -219,16 +219,18 @@ export function RevenueFiltersComponent({
           <div className="space-y-2">
             <Label htmlFor="paymentMethod">Phương thức thanh toán</Label>
             <Select
-              value={filters.paymentMethod || ""}
+              value={filters.paymentMethod || "all"}
               onValueChange={(value) =>
-                onFilterChange({ paymentMethod: value || undefined })
+                onFilterChange({
+                  paymentMethod: value === "all" ? undefined : value,
+                })
               }
             >
               <SelectTrigger>
                 <SelectValue placeholder="Tất cả phương thức" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Tất cả phương thức</SelectItem>
+                <SelectItem value="all">Tất cả phương thức</SelectItem>
                 {paymentMethods.map((method) => (
                   <SelectItem key={method.method_id} value={method.method_name}>
                     {method.method_name}

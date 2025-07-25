@@ -64,11 +64,15 @@ export function AppSidebar() {
             url: "/dashboard",
             icon: Home,
           },
-          {
-            title: "Thống kê người dùng",
-            url: "/user-statistics",
-            icon: BarChart3,
-          },
+          ...(userRole !== "Distributor"
+            ? [
+                {
+                  title: "Thống kê người dùng",
+                  url: "/user-statistics",
+                  icon: BarChart3,
+                },
+              ]
+            : []),
           {
             title: "Thống kê doanh thu",
             url: "/revenue",
@@ -76,23 +80,27 @@ export function AppSidebar() {
           },
         ],
       },
-      {
-        title: "Quản lý người dùng",
-        url: "#",
-        icon: Users,
-        items: [
-          {
-            title: "Người dùng",
-            url: "/users-management",
-            icon: UsersRound,
-          },
-          {
-            title: "Duyệt đại lý",
-            url: "/agency-requests",
-            icon: FileCheck,
-          },
-        ],
-      },
+      ...(userRole !== "Distributor"
+        ? [
+            {
+              title: "Quản lý người dùng",
+              url: "#",
+              icon: Users,
+              items: [
+                {
+                  title: "Người dùng",
+                  url: "/users-management",
+                  icon: UsersRound,
+                },
+                {
+                  title: "Duyệt đại lý",
+                  url: "/agency-requests",
+                  icon: FileCheck,
+                },
+              ],
+            },
+          ]
+        : []),
       {
         title: "Quản lý sản phẩm",
         url: "#",
@@ -103,11 +111,15 @@ export function AppSidebar() {
             url: "/products-management",
             icon: Box,
           },
-          {
-            title: "Danh mục",
-            url: "/categories-management",
-            icon: BookText,
-          },
+          ...(userRole !== "Distributor"
+            ? [
+                {
+                  title: "Danh mục",
+                  url: "/categories-management",
+                  icon: BookText,
+                },
+              ]
+            : []),
           {
             title: "Hoạt chất",
             url: "/ingredients-management",
@@ -118,11 +130,15 @@ export function AppSidebar() {
             url: "/diseases-management",
             icon: Leaf,
           },
-          {
-            title: "Nhà sản xuất",
-            url: "/manufacturer-management",
-            icon: Factory,
-          },
+          ...(userRole !== "Distributor"
+            ? [
+                {
+                  title: "Nhà sản xuất",
+                  url: "/manufacturer-management",
+                  icon: Factory,
+                },
+              ]
+            : []),
         ],
       },
       {
@@ -140,21 +156,29 @@ export function AppSidebar() {
             url: "/batch-products-management",
             icon: Warehouse,
           },
-          {
-            title: "Voucher",
-            url: "vouchers-management",
-            icon: TicketSlash,
-          },
+          ...(userRole !== "Distributor"
+            ? [
+                {
+                  title: "Voucher",
+                  url: "vouchers-management",
+                  icon: TicketSlash,
+                },
+              ]
+            : []),
           {
             title: "Khuyến mãi",
             url: "promotion-management",
             icon: Percent,
           },
-          {
-            title: "Đánh giá",
-            url: "/reviews-management",
-            icon: Star,
-          },
+          ...(userRole !== "Distributor"
+            ? [
+                {
+                  title: "Đánh giá",
+                  url: "/reviews-management",
+                  icon: Star,
+                },
+              ]
+            : []),
         ],
       },
     ],
