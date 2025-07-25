@@ -1,3 +1,5 @@
+import { User } from "@/types/entities";
+
 export interface LoginFormProps {
   username: string;
   setUsername: (value: string) => void;
@@ -49,6 +51,7 @@ export interface LoginResponse {
   user_id: string;
   access_token: string;
   refresh_token: string;
+  user: User;
 }
 
 export interface RegisterResponse {

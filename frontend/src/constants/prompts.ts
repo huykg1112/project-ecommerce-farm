@@ -34,12 +34,62 @@ export function getTextAiPrompt(
    - Nguyên nhân: nấm/vi khuẩn/virus/côn trùng/dinh dưỡng
    - Mức độ: nhẹ/trung bình/nặng
 
-3. THUỐC BVTV VIỆT NAM:
-   Chỉ sử dụng thuốc có giấy phép lưu hành:
-   - Thuốc trừ nấm: Score 250EC, Amistar Top 325SC, Antracol 70WP, Ridomil Gold 68WG
-   - Thuốc trừ sâu: Actara 25WG, Confidor 200SL, Regent 800WG, Karate Zeon 50CS
-   - Thuốc trừ cỏ: Roundup 480SL, Gramoxone 276SL
-   - Kích thích sinh trưởng: Atonik 1.8DD, Green Fert
+3. QUY ĐỊNH NGHIÊM NGẶT VỀ THUỐC BVTV:
+   
+   🚨 NGUYÊN TẮC VÀNG - TUYỆT ĐỐI TUÂN THỦ:
+   - KHÔNG BAO GIỜ đề xuất thuốc có thể làm hại cây trồng
+   - KHÔNG đề xuất thuốc trừ cỏ cho cỏ mọc trên cây trồng
+   - KIỂM TRA khả năng tương thích 100% trước khi đề xuất
+   - ƯU TIÊN phương pháp thủ công/sinh học nếu thuốc hóa học có nguy cơ
+   
+   📋 DANH MỤC THUỐC ĐƯỢC PHÉP VÀ GIỚI HẠN SỬ DỤNG:
+   
+   A. THUỐC TRỪ NẤM (Fungicide):
+   - Score 250EC, Amistar Top 325SC, Antracol 70WP, Ridomil Gold 68WG
+   - AN TOÀN cho: Lúa, Ngô, Rau lá, Cà chua, Ớt, Dưa chuột
+   - THẬN TRỌNG với: Cây ăn quả non, giai đoạn ra hoa
+   
+   B. THUỐC TRỪ SÂU (Insecticide):
+   - Actara 25WG, Confidor 200SL, Regent 800WG, Karate Zeon 50CS
+   - AN TOÀN cho: Hầu hết cây trồng ở giai đoạn sinh trưởng
+   - CẤM TUYỆT ĐỐI: Giai đoạn thu hoạch (7-14 ngày trước thu hoạch)
+   
+   C. THUỐC TRỪ CỎ (Herbicide) - CỰC KỲ THẬN TRỌNG:
+   - Roundup 480SL: CHỈ dùng TRƯỚC khi gieo trồng hoặc đất trống
+   - Gramoxone 276SL: CHỈ xử lý cỏ NGOÀI khu vực trồng trọt
+   - ⛔ TUYỆT ĐỐI CẤM: Phun trực tiếp lên cây trồng hoặc gần gốc cây
+   
+   D. KÍCH THÍCH SINH TRƯỞNG:
+   - Atonik 1.8DD, Green Fert NPK: AN TOÀN cho mọi giai đoạn
+   
+   🔍 MA TRẬN TƯƠNG THÍCH THUỐC-CÂY-GIAI ĐOẠN:
+   
+   LÚA:
+   ✅ Fungicide: Tất cả (trừ 7 ngày trước thu hoạch)
+   ✅ Insecticide: Tất cả (trừ 14 ngày trước thu hoạch)
+   ⛔ Herbicide: TUYỆT ĐỐI CẤM từ khi có mầm
+   
+   NGÂN, CÀ CHUA, ỚT:
+   ✅ Fungicide: An toàn mọi giai đoạn (trừ 7 ngày trước thu hoạch)
+   ✅ Insecticide: Thận trọng giai đoạn ra hoa (giảm liều 50%)
+   ⛔ Herbicide: CẤM hoàn toàn khi đã trồng
+   
+   RAU LÁ (Cải, rau muống, rau lang):
+   ✅ Fungicide: Chỉ giai đoạn đầu (sau trồng 15 ngày)
+   ⚠️ Insecticide: Cần kiểm tra thời gian chờ nghiêm ngặt
+   ⛔ Herbicide: CẤM TUYỆT ĐỐI
+   
+   🎯 LOGIC ĐỀ XUẤT THUỐC:
+   1. Xác định cây trồng + giai đoạn sinh trưởng
+   2. Kiểm tra ma trận tương thích
+   3. Nếu thuốc hóa học CÓ NGUY CƠ → Đề xuất phương pháp thủ công
+   4. Tính toán thời gian chờ trước thu hoạch
+   5. Đưa ra cảnh báo rõ ràng về rủi ro
+   
+   ⚠️ PHƯƠNG PHÁP THAY THẾ KHI THUỐC CÓ NGUY CƠ:
+   - Cỏ dại: Nhổ tay, cày xới, phủ mulch
+   - Sâu bệnh: Bẫy côn trùng, thuốc sinh học, nấm đối kháng
+   - Nấm bệnh: Cải thiện thoát nước, tỉa cành, thuốc dân gian
 
 4. PHÁC ĐỒ ĐIỀU TRỊ LOGIC:
    - Từng ngày liên tục (1→2→3→...)
@@ -59,9 +109,12 @@ Actara 25WG, Confidor 200SL, Score 250EC, Amistar Top 325SC, Antracol 70WP, Rido
 - Đọc lại toàn bộ từng từ
 - Đảm bảo 100% tiếng Việt
 - Không có ký tự lạ
-- Thuốc phải có thật
-- Logic điều trị khoa học
-- Tỷ lệ chính xác hợp lý`,
+- Thuốc phải có thật VÀ phù hợp với cây trồng
+- Kiểm tra ma trận tương thích thuốc-cây-giai đoạn
+- Logic điều trị khoa học và an toàn
+- Tỷ lệ chính xác hợp lý
+- Nếu thuốc có nguy cơ → ƯU TIÊN phương pháp thủ công
+- Cảnh báo rõ ràng về thời gian chờ và rủi ro`,
           },
         ],
       },

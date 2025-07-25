@@ -49,6 +49,16 @@ export class OrderController {
     return this.orderService.findOrdersByUser(userId);
   }
 
+  //kiểm tra người dùng có đặc sản phẩm này chưa
+  @Get('check-product')
+  async checkProduct(@Req() req: any, @Query('product_id') productId: string) {
+    const userId = req.user.id;
+    if (!userId) {
+      throw new Error('Vui lòng đăng nhập để kiểm tra sản phẩm');
+    }
+    return this.orderService.hasProductInCart(userId, productId);
+  }
+
   @Get('my-orders/:id')
   findMyOrder(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
     const userId = req.user.id;

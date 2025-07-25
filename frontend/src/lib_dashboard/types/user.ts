@@ -1,3 +1,6 @@
+import { Inventory } from "@/interfaces";
+import { Invenstory } from "./product";
+
 // Base Response Type
 export interface ApiResponse<T> {
   data: T;
@@ -29,12 +32,14 @@ export interface User {
   username: string;
   cccd: string;
   address: string;
+  avatar?: string;
   email: string;
   phone_number: string;
   role: UserRole;
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  invenstory?: Invenstory;
 }
 
 export enum UserRole {

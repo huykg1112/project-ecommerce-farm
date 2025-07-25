@@ -255,4 +255,19 @@ export const orderServiceManagement = {
       throw error;
     }
   },
+  async isOrderbyProduct(productId: string): Promise<boolean> {
+    try {
+      const response = await axiosInstance.get("/order/check-product", {
+        params: { product_id: productId },
+      });
+      return response.data.data;
+    } catch (error) {
+      let msg = "Lỗi khi kiểm tra đơn hàng theo sản phẩm";
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        msg = error.response.data.message;
+      }
+      showToast.error(msg);
+      throw error;
+    }
+  },
 };

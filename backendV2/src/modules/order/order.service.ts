@@ -696,4 +696,22 @@ export class OrderService {
     await this.orderRepository.remove(order);
     return { message: 'Order deleted successfully' };
   }
+
+  async hasProductInCart(userId: string, productId: string): Promise<boolean> {
+    const orders = await this.orderRepository.find({
+      where: {
+        user: { user_id: userId },
+        order_details: {
+          batch_product: { product: { product_id: productId } },
+        },
+      },
+      relations: ['order_details'],
+    });
+    const isOrdered = orders.some((order) =>
+      order.order_details.some(
+        (detail) => detail.batch_product.product.product_id === productId,
+      ),
+    );
+    return isOrdered;
+  }
 }

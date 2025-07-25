@@ -16,28 +16,28 @@ export class Review {
 
   @ManyToOne(() => Product)
   @JoinColumn({ name: 'product_id' })
-  product!: Product;
+  product!: Product; // Sản phẩm được đánh giá
 
   @ManyToOne(() => User, (user) => user.reviews, { nullable: true })
   @JoinColumn({ name: 'user_id' })
-  user!: User;
+  user!: User; // Người dùng đã đánh giá (đánh giá 1 lần duy nhất)
 
   @ManyToOne(() => User, { nullable: true }) // Distributor phản hồi
   @JoinColumn({ name: 'distributor_id' })
-  distributor!: User;
+  distributor!: User; // Distributor đã phản hồi đánh giá trong parent_review (phản hồi của đánh giá 1 lần duy nhất)
 
   @OneToOne(() => Review, { nullable: true }) // Phản hồi từ distributor
   @JoinColumn({ name: 'parent_review_id' })
-  parent_review!: Review;
+  parent_review!: Review; // Phản hồi từ distributor nếu có
 
   @OneToOne(() => Review, (review) => review.parent_review) // Liên kết đến phản hồi distributor
   distributor_response_review!: Review;
 
   @Column({ type: 'int', nullable: true })
-  rating!: number;
+  rating!: number; // Đánh giá từ 1 đến 5 dành cho khách hàng
 
   @Column({ type: 'text', nullable: true })
-  comment!: string;
+  comment!: string; // Bình luận của người dùng và phảm hồi của distributor
 
   @Column({ type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
   created_at!: Date;
