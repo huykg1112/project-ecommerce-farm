@@ -28,7 +28,7 @@ export function useRevenueStatistics() {
   const [chartVisibility, setChartVisibility] = useState<ChartVisibility>({
     revenueByTime: true,
     revenueByStatus: true,
-    revenueByPayment: true,
+    revenueByPaymentMethod: true,
     topProducts: true,
     growthTrend: true,
   });
@@ -278,9 +278,11 @@ export function useRevenueStatistics() {
     filteredOrders.forEach((order) => {
       if (order.order_details) {
         order.order_details.forEach((detail) => {
-          const productId = detail.batch?.product?.product_id || "unknown";
+          const productId =
+            detail.batch_product?.product?.product_id || "unknown";
           const productName =
-            detail.batch?.product?.name || "Sản phẩm không xác định";
+            detail.batch_product?.product?.product_name ||
+            "Sản phẩm không xác định";
           const current = productMap.get(productId) || {
             productId,
             productName,

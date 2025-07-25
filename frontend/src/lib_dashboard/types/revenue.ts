@@ -71,7 +71,7 @@ export interface RevenueStatistics {
 export interface ChartVisibility {
   revenueByTime: boolean;
   revenueByStatus: boolean;
-  revenueByPayment: boolean;
+  revenueByPaymentMethod: boolean;
   topProducts: boolean;
   growthTrend: boolean;
 }

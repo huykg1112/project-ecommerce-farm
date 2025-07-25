@@ -28,7 +28,7 @@ export function useRevenueStatistics() {
   const [chartVisibility, setChartVisibility] = useState<ChartVisibility>({
     revenueByTime: true,
     revenueByStatus: true,
-    revenueByPayment: true,
+    revenueByPaymentMethod: true,
     topProducts: true,
     growthTrend: true,
   });
