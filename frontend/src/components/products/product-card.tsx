@@ -77,14 +77,17 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { startAnimation: startWishlistAnimation } = useWishlistAnimation();
   const productRef = useRef<HTMLDivElement>(null);
   const [selectedBatch, setSelectedBatch] = useState<BatchProduct | null>(null);
+  const [totalRating, setTotalRating] = useState(0);
 
-  const averageRating: number = useMemo(() => {
+  // chỉ tính trung bình rating của review nào có rating
+  const averageRating = useMemo(() => {
     if (!product.reviews || product.reviews.length === 0) return 0;
-    const totalRating = product.reviews.reduce(
-      (sum, review) => sum + review.rating,
-      0
-    );
-    return totalRating / product.reviews.length;
+    const totalRating = product.reviews.reduce((sum, review) => {
+      return review.rating ? sum + review.rating : sum;
+    }, 0);
+    const count = product.reviews.filter((review) => review.rating).length;
+    setTotalRating(count);
+    return count > 0 ? totalRating / count : 0;
   }, [product.reviews]);
 
   const differentProductTypes = useMemo(() => {
@@ -309,7 +312,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             ))}
           </div>
           <span className="text-xs text-gray-500 ml-1">
-            ({product?.reviews?.length || 0} đánh giá)
+            ({totalRating || 0} đánh giá)
           </span>
         </div>
         <div className="flex items-center mt-2">

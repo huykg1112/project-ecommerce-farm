@@ -40,7 +40,7 @@ export default function ProductsPage() {
       try {
         const products = await productServiceManagement.getProductsForUser();
 
-        console.log("Fetched Products:", products);
+        // console.log("Fetched Products:", products);
         if (products) {
           setFetchedProducts(products);
         }

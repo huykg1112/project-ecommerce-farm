@@ -19,6 +19,7 @@ import {
   SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { getCookie } from "@/lib/utils";
 import {
   BarChart3,
   BookText,
@@ -29,12 +30,14 @@ import {
   FlaskConical,
   Home,
   Leaf,
+  LineChart,
   LogOut,
   Package,
   Percent,
   Settings,
   ShoppingBag,
   ShoppingCart,
+  Star,
   TicketSlash,
   Users,
   UsersRound,
@@ -46,6 +49,8 @@ import { useState } from "react";
 
 export function AppSidebar() {
   const [activeItem, setActiveItem] = useState("dashboard");
+  const user = JSON.parse(getCookie("user") || "{}");
+  const userRole = user.role_name || "CLIENT";
 
   const menuItems = {
     navMain: [
@@ -63,6 +68,11 @@ export function AppSidebar() {
             title: "Thống kê người dùng",
             url: "/user-statistics",
             icon: BarChart3,
+          },
+          {
+            title: "Thống kê doanh thu",
+            url: "/revenue",
+            icon: LineChart,
           },
         ],
       },
@@ -139,6 +149,11 @@ export function AppSidebar() {
             title: "Khuyến mãi",
             url: "promotion-management",
             icon: Percent,
+          },
+          {
+            title: "Đánh giá",
+            url: "/reviews-management",
+            icon: Star,
           },
         ],
       },

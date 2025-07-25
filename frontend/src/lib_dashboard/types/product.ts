@@ -1,9 +1,9 @@
+import { Review } from "@/interfaces";
 import { ActiveIngredient } from "@/types/entities";
 import { BatchProduct } from "./batch-product";
 import { Category } from "./category";
 import { DiseaseTableData } from "./disease";
 import { Manufacturer } from "./manufacturer";
-import { ReviewResponse } from "./review";
 import { User } from "./user";
 
 export interface Product {
@@ -22,7 +22,7 @@ export interface Product {
   manufacturer?: Manufacturer;
   distributor?: ProductDistributor;
   images: ProductImage[];
-  reviews: ReviewResponse[];
+  reviews: Review[];
   avg_rating: number | null;
   product_ingredients: ProductIngredient[];
   productDiseases: ProductDisease[];

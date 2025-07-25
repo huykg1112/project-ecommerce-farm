@@ -15,6 +15,7 @@ import {
 import { axiosInstance } from "./axios-instance";
 
 const userId = getCookie("user_id");
+const user = JSON.parse(getCookie("user") || "{}");
 
 export const orderServiceManagement = {
   // === CRUD Operations ===
@@ -256,10 +257,21 @@ export const orderServiceManagement = {
     }
   },
   async isOrderbyProduct(productId: string): Promise<boolean> {
+    if (!userId || !productId || !user) {
+      return false;
+    } else {
+      console.log(
+        "Checking order by product for user:",
+        userId,
+        "and product:",
+        productId,
+        user
+      );
+    }
     try {
-      const response = await axiosInstance.get("/order/check-product", {
-        params: { product_id: productId },
-      });
+      const response = await axiosInstance.get(
+        `/order/check-product/${productId}`
+      );
       return response.data.data;
     } catch (error) {
       let msg = "Lỗi khi kiểm tra đơn hàng theo sản phẩm";

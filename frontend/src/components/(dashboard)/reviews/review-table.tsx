@@ -92,17 +92,25 @@ export const ReviewTable = memo<ReviewTableProps>(
               </div>
             </div>
           ),
-          width: "300px",
+          width: "250px",
         },
         {
           name: "Sản phẩm",
           cell: (row) => (
-            <div className="py-4">
-              <div className="font-semibold text-[#44703d]">
-                {row.product?.name || "Sản phẩm đã xóa"}
+            <div className="flex items-center gap-3 py-4">
+              <div className="flex-shrink-0">
+                <img
+                  src={
+                    row.product?.images?.[0]?.image_url || "/placeholder.svg"
+                  }
+                  alt={row.product?.product_name || "Product"}
+                  className="h-12 w-12 rounded-lg object-cover border border-[#accc8b]/30"
+                />
               </div>
-              <div className="text-sm text-[#74a65d]">
-                ID: {row.product?.id || "N/A"}
+              <div>
+                <div className="font-semibold text-[#44703d]">
+                  {row.product?.product_name || "Sản phẩm đã xóa"}
+                </div>
               </div>
             </div>
           ),
@@ -121,7 +129,7 @@ export const ReviewTable = memo<ReviewTableProps>(
               )}
             </div>
           ),
-          width: "150px",
+          width: "200px",
         },
         {
           name: "Nội dung",
@@ -132,7 +140,7 @@ export const ReviewTable = memo<ReviewTableProps>(
               </p>
             </div>
           ),
-          width: "300px",
+          width: "350px",
         },
         {
           name: "Ngày tạo",
@@ -158,7 +166,6 @@ export const ReviewTable = memo<ReviewTableProps>(
           minWidth: "100px",
         },
         {
-          name: "Thao tác",
           cell: (row) => (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

@@ -50,13 +50,17 @@ export class OrderController {
   }
 
   //kiểm tra người dùng có đặc sản phẩm này chưa
-  @Get('check-product')
-  async checkProduct(@Req() req: any, @Query('product_id') productId: string) {
-    const userId = req.user.id;
-    if (!userId) {
-      throw new Error('Vui lòng đăng nhập để kiểm tra sản phẩm');
+  @Get('check-product/:product_id')
+  async checkProduct(@Req() req, @Param('product_id') product_id: string) {
+    if (!req) {
+      return { data: false };
     }
-    return this.orderService.hasProductInCart(userId, productId);
+    const user_id = req.user.id;
+    const hasProduct = await this.orderService.hasProductInCart(
+      user_id,
+      product_id,
+    );
+    return { data: hasProduct };
   }
 
   @Get('my-orders/:id')

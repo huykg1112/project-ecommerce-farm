@@ -48,9 +48,12 @@ export class AuthService {
     return bcrypt.compare(token, hashed);
   }
 
-  async login(
-    loginDto: LoginDto,
-  ): Promise<{ access_token: string; refresh_token: string; user_id: string }> {
+  async login(loginDto: LoginDto): Promise<{
+    access_token: string;
+    refresh_token: string;
+    user_id: string;
+    user: Omit<User, 'password'>;
+  }> {
     const { username, password } = loginDto;
     const user = await this.validateUser(username, password);
     const payload = { username: user.username, sub: user.user_id };
@@ -74,6 +77,7 @@ export class AuthService {
       access_token: accessToken,
       refresh_token: refreshToken,
       user_id: user.user_id,
+      user: user,
     };
   }
 
@@ -128,9 +132,12 @@ export class AuthService {
       await this.tokenService.deleteByAccessToken(accessToken); // Xóa token
     }
   }
-  async googleLogin(
-    googleUser: any,
-  ): Promise<{ access_token: string; refresh_token: string; user_id: string }> {
+  async googleLogin(googleUser: any): Promise<{
+    access_token: string;
+    refresh_token: string;
+    user_id: string;
+    user: Omit<User, 'password'>;
+  }> {
     try {
       // Kiểm tra xem user đã tồn tại qua email
       let user = await this.userService.userRepository.findOne({
@@ -171,6 +178,7 @@ export class AuthService {
         access_token: accessToken,
         refresh_token: refreshToken,
         user_id: user.user_id,
+        user: user, // Trả về thông tin user không có password
       };
     } catch (error) {
       console.error('Google login error:', error);

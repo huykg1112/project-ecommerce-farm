@@ -39,7 +39,7 @@ import {
 } from "@/interfaces";
 import { withAuth } from "@/lib/auth/with-auth";
 import { showToast } from "@/lib/toast-provider";
-import { deleteCookie } from "@/lib/utils";
+import { deleteCookie, setCookie } from "@/lib/utils";
 import {
   EyeIcon,
   EyeOffIcon,
@@ -108,6 +108,8 @@ function ProfilePage() {
     const fetchProfile = async () => {
       try {
         const data = await userService.getProfile();
+        setCookie("user", JSON.stringify(data)); // Lưu thông tin user vào cookie
+        setCookie("user_id", data.user_id); // Lưu user_id vào cookie
         let address = [
           {
             address_detail: "",

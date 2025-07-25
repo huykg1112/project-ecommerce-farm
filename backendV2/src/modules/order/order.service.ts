@@ -249,6 +249,7 @@ export class OrderService {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+    console.log('User found:', user);
 
     return this.orderRepository.find({
       where: { user: { user_id: userId }, is_deleted: false },
@@ -697,21 +698,34 @@ export class OrderService {
     return { message: 'Order deleted successfully' };
   }
 
-  async hasProductInCart(userId: string, productId: string): Promise<boolean> {
+  async hasProductInCart(
+    user_id: string,
+    product_id: string,
+  ): Promise<boolean> {
     const orders = await this.orderRepository.find({
       where: {
-        user: { user_id: userId },
-        order_details: {
-          batch_product: { product: { product_id: productId } },
-        },
+        user: { user_id: user_id },
+        is_deleted: false,
       },
-      relations: ['order_details'],
+      relations: [
+        'order_details',
+        'order_details.batch_product',
+        'order_details.batch_product.product',
+      ],
     });
+    if (
+      !orders ||
+      orders.length === 0 ||
+      orders[0].order_details.length === 0
+    ) {
+      return false; // No orders found for this user
+    }
     const isOrdered = orders.some((order) =>
-      order.order_details.some(
-        (detail) => detail.batch_product.product.product_id === productId,
+      order.order_details?.some(
+        (detail) => detail.batch_product?.product?.product_id === product_id,
       ),
     );
+    console.log('Product check result:', isOrdered);
     return isOrdered;
   }
 }

@@ -28,7 +28,7 @@ export class Review {
 
   @OneToOne(() => Review, { nullable: true }) // Phản hồi từ distributor
   @JoinColumn({ name: 'parent_review_id' })
-  parent_review!: Review; // Phản hồi từ distributor nếu có
+  parent_review!: Review; // review gốc nếu đây là review phản hồi
 
   @OneToOne(() => Review, (review) => review.parent_review) // Liên kết đến phản hồi distributor
   distributor_response_review!: Review;

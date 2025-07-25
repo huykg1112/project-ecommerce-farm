@@ -15,6 +15,7 @@ import {
   selectIsInWishlist,
 } from "@/lib/features/wishlist-slice";
 import { showToast } from "@/lib/toast-provider";
+import { getCookie } from "@/lib/utils";
 import { useWishlistAnimation } from "@/lib/wishlist/wishlist-animation-context";
 import { productServiceManagement } from "@/lib_dashboard/services/product-service-management";
 import { BatchProduct } from "@/lib_dashboard/types/batch-product";
@@ -74,6 +75,7 @@ export default function ProductPage() {
   const [loading, setLoading] = useState(false);
   const [product, setProduct] = useState<Product>();
   const [selectedBatch, setSelectedBatch] = useState<BatchProduct | null>(null);
+  const [user, setUser] = useState<any>(null);
 
   // Check if product is in wishlist
   const isInWishlist = useSelector(
@@ -83,6 +85,14 @@ export default function ProductPage() {
   // Fetch product data from API
   useEffect(() => {
     setLoading(true);
+    const userCookie = getCookie("user");
+    if (userCookie) {
+      try {
+        setUser(JSON.parse(userCookie));
+      } catch (error) {
+        console.error("Error parsing user cookie:", error);
+      }
+    }
     const fetchProduct = async () => {
       try {
         const productId = Array.isArray(id) ? id[0] : id;
@@ -108,24 +118,40 @@ export default function ProductPage() {
     fetchProduct();
   }, [id]);
 
+  console.log("Product:", product);
+
   // Memoized product images (max 5 images)
   const productImages = useMemo(() => {
     if (!product?.images) return ["/placeholder.svg"];
     return product.images.slice(0, 5).map((img) => img.image_url);
   }, [product?.images]);
 
-  // Memoized review statistics
+  // tìm và thống kê tất cả review vào có review.rating thì mới tính
   const reviewStats = useMemo(() => {
     if (!product?.reviews || product.reviews.length === 0) {
       return { averageRating: 0, totalReviews: 0 };
     }
-    const totalRating = product.reviews.reduce(
-      (sum, review) => sum + review.rating,
+
+    // Chỉ lấy những review có rating (không phải response của distributor)
+    const reviewsWithRating = product.reviews.filter(
+      (review) =>
+        review.rating !== null &&
+        review.rating !== undefined &&
+        !review.parent_review_id
+    );
+
+    if (reviewsWithRating.length === 0) {
+      return { averageRating: 0, totalReviews: 0 };
+    }
+
+    const totalRating = reviewsWithRating.reduce(
+      (sum, review) => sum + (review.rating || 0),
       0
     );
+
     return {
-      averageRating: totalRating / product.reviews.length,
-      totalReviews: product.reviews.length,
+      averageRating: totalRating / reviewsWithRating.length,
+      totalReviews: reviewsWithRating.length,
     };
   }, [product?.reviews]);
 

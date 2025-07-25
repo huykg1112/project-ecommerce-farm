@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { IsNull, Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { Product } from '../product/entities/product.entity';
 import { User } from '../user/entities/user.entity';
 import { CreateReviewDto } from './dto/create-review.dto';
@@ -144,6 +144,7 @@ export class ReviewService {
       where: { is_deleted: false },
       relations: [
         'product',
+        'product.images',
         'user',
         'distributor',
         'parent_review',
@@ -205,7 +206,11 @@ export class ReviewService {
 
   async findAllByProduct(productId: string): Promise<Review[]> {
     const reviews = await this.reviewRepository.find({
-      where: { product: { product_id: productId }, is_deleted: false },
+      where: {
+        product: { product_id: productId },
+        is_deleted: false,
+        rating: Not(IsNull()), // Ensure we only get main reviews without responses
+      },
       relations: [
         'product',
         'user',

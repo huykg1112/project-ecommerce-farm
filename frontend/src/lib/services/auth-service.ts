@@ -34,15 +34,18 @@ export const authService = {
     }
 
     const result: LoginResponse = await response.json();
+    console.log("Login result:", result);
 
     // Lưu token vào localStorage (chỉ ở phía client)
     if (isClient) {
       deleteCookie("access_token");
       deleteCookie("refresh_token");
       deleteCookie("user_id");
+      deleteCookie("user");
       setCookie("access_token", result.access_token);
       setCookie("refresh_token", result.refresh_token);
       setCookie("user_id", result.user_id);
+      setCookie("user", JSON.stringify(result.user));
     }
 
     return result;
@@ -89,6 +92,7 @@ export const authService = {
         deleteCookie("access_token");
         deleteCookie("refresh_token");
         deleteCookie("user_id");
+        deleteCookie("user");
         localStorage.removeItem("Authorization");
         localStorage.removeItem("wishlist");
       }
@@ -100,6 +104,7 @@ export const authService = {
         deleteCookie("access_token");
         deleteCookie("refresh_token");
         deleteCookie("user_id");
+        deleteCookie("user");
         localStorage.removeItem("Authorization");
         localStorage.removeItem("wishlist");
       }
@@ -186,7 +191,6 @@ export const authService = {
     if (isClient) {
       setCookie("access_token", accessToken);
       setCookie("refresh_token", refreshToken);
-      setCookie("user_id", ""); // Cần lấy user_id từ response nếu có
     }
   },
 

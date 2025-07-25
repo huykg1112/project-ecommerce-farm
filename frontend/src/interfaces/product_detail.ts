@@ -1,6 +1,7 @@
 import { BatchProduct } from "@/lib_dashboard/types/batch-product";
 import { Category } from "@/lib_dashboard/types/category";
 import { Manufacturer } from "@/lib_dashboard/types/manufacturer";
+import { Product } from "@/lib_dashboard/types/product";
 
 export interface ProductImagesProps {
   productImages: string[];
@@ -36,6 +37,6 @@ export interface ProductActionsProps {
 }
 
 export interface ProductTabsProps {
-  product?: any;
+  product?: Product;
   reviewStats?: { averageRating: number; totalReviews: number };
 }

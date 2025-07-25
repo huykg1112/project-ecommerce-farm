@@ -173,10 +173,11 @@ export const ReviewModals = memo<ReviewModalsProps>(
                   </h3>
                   <div className="p-4 bg-[#accc8b]/10 rounded-lg">
                     <div className="font-medium text-[#44703d]">
-                      {selectedReview.product?.name || "Sản phẩm đã xóa"}
+                      {selectedReview.product?.product_name ||
+                        "Sản phẩm đã xóa"}
                     </div>
                     <div className="text-sm text-[#74a65d]">
-                      ID: {selectedReview.product?.id || "N/A"}
+                      ID: {selectedReview.product?.product_id || "N/A"}
                     </div>
                   </div>
                 </div>

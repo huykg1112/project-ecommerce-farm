@@ -62,7 +62,7 @@ export default function ReviewsManagementPage() {
         return (
           review.comment?.toLowerCase().includes(searchTerm) ||
           review.user?.full_name?.toLowerCase().includes(searchTerm) ||
-          review.product?.name?.toLowerCase().includes(searchTerm)
+          review.product?.product_name?.toLowerCase().includes(searchTerm)
         );
       });
     }

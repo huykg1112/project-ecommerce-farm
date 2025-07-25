@@ -1,4 +1,4 @@
-import { Product } from "./products";
+import { Product } from "@/lib_dashboard/types/product";
 import { User } from "./users";
 
 export interface Review {
@@ -14,13 +14,9 @@ export interface Review {
   is_deleted: boolean;
 
   // Populated relations
-  product?: Product;
-  user?: User;
-  distributor?: User;
-  parent_review?: Review;
-  distributor_response_review?: Review;
-
-  // Computed fields
-  has_response?: boolean;
-  response_count?: number;
+  product?: Product; // Sản phẩm được đánh giá
+  user?: User; // Người dùng đã đánh giá (đánh giá 1 lần duy nhất) nếu là đánh giá của đại lý thì ko có này
+  distributor?: User; // Distributor đã phản hồi đánh giá trong parent_review (phản hồi của đánh giá 1 lần duy nhất) nếu là đánh giá của khách hàng thì ko có này
+  parent_review?: Review; // review gốc nếu đây là review phản hồi
+  distributor_response_review?: Review; //  đây là phản hồi của distributor nếu có
 }
