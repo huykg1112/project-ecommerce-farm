@@ -46,7 +46,9 @@ export function RevenueTable({ statistics, loading }: RevenueTableProps) {
         right: true,
         cell: (row) => (
           <div className="font-semibold text-green-600">
-            {row.revenue.toFixed(2)}
+            {isNaN(row.revenue) || !isFinite(row.revenue)
+              ? "0.00"
+              : row.revenue.toFixed(2)}
           </div>
         ),
       },
@@ -67,7 +69,11 @@ export function RevenueTable({ statistics, loading }: RevenueTableProps) {
         sortable: true,
         right: true,
         cell: (row) => (
-          <div className="text-gray-700">{row.averageOrder.toFixed(2)}</div>
+          <div className="text-gray-700">
+            {isNaN(row.averageOrder) || !isFinite(row.averageOrder)
+              ? "0.00"
+              : row.averageOrder.toFixed(2)}
+          </div>
         ),
       },
     ],
@@ -103,7 +109,9 @@ export function RevenueTable({ statistics, loading }: RevenueTableProps) {
         right: true,
         cell: (row) => (
           <div className="font-semibold text-green-600">
-            {row.revenue.toFixed(2)}
+            {isNaN(row.revenue) || !isFinite(row.revenue)
+              ? "0.00"
+              : row.revenue.toFixed(2)}
           </div>
         ),
       },
@@ -264,13 +272,19 @@ export function RevenueTable({ statistics, loading }: RevenueTableProps) {
                       </div>
                     </TableCell>
                     <TableCell className="text-right font-semibold text-green-600">
-                      {item.revenue.toFixed(2)} triệu
+                      {isNaN(item.revenue) || !isFinite(item.revenue)
+                        ? "0.00"
+                        : item.revenue.toFixed(2)}{" "}
+                      triệu
                     </TableCell>
                     <TableCell className="text-center">
                       <Badge variant="outline">{item.orders}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      {item.percentage.toFixed(1)}%
+                      {isNaN(item.percentage) || !isFinite(item.percentage)
+                        ? "0.0"
+                        : item.percentage.toFixed(1)}
+                      %
                     </TableCell>
                   </TableRow>
                 ))}
@@ -308,13 +322,19 @@ export function RevenueTable({ statistics, loading }: RevenueTableProps) {
                       </div>
                     </TableCell>
                     <TableCell className="text-right font-semibold text-green-600">
-                      {item.revenue.toFixed(2)} triệu
+                      {isNaN(item.revenue) || !isFinite(item.revenue)
+                        ? "0.00"
+                        : item.revenue.toFixed(2)}{" "}
+                      triệu
                     </TableCell>
                     <TableCell className="text-center">
                       <Badge variant="outline">{item.orders}</Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      {item.percentage.toFixed(1)}%
+                      {isNaN(item.percentage) || !isFinite(item.percentage)
+                        ? "0.0"
+                        : item.percentage.toFixed(1)}
+                      %
                     </TableCell>
                   </TableRow>
                 ))}
@@ -338,7 +358,11 @@ export function RevenueTable({ statistics, loading }: RevenueTableProps) {
                   Tổng doanh thu
                 </span>
                 <span className="font-bold text-green-600">
-                  {statistics.totalRevenue.toFixed(2)} triệu đồng
+                  {isNaN(statistics.totalRevenue) ||
+                  !isFinite(statistics.totalRevenue)
+                    ? "0.00"
+                    : statistics.totalRevenue.toFixed(2)}{" "}
+                  triệu đồng
                 </span>
               </div>
               <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
@@ -352,7 +376,11 @@ export function RevenueTable({ statistics, loading }: RevenueTableProps) {
                   Giá trị TB/đơn
                 </span>
                 <span className="font-bold text-purple-600">
-                  {statistics.averageOrderValue.toFixed(2)} triệu đồng
+                  {isNaN(statistics.averageOrderValue) ||
+                  !isFinite(statistics.averageOrderValue)
+                    ? "0.00"
+                    : statistics.averageOrderValue.toFixed(2)}{" "}
+                  triệu đồng
                 </span>
               </div>
               <div className="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
@@ -360,7 +388,11 @@ export function RevenueTable({ statistics, loading }: RevenueTableProps) {
                   Tỷ lệ chuyển đổi
                 </span>
                 <span className="font-bold text-orange-600">
-                  {statistics.conversionRate.toFixed(1)}%
+                  {isNaN(statistics.conversionRate) ||
+                  !isFinite(statistics.conversionRate)
+                    ? "0.0"
+                    : statistics.conversionRate.toFixed(1)}
+                  %
                 </span>
               </div>
             </div>

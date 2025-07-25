@@ -67,7 +67,11 @@ export function RevenueCharts({
           <p className="font-medium text-gray-900">{label}</p>
           {payload.map((entry: any, index: number) => (
             <p key={index} style={{ color: entry.color }}>
-              {entry.name}: {entry.value.toFixed(2)} triệu đồng
+              {entry.name}:{" "}
+              {isNaN(entry.value) || !isFinite(entry.value)
+                ? "0.00"
+                : entry.value.toFixed(2)}{" "}
+              triệu đồng
             </p>
           ))}
         </div>
@@ -86,9 +90,19 @@ export function RevenueCharts({
             {data.status || data.method}
           </p>
           <p style={{ color: payload[0].color }}>
-            Doanh thu: {data.revenue.toFixed(2)} triệu đồng
+            Doanh thu:{" "}
+            {isNaN(data.revenue) || !isFinite(data.revenue)
+              ? "0.00"
+              : data.revenue.toFixed(2)}{" "}
+            triệu đồng
           </p>
-          <p className="text-gray-600">Tỷ lệ: {data.percentage.toFixed(1)}%</p>
+          <p className="text-gray-600">
+            Tỷ lệ:{" "}
+            {isNaN(data.percentage) || !isFinite(data.percentage)
+              ? "0.0"
+              : data.percentage.toFixed(1)}
+            %
+          </p>
           <p className="text-gray-600">Đơn hàng: {data.orders}</p>
         </div>
       );
@@ -133,7 +147,7 @@ export function RevenueCharts({
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className=" flex flex-col  gap-6">
         {/* Revenue by Time */}
         {chartVisibility.revenueByTime && (
           <Card className="lg:col-span-2">

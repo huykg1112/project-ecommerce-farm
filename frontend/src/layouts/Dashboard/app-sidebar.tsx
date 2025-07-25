@@ -59,13 +59,13 @@ export function AppSidebar() {
         url: "#",
         icon: BarChart3,
         items: [
-          {
-            title: "Dashboard",
-            url: "/dashboard",
-            icon: Home,
-          },
           ...(userRole !== "Distributor"
             ? [
+                {
+                  title: "Dashboard",
+                  url: "/dashboard",
+                  icon: Home,
+                },
                 {
                   title: "Thống kê người dùng",
                   url: "/user-statistics",

@@ -64,7 +64,7 @@ export default function Header() {
 
   const mainNavItems = [
     { name: "Trang Chủ", href: "/home" },
-    { name: "Phân tích", href: "/blog", label: "AI" },
+    { name: "Phân tích", href: "/analyze", label: "AI" },
     { name: "Sản phẩm", href: "/products" },
     { name: "Cửa hàng ", href: "/stores" },
     { name: "Liên hệ", href: "/contact" },

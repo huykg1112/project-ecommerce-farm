@@ -122,6 +122,11 @@ export function RevenueCards({ statistics, loading }: RevenueCardsProps) {
   ];
 
   const formatValue = (value: number, unit: string) => {
+    // Handle NaN and invalid values
+    if (isNaN(value) || !isFinite(value)) {
+      return "0";
+    }
+
     if (unit === "triệu đồng") {
       return value.toFixed(2);
     }

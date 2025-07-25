@@ -104,6 +104,12 @@ export function useRevenueStatistics() {
   const revenueByTime = useMemo(() => {
     if (filteredOrders.length === 0) return [];
 
+    // Helper function to safely get numeric value
+    const getNumericValue = (value: any): number => {
+      const num = Number(value);
+      return isNaN(num) || !isFinite(num) ? 0 : num;
+    };
+
     const result: RevenueByTime[] = [];
 
     if (filters.timeRange === "custom" || filters.timeRange === "day") {
@@ -132,12 +138,14 @@ export function useRevenueStatistics() {
         });
 
         const revenue =
-          periodOrders.reduce((sum, order) => sum + order.total_amount, 0) /
-          MILLION;
+          periodOrders.reduce(
+            (sum, order) => sum + getNumericValue(order.total_amount),
+            0
+          ) / MILLION;
 
         result.push({
           period: `${periodStart.getDate()}/${periodStart.getMonth() + 1}`,
-          revenue,
+          revenue: isNaN(revenue) ? 0 : revenue,
           orders: periodOrders.length,
           averageOrder:
             periodOrders.length > 0 ? revenue / periodOrders.length : 0,
@@ -167,12 +175,14 @@ export function useRevenueStatistics() {
         });
 
         const revenue =
-          periodOrders.reduce((sum, order) => sum + order.total_amount, 0) /
-          MILLION;
+          periodOrders.reduce(
+            (sum, order) => sum + getNumericValue(order.total_amount),
+            0
+          ) / MILLION;
 
         result.push({
           period: `${periodStart.getDate()}-${periodEnd.getDate()}`,
-          revenue,
+          revenue: isNaN(revenue) ? 0 : revenue,
           orders: periodOrders.length,
           averageOrder:
             periodOrders.length > 0 ? revenue / periodOrders.length : 0,
@@ -193,12 +203,14 @@ export function useRevenueStatistics() {
         });
 
         const revenue =
-          periodOrders.reduce((sum, order) => sum + order.total_amount, 0) /
-          MILLION;
+          periodOrders.reduce(
+            (sum, order) => sum + getNumericValue(order.total_amount),
+            0
+          ) / MILLION;
 
         result.push({
           period: `T${month}`,
-          revenue,
+          revenue: isNaN(revenue) ? 0 : revenue,
           orders: periodOrders.length,
           averageOrder:
             periodOrders.length > 0 ? revenue / periodOrders.length : 0,
@@ -212,28 +224,38 @@ export function useRevenueStatistics() {
 
   // Calculate revenue by status
   const revenueByStatus = useMemo(() => {
+    // Helper function to safely get numeric value
+    const getNumericValue = (value: any): number => {
+      const num = Number(value);
+      return isNaN(num) || !isFinite(num) ? 0 : num;
+    };
+
     const statusMap = new Map<string, { revenue: number; orders: number }>();
     const totalRevenue = filteredOrders.reduce(
-      (sum, order) => sum + order.total_amount,
+      (sum, order) => sum + getNumericValue(order.total_amount),
       0
     );
 
     filteredOrders.forEach((order) => {
       const status = order.status.status_name;
+      const orderAmount = getNumericValue(order.total_amount);
       const current = statusMap.get(status) || { revenue: 0, orders: 0 };
       statusMap.set(status, {
-        revenue: current.revenue + order.total_amount,
+        revenue: current.revenue + orderAmount,
         orders: current.orders + 1,
       });
     });
 
     const result: RevenueByStatus[] = [];
     statusMap.forEach((data, status) => {
+      const revenue = data.revenue / MILLION;
+      const percentage =
+        totalRevenue > 0 ? (data.revenue / totalRevenue) * 100 : 0;
       result.push({
         status,
-        revenue: data.revenue / MILLION,
+        revenue: isNaN(revenue) ? 0 : revenue,
         orders: data.orders,
-        percentage: totalRevenue > 0 ? (data.revenue / totalRevenue) * 100 : 0,
+        percentage: isNaN(percentage) ? 0 : percentage,
         color: STATUS_COLORS[status as keyof typeof STATUS_COLORS] || "#6b7280",
       });
     });
@@ -243,28 +265,38 @@ export function useRevenueStatistics() {
 
   // Calculate revenue by payment method
   const revenueByPaymentMethod = useMemo(() => {
+    // Helper function to safely get numeric value
+    const getNumericValue = (value: any): number => {
+      const num = Number(value);
+      return isNaN(num) || !isFinite(num) ? 0 : num;
+    };
+
     const paymentMap = new Map<string, { revenue: number; orders: number }>();
     const totalRevenue = filteredOrders.reduce(
-      (sum, order) => sum + order.total_amount,
+      (sum, order) => sum + getNumericValue(order.total_amount),
       0
     );
 
     filteredOrders.forEach((order) => {
       const method = order.payment_method.method_name;
+      const orderAmount = getNumericValue(order.total_amount);
       const current = paymentMap.get(method) || { revenue: 0, orders: 0 };
       paymentMap.set(method, {
-        revenue: current.revenue + order.total_amount,
+        revenue: current.revenue + orderAmount,
         orders: current.orders + 1,
       });
     });
 
     const result: RevenueByPaymentMethod[] = [];
     paymentMap.forEach((data, method) => {
+      const revenue = data.revenue / MILLION;
+      const percentage =
+        totalRevenue > 0 ? (data.revenue / totalRevenue) * 100 : 0;
       result.push({
         method,
-        revenue: data.revenue / MILLION,
+        revenue: isNaN(revenue) ? 0 : revenue,
         orders: data.orders,
-        percentage: totalRevenue > 0 ? (data.revenue / totalRevenue) * 100 : 0,
+        percentage: isNaN(percentage) ? 0 : percentage,
       });
     });
 
@@ -273,6 +305,12 @@ export function useRevenueStatistics() {
 
   // Calculate top products
   const topProducts = useMemo(() => {
+    // Helper function to safely get numeric value
+    const getNumericValue = (value: any): number => {
+      const num = Number(value);
+      return isNaN(num) || !isFinite(num) ? 0 : num;
+    };
+
     const productMap = new Map<string, TopProduct>();
 
     filteredOrders.forEach((order) => {
@@ -283,6 +321,9 @@ export function useRevenueStatistics() {
           const productName =
             detail.batch_product?.product?.product_name ||
             "Sản phẩm không xác định";
+          const unitPrice = getNumericValue(detail.unit_price);
+          const quantity = getNumericValue(detail.quantity);
+
           const current = productMap.get(productId) || {
             productId,
             productName,
@@ -293,8 +334,8 @@ export function useRevenueStatistics() {
 
           productMap.set(productId, {
             ...current,
-            revenue: current.revenue + detail.unit_price * detail.quantity,
-            quantity: current.quantity + detail.quantity,
+            revenue: current.revenue + unitPrice * quantity,
+            quantity: current.quantity + quantity,
             orders: current.orders + 1,
           });
         });
@@ -304,7 +345,9 @@ export function useRevenueStatistics() {
     return Array.from(productMap.values())
       .map((product) => ({
         ...product,
-        revenue: product.revenue / MILLION,
+        revenue: isNaN(product.revenue / MILLION)
+          ? 0
+          : product.revenue / MILLION,
       }))
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 10);
@@ -320,9 +363,17 @@ export function useRevenueStatistics() {
 
   // Calculate main statistics
   const statistics = useMemo(() => {
+    // Helper function to safely get numeric value
+    const getNumericValue = (value: any): number => {
+      const num = Number(value);
+      return isNaN(num) || !isFinite(num) ? 0 : num;
+    };
+
     const totalRevenue =
-      filteredOrders.reduce((sum, order) => sum + order.total_amount, 0) /
-      MILLION;
+      filteredOrders.reduce(
+        (sum, order) => sum + getNumericValue(order.total_amount),
+        0
+      ) / MILLION;
     const totalOrders = filteredOrders.length;
     const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
@@ -332,8 +383,10 @@ export function useRevenueStatistics() {
         order.status.status_name === "DELIVERED"
     );
     const completedRevenue =
-      completedOrders.reduce((sum, order) => sum + order.total_amount, 0) /
-      MILLION;
+      completedOrders.reduce(
+        (sum, order) => sum + getNumericValue(order.total_amount),
+        0
+      ) / MILLION;
 
     const pendingOrders = filteredOrders.filter(
       (order) =>
@@ -341,8 +394,10 @@ export function useRevenueStatistics() {
         order.status.status_name === "CONFIRMED"
     );
     const pendingRevenue =
-      pendingOrders.reduce((sum, order) => sum + order.total_amount, 0) /
-      MILLION;
+      pendingOrders.reduce(
+        (sum, order) => sum + getNumericValue(order.total_amount),
+        0
+      ) / MILLION;
 
     const cancelledOrders = filteredOrders.filter(
       (order) =>
@@ -350,19 +405,21 @@ export function useRevenueStatistics() {
         order.status.status_name === "FAILED"
     );
     const cancelledRevenue =
-      cancelledOrders.reduce((sum, order) => sum + order.total_amount, 0) /
-      MILLION;
+      cancelledOrders.reduce(
+        (sum, order) => sum + getNumericValue(order.total_amount),
+        0
+      ) / MILLION;
 
     const conversionRate =
       totalOrders > 0 ? (completedOrders.length / totalOrders) * 100 : 0;
 
     const result: RevenueStatistics = {
-      totalRevenue,
+      totalRevenue: isNaN(totalRevenue) ? 0 : totalRevenue,
       totalOrders,
-      averageOrderValue,
-      completedRevenue,
-      pendingRevenue,
-      cancelledRevenue,
+      averageOrderValue: isNaN(averageOrderValue) ? 0 : averageOrderValue,
+      completedRevenue: isNaN(completedRevenue) ? 0 : completedRevenue,
+      pendingRevenue: isNaN(pendingRevenue) ? 0 : pendingRevenue,
+      cancelledRevenue: isNaN(cancelledRevenue) ? 0 : cancelledRevenue,
       revenueByTime,
       revenueByStatus,
       revenueByPaymentMethod,
@@ -371,7 +428,7 @@ export function useRevenueStatistics() {
       filteredOrders,
       revenueChangePercent: 0, // Would need previous period data
       ordersChangePercent: 0, // Would need previous period data
-      conversionRate,
+      conversionRate: isNaN(conversionRate) ? 0 : conversionRate,
     };
 
     return result;
