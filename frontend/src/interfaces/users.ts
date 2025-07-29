@@ -52,6 +52,7 @@ export interface UserProfile {
   address?: string;
   cccd?: string;
   license_number?: string;
+  invenstory?: Invenstory;
   avatar?: string;
   role_name: string;
   role_id?: string;
@@ -69,6 +70,7 @@ export interface UpdateProfileDto {
   lng?: number;
   cccd?: string;
   license_number?: string;
+  inventory?: Invenstory;
 }
 
 export interface ChangePasswordDto {

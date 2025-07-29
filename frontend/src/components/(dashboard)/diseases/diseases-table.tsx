@@ -82,12 +82,13 @@ export const DiseaseTable = memo<DiseaseTableProps>(
           <div className="font-semibold text-[#44703d]">{row.disease_name}</div>
         ),
         allowOverflow: true,
+        width: "200px",
       },
       {
         name: "Mô tả",
         selector: (row: DiseaseTableData) => row.description,
         cell: (row: DiseaseTableData) => (
-          <div className="text-[#74a65d] max-w-md">{row.description}</div>
+          <div className="text-[#74a65d]">{row.description}</div>
         ),
       },
       {
@@ -102,6 +103,8 @@ export const DiseaseTable = memo<DiseaseTableProps>(
             </Badge>
           );
         },
+        allowOverflow: true,
+        width: "150px",
       },
       {
         name: "Kích hoạt",
@@ -113,6 +116,7 @@ export const DiseaseTable = memo<DiseaseTableProps>(
             className="data-[state=checked]:bg-[#74a65d]"
           />
         ),
+        width: "120px",
       },
       {
         width: "80px",

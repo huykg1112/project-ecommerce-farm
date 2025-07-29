@@ -42,63 +42,69 @@ This project combines a robust backend with **NestJS** (TypeScript) for efficien
 
 ## Project Structure
 
-
 ecommerce-farm/
-├── backend/              # Backend (NestJS)
+├── backend/ # Backend (NestJS)
 
-│   ├── src/              # Source code
+│ ├── src/ # Source code
 
-│   ├── test/             # Tests
+│ ├── test/ # Tests
 
-│   ├── .env              # Environment variables
+│ ├── .env # Environment variables
 
-│   ├── package.json      # Dependencies and scripts
+│ ├── package.json # Dependencies and scripts
 
-│   └── README.md         # Backend docs
+│ └── README.md # Backend docs
 
-├── frontend/             # Frontend (Next.js)
+├── frontend/ # Frontend (Next.js)
 
-│   ├── src/              # Source code
+│ ├── src/ # Source code
 
-│   ├── public/           # Static assets
+│ ├── public/ # Static assets
 
-│   ├── .env.local        # Local environment variables
+│ ├── .env.local # Local environment variables
 
-│   ├── package.json      # Dependencies and scripts
+│ ├── package.json # Dependencies and scripts
 
-│   └── README.md         # Frontend docs
+│ └── README.md # Frontend docs
 
-├── .gitignore            # Git ignore file
+├── .gitignore # Git ignore file
 
-├── README.md             # Project overview
+├── README.md # Project overview
 
-└── package.json          # Root scripts
-
+└── package.json # Root scripts
 
 ## Getting Started
 
 ### Prerequisites
+
 - Node.js (>= 14.x)
 - npm or yarn
 
 ### Installation
+
 1. Clone the repository:
    ```bash
    git clone https://github.com/huykg1112/project-ecommerce-farm.git
    cd project-ecommerce-farm
+   ```
 2. Install dependencies:
-  - For backend:
-    ```bash
-    cd backend
-    npm install
-  - For frontend:
-    ```bash
-    cd ../frontend
-    npm install
-  - For root (concurrently):
-    ```bash
-    cd ../frontend
-    npm install
+
+- For backend:
+  ```bash
+  cd backend
+  npm install
+  ```
+- For frontend:
+  ```bash
+  cd ../frontend
+  npm install
+  ```
+- For root (concurrently):
+  ```bash
+  cd ../frontend
+  npm install
+  ```
+
 3. Set up environment variables:
    Create .env in backend:
    ```bash
@@ -107,18 +113,50 @@ ecommerce-farm/
    DATABASE_USER=youruser
    DATABASE_PASSWORD=yourpassword
    DATABASE_NAME=ecommerce_farm
+   ```
 
 ### Usage
+
 - Run both backend and frontend:
+
   ```bash
   npm run dev
-Backend: http://localhost:4200
-Frontend: http://localhost:3000
+  Backend: http://localhost:4200
+  Frontend: http://localhost:3000
+
+  ```
 
 - Run only backend:
+
   ```bash
   npm run start:backend
-  
+
+  ```
+
 - Run only frontend:
+
   ```bash
   npm run start:frontend
+
+  ```
+
+- Run action rasa
+
+  ```bash
+  rasa run actions
+
+  ```
+
+- Run Shell rasa
+
+```bash
+  rasa shell --endpoints endpoints.yml
+```
+
+VNpay demo
+
+Ngân hàng: NCB
+Số thẻ: 9704198526191432198
+Tên chủ thẻ:NGUYEN VAN A
+Ngày phát hành:07/15
+Mật khẩu OTP:123456

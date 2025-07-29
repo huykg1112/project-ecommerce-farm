@@ -140,6 +140,7 @@ export const productServiceManagement = {
           "Content-Type": "multipart/form-data", // Đặt header để gửi FormData
         },
       });
+      showToast.success("Tạo sản phẩm thành công");
       return response.data;
     } catch (error) {
       let msg = "Lỗi khi tạo sản phẩm";
@@ -191,6 +192,7 @@ export const productServiceManagement = {
         },
       });
       return response.data;
+      showToast.success("Cập nhật sản phẩm thành công");
     } catch (error) {
       let msg = "Lỗi khi cập nhật sản phẩm";
       if (axios.isAxiosError(error) && error.response?.data?.message) {

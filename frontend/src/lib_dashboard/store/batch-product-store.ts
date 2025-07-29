@@ -283,7 +283,7 @@ export const loadFormDataAtom = atom(null, async (get, set) => {
     set(productTypesListAtom, productTypes);
 
     // Load promotions
-    const promotions = await promotionService.getPromotions();
+    const promotions = await promotionService.getPromotionManagement();
     set(
       promotionsListAtom,
       promotions.filter((p) => p.is_active)

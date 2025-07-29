@@ -204,7 +204,7 @@ export function OrderDetailModal({
                   Nhà phân phối
                 </h3>
                 <div className="space-y-2">
-                  <div className="font-medium">{order.distributor.full_name}</div>
+                  <div className="font-medium">{order.distributor.invenstory?.name}</div>
                   <div className="text-sm text-gray-600">{order.distributor.email}</div>
                 </div>
               </div>

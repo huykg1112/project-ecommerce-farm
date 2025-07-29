@@ -139,8 +139,6 @@ export default function ProductsPage() {
     return true;
   });
 
-  console.log("Filtered Products:", filteredProducts);
-
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     switch (sort) {
       case "newest":

@@ -106,11 +106,7 @@ export class PromotionService {
       relations: ['created_by', 'batch_products'],
       order: { created_at: 'DESC' },
     });
-    return {
-      message: 'Lấy danh sách chương trình khuyến mãi thành công',
-      data: promotions,
-      total: promotions.length,
-    };
+    return promotions;
   }
   async findActivePromotions() {
     const promotions = await this.promotionRepository.find({

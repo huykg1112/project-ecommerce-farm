@@ -8,11 +8,12 @@ import {
   Post,
   Req,
 } from '@nestjs/common';
+import { Role } from '@root/src/auth/enums/role.enum';
 import { Public } from '@root/src/public.decorator';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
+import { CreateNoBatchPromotionDto } from './dto/createNoBatch-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
 import { PromotionService } from './promotion.service';
-import { CreateNoBatchPromotionDto } from './dto/createNoBatch-promotion.dto';
 
 @Controller('promotion')
 export class PromotionController {
@@ -36,6 +37,11 @@ export class PromotionController {
 
   @Get('distributor')
   findAllByDistributor(@Req() req) {
+    //kiểm tra nếu là Administrator thì trả về tất cả
+    const isAdmin = req.user.role_name === Role.ADMIN;
+    if (isAdmin) {
+      return this.promotionService.findAll();
+    }
     return this.promotionService.findAllByDistributor(req.user.user_id);
   }
 

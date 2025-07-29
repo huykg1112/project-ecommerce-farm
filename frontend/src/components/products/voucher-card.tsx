@@ -44,7 +44,7 @@ export default function VoucherCard({ voucher }: VoucherCardProps) {
       }
       await voucherService.collectVoucher(voucher.voucher_id);
       showToast.success(`Đã lưu voucher: ${voucher.voucher_code}`);
-      router.push(`/seller/${voucher.distributor_id}`);
+      // router.push(`/seller/${voucher.distributor_id}`);
       // Decrease remaining uses
       if (typeof remainingUses === "number") {
         setRemainingUses((prev) => prev - 1);

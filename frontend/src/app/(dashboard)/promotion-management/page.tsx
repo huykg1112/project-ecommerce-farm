@@ -40,7 +40,7 @@ export default function PromotionManagementPage() {
   const fetchPromotions = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await promotionService.getPromotions();
+      const data = await promotionService.getPromotionManagement();
       setPromotions(data);
     } catch (error) {
     } finally {
@@ -50,17 +50,17 @@ export default function PromotionManagementPage() {
 
   // Filter promotions
   const filteredPromotions = useMemo(() => {
-    let filtered = promotions;
-    console;
+    let filtered =
+      (promotions && promotions.length > 0 ? promotions : []) || [];
 
-    if (searchTerm) {
+    if (searchTerm && promotions && promotions.length > 0) {
       const search = searchTerm.toLowerCase();
       filtered = filtered.filter((promotion) =>
         (promotion?.promotion_name || "").toLowerCase().includes(search)
       );
     }
 
-    if (statusFilter) {
+    if (statusFilter && promotions && promotions.length > 0) {
       filtered = filtered.filter((promotion) =>
         statusFilter === "all"
           ? true
@@ -405,7 +405,7 @@ export default function PromotionManagementPage() {
         onSubmit={handleSubmitForm}
         formData={formData}
         onUpdateFormData={handleFormChange}
-        title="Chỉnh sửa voucher"
+        title="Chỉnh sửa mã giảm giá"
         submitText="Lưu"
         isEdit
       />
@@ -415,7 +415,7 @@ export default function PromotionManagementPage() {
         open={deleteModalOpen}
         setOpen={setDeleteModalOpen}
         handleConfirm={handleConfirmDelete}
-        title="voucher"
+        title="Giảm giá"
         nameDelete={selectedPromotionName}
       />
     </section>

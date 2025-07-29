@@ -24,9 +24,9 @@ import { Category } from "@/lib_dashboard/types/category";
 import { Manufacturer } from "@/lib_dashboard/types/manufacturer";
 import { ProductFormData } from "@/lib_dashboard/types/product";
 import { ActiveIngredient, Disease } from "@/types/entities";
-import { ImagePlus, Star, StarOff, Trash2 } from "lucide-react";
+import { ImagePlus, Search, Star, StarOff, Trash2 } from "lucide-react";
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 interface ProductFormModalProps {
   open: boolean;
@@ -81,6 +81,8 @@ export function ProductFormModal({
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [images, setImages] = useState<ImageUpload[]>([]);
+  const [searchIngredientText, setSearchIngredientText] = useState("");
+  const [searchDiseaseText, setSearchDiseaseText] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -108,7 +110,28 @@ export function ProductFormModal({
     fetchData();
   }, []);
 
-  // const manufacturers = useMemo(async () => {
+  // Filtered lists for search
+  const filteredActiveIngredients = useMemo(() => {
+    if (!activeIngredients) return [];
+    if (!searchIngredientText.trim()) return activeIngredients;
+
+    return activeIngredients.filter((ingredient) =>
+      ingredient.ingredient_name
+        ?.toLowerCase()
+        .includes(searchIngredientText.toLowerCase())
+    );
+  }, [activeIngredients, searchIngredientText]);
+
+  const filteredDiseases = useMemo(() => {
+    if (!diseases) return [];
+    if (!searchDiseaseText.trim()) return diseases;
+
+    return diseases.filter((disease) =>
+      disease.disease_name
+        ?.toLowerCase()
+        .includes(searchDiseaseText.toLowerCase())
+    );
+  }, [diseases, searchDiseaseText]); // const manufacturers = useMemo(async () => {
   //   setLoadingManufacturers(true);
   //   const list = await manufacturerServiceManagement.getManufacturers();
   //   if (list && list.length > 0) {
@@ -200,16 +223,14 @@ export function ProductFormModal({
     try {
       setLoading(true);
 
-      // TODO: Handle image upload to Cloudinary here
-      // For now, we'll just pass the form data
+      // formData.product_images is already synced with images via useEffect
       const success = await onSubmit();
 
       if (success) {
-        onProductImagesChange?.(
-          images.map((img) => img.file).filter(Boolean) as File[]
-        );
         setImages([]);
         setErrors({});
+        setSearchIngredientText("");
+        setSearchDiseaseText("");
       }
     } catch (error) {
       console.error("Submit error:", error);
@@ -219,11 +240,10 @@ export function ProductFormModal({
   }, [onSubmit, validateForm]);
 
   const handleClose = useCallback(() => {
-    onProductImagesChange?.(
-      images.map((img) => img.file).filter(Boolean) as File[]
-    );
     setImages([]);
     setErrors({});
+    setSearchIngredientText("");
+    setSearchDiseaseText("");
     onClose();
   }, [onClose]);
 
@@ -259,6 +279,15 @@ export function ProductFormModal({
     [onUpdateFormData]
   );
 
+  // Sync images with formData.product_images whenever images change
+  useEffect(() => {
+    const imageFiles = images
+      .map((img) => img.file)
+      .filter((f): f is File => !!f);
+
+    updateFormData({ product_images: imageFiles });
+  }, [images, updateFormData]);
+
   // Image handling
   const handleImageUpload = useCallback(
     (files: FileList | null) => {
@@ -284,15 +313,10 @@ export function ProductFormModal({
           reader.readAsDataURL(file);
         }
       });
-      updateFormData({
-        product_images: images
-          .map((img) => img.file)
-          .filter((f): f is File => !!f),
-      });
 
-      // Notify parent component about image chang
+      // Notify parent component about image change
     },
-    [images.length]
+    [images.length, updateFormData]
   );
 
   const handleImageRemove = useCallback((imageId: string) => {
@@ -715,81 +739,102 @@ export function ProductFormModal({
               ) : !activeIngredients || activeIngredients.length === 0 ? (
                 <div>Không có hoạt chất nào.</div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {activeIngredients.map(
-                    (activeIngredient: ActiveIngredient) => (
-                      <div
-                        key={activeIngredient.ingredient_id}
-                        className={`p-4 border rounded-lg shadow-sm hover:shadow-md transition-shadow ${
-                          formData.ingredient_id_primary ===
-                          activeIngredient.ingredient_id
-                            ? "border-yellow-500 bg-yellow-50"
-                            : ""
-                        }`}
-                      >
-                        <div className="flex items-center gap-3 mb-2">
-                          <Checkbox
-                            id={`ingredient-${activeIngredient.ingredient_id}`}
-                            checked={formData.ingredient_ids?.includes(
-                              activeIngredient.ingredient_id
-                            )}
-                            onCheckedChange={() =>
-                              handleIngredientToggle(
-                                activeIngredient.ingredient_id
-                              )
-                            }
-                          />
-                          <Label
-                            htmlFor={`ingredient-${activeIngredient.ingredient_id}`}
-                            className="flex-1"
-                          >
-                            {activeIngredient.ingredient_name ||
-                              "Chưa có tên hoạt chất"}
-                          </Label>
-                        </div>
+                <>
+                  {/* Search Input for Active Ingredients */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      type="text"
+                      placeholder="Tìm kiếm hoạt chất..."
+                      value={searchIngredientText}
+                      onChange={(e) => setSearchIngredientText(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
 
-                        {formData.ingredient_ids?.includes(
-                          activeIngredient.ingredient_id
-                        ) && (
-                          <div className="flex items-center gap-2 mt-2">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant={
-                                formData.ingredient_id_primary ===
-                                activeIngredient.ingredient_id
-                                  ? "default"
-                                  : "outline"
-                              }
-                              onClick={() =>
-                                handleSetPrimaryIngredient(
-                                  activeIngredient.ingredient_id
-                                )
-                              }
-                              className={`flex items-center gap-1 ${
-                                formData.ingredient_id_primary ===
-                                activeIngredient.ingredient_id
-                                  ? "bg-yellow-500 hover:bg-yellow-600 text-white"
-                                  : "border-yellow-500 text-yellow-600 hover:bg-yellow-50"
-                              }`}
-                            >
-                              {formData.ingredient_id_primary ===
-                              activeIngredient.ingredient_id ? (
-                                <Star className="h-3 w-3" />
-                              ) : (
-                                <StarOff className="h-3 w-3" />
-                              )}
-                              {formData.ingredient_id_primary ===
+                  {filteredActiveIngredients.length === 0 ? (
+                    <div className="text-center text-gray-500 py-4">
+                      Không tìm thấy hoạt chất nào phù hợp với "
+                      {searchIngredientText}"
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {filteredActiveIngredients.map(
+                        (activeIngredient: ActiveIngredient) => (
+                          <div
+                            key={activeIngredient.ingredient_id}
+                            className={`p-4 border rounded-lg shadow-sm hover:shadow-md transition-shadow ${
+                              formData.ingredient_id_primary ===
                               activeIngredient.ingredient_id
-                                ? "Hoạt chất chính"
-                                : "Đặt làm chính"}
-                            </Button>
+                                ? "border-yellow-500 bg-yellow-50"
+                                : ""
+                            }`}
+                          >
+                            <div className="flex items-center gap-3 mb-2">
+                              <Checkbox
+                                id={`ingredient-${activeIngredient.ingredient_id}`}
+                                checked={formData.ingredient_ids?.includes(
+                                  activeIngredient.ingredient_id
+                                )}
+                                onCheckedChange={() =>
+                                  handleIngredientToggle(
+                                    activeIngredient.ingredient_id
+                                  )
+                                }
+                              />
+                              <Label
+                                htmlFor={`ingredient-${activeIngredient.ingredient_id}`}
+                                className="flex-1"
+                              >
+                                {activeIngredient.ingredient_name ||
+                                  "Chưa có tên hoạt chất"}
+                              </Label>
+                            </div>
+
+                            {formData.ingredient_ids?.includes(
+                              activeIngredient.ingredient_id
+                            ) && (
+                              <div className="flex items-center gap-2 mt-2">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant={
+                                    formData.ingredient_id_primary ===
+                                    activeIngredient.ingredient_id
+                                      ? "default"
+                                      : "outline"
+                                  }
+                                  onClick={() =>
+                                    handleSetPrimaryIngredient(
+                                      activeIngredient.ingredient_id
+                                    )
+                                  }
+                                  className={`flex items-center gap-1 ${
+                                    formData.ingredient_id_primary ===
+                                    activeIngredient.ingredient_id
+                                      ? "bg-yellow-500 hover:bg-yellow-600 text-white"
+                                      : "border-yellow-500 text-yellow-600 hover:bg-yellow-50"
+                                  }`}
+                                >
+                                  {formData.ingredient_id_primary ===
+                                  activeIngredient.ingredient_id ? (
+                                    <Star className="h-3 w-3" />
+                                  ) : (
+                                    <StarOff className="h-3 w-3" />
+                                  )}
+                                  {formData.ingredient_id_primary ===
+                                  activeIngredient.ingredient_id
+                                    ? "Hoạt chất chính"
+                                    : "Đặt làm chính"}
+                                </Button>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    )
+                        )
+                      )}
+                    </div>
                   )}
-                </div>
+                </>
               )}
             </CardContent>
           </Card>
@@ -809,68 +854,94 @@ export function ProductFormModal({
               ) : !diseases || diseases.length === 0 ? (
                 <div>Không có bệnh cây trồng nào.</div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {diseases.map((disease: Disease) => (
-                    <div
-                      key={disease.disease_id}
-                      className={`p-4 border rounded-lg shadow-sm hover:shadow-md transition-shadow ${
-                        formData.disease_id_primary === disease.disease_id
-                          ? "border-green-500 bg-green-50"
-                          : ""
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 mb-2">
-                        <Checkbox
-                          id={`disease-${disease.disease_id}`}
-                          checked={formData.disease_ids?.includes(
-                            disease.disease_id
-                          )}
-                          onCheckedChange={() =>
-                            handleDiseaseToggle(disease.disease_id)
-                          }
-                        />
-                        <Label
-                          htmlFor={`disease-${disease.disease_id}`}
-                          className="flex-1"
-                        >
-                          {disease.disease_name || "Chưa có tên bệnh"}
-                        </Label>
-                      </div>
+                <>
+                  {/* Search Input for Diseases */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                    <Input
+                      type="text"
+                      placeholder="Tìm kiếm bệnh cây trồng..."
+                      value={searchDiseaseText}
+                      onChange={(e) => setSearchDiseaseText(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
 
-                      {formData.disease_ids?.includes(disease.disease_id) && (
-                        <div className="flex items-center gap-2 mt-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant={
-                              formData.disease_id_primary === disease.disease_id
-                                ? "default"
-                                : "outline"
-                            }
-                            onClick={() =>
-                              handleSetPrimaryDisease(disease.disease_id)
-                            }
-                            className={`flex items-center gap-1 ${
-                              formData.disease_id_primary === disease.disease_id
-                                ? "bg-green-500 hover:bg-green-600 text-white"
-                                : "border-green-500 text-green-600 hover:bg-green-50"
-                            }`}
-                          >
-                            {formData.disease_id_primary ===
-                            disease.disease_id ? (
-                              <Star className="h-3 w-3" />
-                            ) : (
-                              <StarOff className="h-3 w-3" />
-                            )}
-                            {formData.disease_id_primary === disease.disease_id
-                              ? "Bệnh chính"
-                              : "Đặt làm chính"}
-                          </Button>
-                        </div>
-                      )}
+                  {filteredDiseases.length === 0 ? (
+                    <div className="text-center text-gray-500 py-4">
+                      Không tìm thấy bệnh cây trồng nào phù hợp với "
+                      {searchDiseaseText}"
                     </div>
-                  ))}
-                </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {filteredDiseases.map((disease: Disease) => (
+                        <div
+                          key={disease.disease_id}
+                          className={`p-4 border rounded-lg shadow-sm hover:shadow-md transition-shadow ${
+                            formData.disease_id_primary === disease.disease_id
+                              ? "border-green-500 bg-green-50"
+                              : ""
+                          }`}
+                        >
+                          <div className="flex items-center gap-3 mb-2">
+                            <Checkbox
+                              id={`disease-${disease.disease_id}`}
+                              checked={formData.disease_ids?.includes(
+                                disease.disease_id
+                              )}
+                              onCheckedChange={() =>
+                                handleDiseaseToggle(disease.disease_id)
+                              }
+                            />
+                            <Label
+                              htmlFor={`disease-${disease.disease_id}`}
+                              className="flex-1"
+                            >
+                              {disease.disease_name || "Chưa có tên bệnh"}
+                            </Label>
+                          </div>
+
+                          {formData.disease_ids?.includes(
+                            disease.disease_id
+                          ) && (
+                            <div className="flex items-center gap-2 mt-2">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant={
+                                  formData.disease_id_primary ===
+                                  disease.disease_id
+                                    ? "default"
+                                    : "outline"
+                                }
+                                onClick={() =>
+                                  handleSetPrimaryDisease(disease.disease_id)
+                                }
+                                className={`flex items-center gap-1 ${
+                                  formData.disease_id_primary ===
+                                  disease.disease_id
+                                    ? "bg-green-500 hover:bg-green-600 text-white"
+                                    : "border-green-500 text-green-600 hover:bg-green-50"
+                                }`}
+                              >
+                                {formData.disease_id_primary ===
+                                disease.disease_id ? (
+                                  <Star className="h-3 w-3" />
+                                ) : (
+                                  <StarOff className="h-3 w-3" />
+                                )}
+                                {formData.disease_id_primary ===
+                                disease.disease_id
+                                  ? "Bệnh chính"
+                                  : "Đặt làm chính"}
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>

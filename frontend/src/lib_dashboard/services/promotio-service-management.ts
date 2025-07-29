@@ -11,7 +11,21 @@ export const promotionService = {
   async getPromotions(): Promise<PromotionInterface[]> {
     try {
       const response = await axiosInstance.get("/promotion");
-      return response.data.data;
+      return response.data;
+    } catch (error) {
+      let msg = "Lỗi khi lấy danh sách khuyến mãi";
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        msg = error.response.data.message;
+      }
+      showToast.error(msg);
+      throw error;
+    }
+  },
+  async getPromotionManagement(): Promise<PromotionInterface[]> {
+    try {
+      const response = await axiosInstance.get("/promotion/distributor");
+      console.log("Promotion Management Data:", response.data);
+      return response.data;
     } catch (error) {
       let msg = "Lỗi khi lấy danh sách khuyến mãi";
       if (axios.isAxiosError(error) && error.response?.data?.message) {

@@ -10,6 +10,9 @@ import { Skeleton } from "../ui/skeleton";
 
 export default function FeaturedProductsSection() {
   const userId = getCookie("user_id");
+  console.log("User ID:", userId);
+  const user = getCookie("user");
+  console.log("User:", user);
 
   const [loading, setLoading] = useState(true);
 
@@ -34,7 +37,7 @@ export default function FeaturedProductsSection() {
       <div className="container">
         <div className="flex flex-col md:flex-row justify-between items-center mb-8">
           <h2 className="text-2xl md:text-3xl font-bold text-primary-dark">
-            {userId ? "Sản Phẩm Nổi Bật" : "Sản Phẩm Đề Xuất"}
+            {userId || user ? "Sản Phẩm Đề Xuất" : "Sản Phẩm Nổi Bật"}
           </h2>
           <Link href="/products">
             <Button variant="link" className="text-primary">

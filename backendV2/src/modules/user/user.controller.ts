@@ -112,7 +112,7 @@ export class UserController {
   ) {
     // console.log('File received:', file);
     console.log('User ID from request:', req.user);
-    const userId = req.user.id;
+    const userId = req.user.user_id; // Assuming user ID is available in the request object
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }

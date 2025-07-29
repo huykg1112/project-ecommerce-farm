@@ -271,12 +271,15 @@ export class OrderService {
   }
 
   async findOrdersByDistributor(distributorId: string) {
+    console.log('Finding orders for distributor:', distributorId);
     const distributor = await this.userRepository.findOne({
       where: { user_id: distributorId },
     });
     if (!distributor) {
       throw new NotFoundException('Distributor not found');
     }
+
+    console.log('Distributor found:', distributor);
 
     return this.orderRepository.find({
       where: { distributor: { user_id: distributorId }, is_deleted: false },

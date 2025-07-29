@@ -330,6 +330,7 @@ export default function DiseasesManagementPage() {
             onBatchActivate={handleBatchUpdateStatusActivate}
             onBatchDeactivate={handleBatchUpdateStatusDeactivate}
             onBatchDelete={handleDeleteDiseases}
+            loading={loading}
             title="bệnh"
           />
         </div>

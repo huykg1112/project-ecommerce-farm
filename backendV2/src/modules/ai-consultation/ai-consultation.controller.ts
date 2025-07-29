@@ -21,7 +21,7 @@ export class AiConsultationController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   create(@Body() createAiConsultationDto: CreateAiConsultationDto, @Req() req) {
-    const userId = req.user.id; // Assuming the user ID is available in the request object
+    const userId = req.user.user_id; // Assuming the user ID is available in the request object
     return this.aiConsultationService.create(createAiConsultationDto, userId);
   }
 
@@ -32,7 +32,7 @@ export class AiConsultationController {
 
   @Get('my-consultations')
   findMyConsultations(@Req() req) {
-    const userId = req.user.id; // Assuming the user ID is available in the request object
+    const userId = req.user.user_id; // Assuming the user ID is available in the request object
     return this.aiConsultationService.findByUser(userId);
   }
 
@@ -77,7 +77,7 @@ export class AiConsultationController {
     @Req() req,
     @Body() updateAiConsultationDto: UpdateAiConsultationDto,
   ) {
-    const userId = req.user.id; // Assuming the user ID is available in the request object
+    const userId = req.user.user_id; // Assuming the user ID is available in the request object
     return this.aiConsultationService.update(
       id,
       userId,

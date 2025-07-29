@@ -112,7 +112,7 @@ export function PrintInvoice({ order }: PrintInvoiceProps) {
               <p className="font-medium">
                 Nhà phân phối:{" "}
                 <span className="font-normal">
-                  {order.distributor?.full_name || "N/A"}
+                  {order.distributor?.invenstory?.name || "N/A"}
                 </span>
               </p>
               {order.shipping_address && (
@@ -129,7 +129,6 @@ export function PrintInvoice({ order }: PrintInvoiceProps) {
               <TableRow>
                 <TableHead className="border bg-gray-100">STT</TableHead>
                 <TableHead className="border bg-gray-100">Sản phẩm</TableHead>
-                <TableHead className="border bg-gray-100">Đại lý</TableHead>
                 <TableHead className="border bg-gray-100">Đơn giá</TableHead>
                 <TableHead className="border bg-gray-100">Số lượng</TableHead>
                 <TableHead className="border bg-gray-100">Thành tiền</TableHead>
@@ -142,9 +141,7 @@ export function PrintInvoice({ order }: PrintInvoiceProps) {
                   <TableCell className="border">
                     {detail.batch_product.product.product_name}
                   </TableCell>
-                  <TableCell className="border">
-                    {order.distributor?.full_name || "N/A"}
-                  </TableCell>
+
                   <TableCell className="border">
                     {formatCurrency(Number(detail.unit_price))}
                   </TableCell>
@@ -157,7 +154,7 @@ export function PrintInvoice({ order }: PrintInvoiceProps) {
             </TableBody>
             <TableFooter>
               <TableRow className="font-bold">
-                <TableCell colSpan={5} className="border text-right">
+                <TableCell colSpan={4} className="border text-right">
                   Tổng cộng:
                 </TableCell>
                 <TableCell className="border">

@@ -108,6 +108,7 @@ function ProfilePage() {
     const fetchProfile = async () => {
       try {
         const data = await userService.getProfile();
+        console.log("Fetched Profile:", data);
         setCookie("user", JSON.stringify(data)); // Lưu thông tin user vào cookie
         setCookie("user_id", data.user_id); // Lưu user_id vào cookie
         let address = [
@@ -138,7 +139,7 @@ function ProfilePage() {
           lat: lat,
           lng: lng,
           cccd: data.cccd || "",
-          license_number: data.license_number || "",
+          license_number: data.invenstory?.business_license || "",
         });
         setProfile(data);
         // lọc các địa có is_active là true và is_deleted là false
@@ -598,6 +599,7 @@ function ProfilePage() {
                           <div className="relative">
                             <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                             <Input
+                              disabled={profile?.role_name === "Distributor"}
                               id="license"
                               name="license"
                               value={formData.license_number}

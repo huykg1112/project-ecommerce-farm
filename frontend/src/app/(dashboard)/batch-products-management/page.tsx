@@ -137,7 +137,8 @@ export default function BatchProductsManagementPage() {
       const productTypesResponse = await productTypeService.getProductTypes(); // Replace with actual product type service if available
       setProductTypes(productTypesResponse);
 
-      const promotionsResponse = await promotionService.getPromotions(); // Replace with actual promotion service if available
+      const promotionsResponse =
+        await promotionService.getPromotionManagement(); // Replace with actual promotion service if available
       setPromotions(promotionsResponse.filter((p: Promotion) => p.is_active));
 
       // console.log(

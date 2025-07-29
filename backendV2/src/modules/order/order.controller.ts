@@ -28,7 +28,7 @@ export class OrderController {
 
   @Post()
   create(@Req() req, @Body() createOrderDto: CreateOrderDto) {
-    const userId = req.user.id;
+    const userId = req.user.user_id;
     return this.orderService.create(createOrderDto, userId);
   }
 
@@ -36,8 +36,11 @@ export class OrderController {
   findAll(@Req() req) {
     // kiểm tra quyền truy cập của người dùng, nếu là đại lý thì lấy theo distributor_id còn nếu admin thì lấy tất cả
     const isAdmin = req.user.role?.role_name === Role.ADMIN;
+    console.log('isAdmin', isAdmin);
     if (!isAdmin) {
-      const userId = req.user.id;
+      const userId = req.user.user_id;
+      console.log('User:', req.user);
+      console.log('User ID:', userId);
       return this.orderService.findOrdersByDistributor(userId);
     }
     return this.orderService.findAll();
@@ -45,7 +48,7 @@ export class OrderController {
 
   @Get('my-orders')
   findMyOrders(@Req() req) {
-    const userId = req.user.id;
+    const userId = req.user.user_id;
     return this.orderService.findOrdersByUser(userId);
   }
 
@@ -55,7 +58,7 @@ export class OrderController {
     if (!req) {
       return { data: false };
     }
-    const user_id = req.user.id;
+    const user_id = req.user.user_id;
     const hasProduct = await this.orderService.hasProductInCart(
       user_id,
       product_id,
@@ -65,7 +68,7 @@ export class OrderController {
 
   @Get('my-orders/:id')
   findMyOrder(@Param('id', ParseUUIDPipe) id: string, @Req() req) {
-    const userId = req.user.id;
+    const userId = req.user.user_id;
     return this.orderService.findOrderByUser(id, userId);
   }
 

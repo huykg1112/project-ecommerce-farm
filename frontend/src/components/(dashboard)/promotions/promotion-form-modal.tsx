@@ -89,7 +89,7 @@ export const PromotionFormModal = memo<PromotionFormModalProps>(
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="promotion_name" className="text-[#44703d]">
-                Mã voucher *
+                Mã giảm giá *
               </Label>
               <Input
                 id="promotion_name"
@@ -97,7 +97,7 @@ export const PromotionFormModal = memo<PromotionFormModalProps>(
                 onChange={(e) =>
                   handleInputChange("promotion_name", e.target.value)
                 }
-                placeholder="Nhập mã voucher"
+                placeholder="Nhập mã giảm giá"
                 required
                 disabled={loading}
                 className="border-[#90c577] focus:border-[#74a65d]"
