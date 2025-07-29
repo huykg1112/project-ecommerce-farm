@@ -95,6 +95,7 @@ export const authService = {
         deleteCookie("user");
         localStorage.removeItem("Authorization");
         localStorage.removeItem("wishlist");
+        localStorage.removeItem("cart");
       }
 
       return await response.json();
@@ -107,6 +108,7 @@ export const authService = {
         deleteCookie("user");
         localStorage.removeItem("Authorization");
         localStorage.removeItem("wishlist");
+        localStorage.removeItem("cart");
       }
       throw error;
     }

@@ -12,6 +12,8 @@ import {
 import { authService } from "../services/auth-service";
 import { userService } from "../services/user-service";
 import { deleteCookie } from "../utils";
+import { clearCart } from "./cart-slice";
+import { clearWishlist } from "./wishlist-slice";
 
 export interface User {
   id?: string;
@@ -82,14 +84,20 @@ export const registerUser = createAsyncThunk(
 
 export const logoutUser = createAsyncThunk(
   "user/logout",
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, dispatch }) => {
     // _là tham số không sử dụng
     //rejectWithValue là một hàm được sử dụng để trả về một giá trị lỗi từ async thunk
     try {
       await authService.logout();
+      // Clear cart and wishlist when logout
+      dispatch(clearCart());
+      dispatch(clearWishlist());
       // console.log("Logout message");
       return null;
     } catch (error: any) {
+      // Even if logout API fails, still clear cart and wishlist
+      dispatch(clearCart());
+      dispatch(clearWishlist());
       return rejectWithValue(error.message || "Đăng xuất thất bại");
     }
   }

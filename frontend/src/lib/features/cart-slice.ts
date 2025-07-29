@@ -23,11 +23,26 @@ interface CartState {
   totalAmount: number;
 }
 
-const initialState: CartState = {
-  items: [],
-  totalItems: 0,
-  totalAmount: 0,
+// Initialize state from localStorage if available
+const getInitialState = (): CartState => {
+  if (typeof window === "undefined") {
+    return { items: [], totalItems: 0, totalAmount: 0 };
+  }
+
+  try {
+    const savedCart = localStorage.getItem("cart");
+    if (savedCart) {
+      const parsed = JSON.parse(savedCart) as CartState;
+      return parsed;
+    }
+  } catch (error) {
+    console.error("Failed to parse cart from localStorage:", error);
+  }
+
+  return { items: [], totalItems: 0, totalAmount: 0 };
 };
+
+const initialState: CartState = getInitialState();
 
 const calculateTotals = (state: CartState) => {
   state.totalItems = state.items.reduce(
@@ -40,6 +55,11 @@ const calculateTotals = (state: CartState) => {
     const finalPrice = originalPrice - discountValue;
     return total + finalPrice * item.quantity;
   }, 0);
+
+  // Save to localStorage
+  if (typeof window !== "undefined") {
+    localStorage.setItem("cart", JSON.stringify(state));
+  }
 };
 
 const cartSlice = createSlice({
@@ -80,12 +100,25 @@ const cartSlice = createSlice({
       state.items = [];
       state.totalItems = 0;
       state.totalAmount = 0;
+
+      // Save to localStorage
+      if (typeof window !== "undefined") {
+        localStorage.setItem("cart", JSON.stringify(state));
+      }
     },
   },
 });
 
 export const { addToCart, removeFromCart, updateQuantity, clearCart } =
   cartSlice.actions;
+
+// Selectors
+export const selectCartItems = (state: { cart: CartState }) => state.cart.items;
+export const selectCartTotalItems = (state: { cart: CartState }) =>
+  state.cart.totalItems;
+export const selectCartTotalAmount = (state: { cart: CartState }) =>
+  state.cart.totalAmount;
+
 export default cartSlice.reducer;
 
 // Các hàm addToCart, removeFromCart, updateQuantity, clearCart được export ra để sử dụng trong các component khác

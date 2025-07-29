@@ -33,7 +33,7 @@ export default function FeaturedSellersSection({
           <FeaturedSellers sellers={sellers} />
         )}
         <div className="text-center mt-8">
-          <Link href="/sellers">
+          <Link href="/stores">
             <Button variant="outline" size="lg">
               Xem tất cả đại lý
             </Button>

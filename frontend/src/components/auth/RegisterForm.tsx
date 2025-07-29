@@ -60,11 +60,11 @@ export default function RegisterForm({
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="register-username">Username</Label>
+            <Label htmlFor="register-username">Tên đăng nhập</Label>
             <Input
               id="register-username"
               type="text"
-              placeholder="Nhập username"
+              placeholder="Nhập tên đăng nhập"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />

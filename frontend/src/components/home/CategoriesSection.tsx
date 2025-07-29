@@ -1,7 +1,5 @@
 import CategoryCard from "@/components/products/category-card";
-import { Button } from "@/components/ui/button";
 import { CategoriesSectionProps } from "@/interfaces";
-import Link from "next/link";
 import { Skeleton } from "../ui/skeleton";
 
 export default function CategoriesSection({
@@ -15,11 +13,11 @@ export default function CategoriesSection({
           <h2 className="text-2xl md:text-3xl font-bold text-[#599146]">
             Danh Mục Sản Phẩm
           </h2>
-          <Link href="/categories">
+          {/* <Link href="/categories">
             <Button variant="link" className="text-[#599146]">
               Xem tất cả danh mục
             </Button>
-          </Link>
+          </Link> */}
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
           {loading

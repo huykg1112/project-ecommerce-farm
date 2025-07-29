@@ -56,11 +56,11 @@ export default function LoginForm({
         )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor="username">Tên đăng nhập</Label>
             <Input
               id="username"
               type="text"
-              placeholder="Nhập username"
+              placeholder="Nhập tên đăng nhập"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />

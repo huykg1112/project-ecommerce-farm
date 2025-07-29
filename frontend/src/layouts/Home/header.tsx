@@ -67,7 +67,7 @@ export default function Header() {
     { name: "Phân tích", href: "/analyze", label: "AI" },
     { name: "Sản phẩm", href: "/products" },
     { name: "Cửa hàng ", href: "/stores" },
-    { name: "Liên hệ", href: "/contact" },
+    { name: "Chính sách", href: "/policies" },
   ];
 
   // Hàm xóa nội dung tìm kiếm

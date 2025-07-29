@@ -43,6 +43,7 @@ export class VoucherController {
     return this.voucherService.findMyCollectedVouchers(userId);
   }
 
+  @Public()
   @Get('for-users')
   findVouchersForUsers() {
     return this.voucherService.findVouchersForUsers();
