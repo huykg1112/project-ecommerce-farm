@@ -9,6 +9,7 @@ dist/
 out/
 build/
 rasa/
+AI/
 
 # Logs
 *.log
