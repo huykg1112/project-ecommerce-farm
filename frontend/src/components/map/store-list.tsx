@@ -2,61 +2,93 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Store, StoreListProps } from "@/interfaces";
+import { StoreListProps } from "@/interfaces";
+import { InvenstoryClient } from "@/lib_dashboard/types/product";
 
 import { MapPin, Phone, Search, Star } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const StoreList = ({
-  stores,
+  inventories,
   onStoreSelect,
-  selectedStore,
+  selectedInventory,
   mapInstance,
   initialSearchTerm,
 }: StoreListProps) => {
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm || "");
-  const [filteredStores, setFilteredStores] = useState<Store[]>(stores);
-  const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [filteredInventories, setFilteredInventories] =
+    useState<InvenstoryClient[]>(inventories);
   const listRef = useRef<HTMLUListElement>(null);
+
+  // Calculate rating for inventory
+  const calculateInventoryRating = useCallback(
+    (inventory: InvenstoryClient): number => {
+      if (!inventory.batch_products || inventory.batch_products.length === 0) {
+        return 0;
+      }
+
+      const productRatings: number[] = [];
+
+      // Get unique products from batch_products
+      const uniqueProducts = inventory.batch_products
+        .map((batch) => batch.product)
+        .filter(
+          (product, index, self) =>
+            index === self.findIndex((p) => p.product_id === product.product_id)
+        );
+
+      uniqueProducts.forEach((product) => {
+        if (product.reviews && product.reviews.length > 0) {
+          const ratingsWithValue = product.reviews
+            .filter((review) => review.rating != null && review.rating > 0)
+            .map((review) => review.rating!);
+
+          if (ratingsWithValue.length > 0) {
+            const avgRating =
+              ratingsWithValue.reduce((sum, rating) => sum + rating, 0) /
+              ratingsWithValue.length;
+            if (avgRating > 0) {
+              productRatings.push(avgRating);
+            }
+          }
+        }
+      });
+
+      if (productRatings.length === 0) return 0;
+
+      return (
+        productRatings.reduce((sum, rating) => sum + rating, 0) /
+        productRatings.length
+      );
+    },
+    []
+  );
+
   useEffect(() => {
-    let result = stores;
+    let result = inventories;
 
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       result = result.filter(
-        (store) =>
-          store.name.toLowerCase().includes(term) ||
-          store.address.toLowerCase().includes(term)
+        (inventory) =>
+          inventory.name?.toLowerCase().includes(term) ||
+          inventory.distributor.full_name?.toLowerCase().includes(term) ||
+          inventory.invenstory_address?.toLowerCase().includes(term)
       );
     }
 
-    if (activeFilter) {
-      result = result.filter((store) => store.type === activeFilter);
-    }
-
-    setFilteredStores(result);
-  }, [searchTerm, activeFilter, stores]);
-
-  const handleFilterClick = (filter: string) => {
-    setActiveFilter(activeFilter === filter ? null : filter);
-  };
-
-  // const handleStoreHover = (store: Store) => {
-  //   if (mapInstance) {
-  //     mapInstance.panTo({ lat: store.lat, lng: store.lng });
-  //   }
-  // };
-
+    setFilteredInventories(result);
+  }, [searchTerm, inventories]);
   useEffect(() => {
-    if (selectedStore && listRef.current) {
+    if (selectedInventory && listRef.current) {
       const selectedElement = listRef.current.querySelector(
-        `[data-store-id="${selectedStore.id}"]`
+        `[data-inventory-id="${selectedInventory.invenstory_id}"]`
       );
       if (selectedElement) {
         selectedElement.scrollIntoView({ behavior: "smooth", block: "center" });
       }
     }
-  }, [selectedStore]);
+  }, [selectedInventory]);
 
   return (
     <div className="flex flex-col h-full bg-white shadow-lg rounded-xl overflow-hidden">
@@ -70,91 +102,78 @@ const StoreList = ({
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <div className="flex gap-2 mt-3 flex-wrap">
-          {["store", "dealer", "distributor"].map((type) => (
-            <Badge
-              key={type}
-              variant={activeFilter === type ? "default" : "outline"}
-              className={`cursor-pointer transition-all duration-200 ${
-                activeFilter === type
-                  ? "bg-blue-600 text-white"
-                  : "hover:bg-gray-100"
-              }`}
-              onClick={() => handleFilterClick(type)}
-            >
-              {type === "store"
-                ? "Cửa hàng"
-                : type === "dealer"
-                ? "Đại lý"
-                : "Nhà phân phối"}
-            </Badge>
-          ))}
-        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {filteredStores.length === 0 ? (
+        {filteredInventories.length === 0 ? (
           <div className="p-4 text-center text-gray-500">
             Không tìm thấy cửa hàng nào
           </div>
         ) : (
           <ul ref={listRef} className="divide-y divide-gray-100">
-            {filteredStores.map((store) => (
-              <li
-                key={store.id}
-                data-store-id={store.id}
-                className={`p-4 hover:bg-gray-50 transition-colors duration-200 cursor-pointer ${
-                  selectedStore?.id === store.id ? "bg-blue-50" : ""
-                }`}
-                onClick={() => onStoreSelect(store)}
-                // onMouseEnter={() => handleStoreHover(store)}
-              >
-                <div className="flex justify-between items-start">
-                  <h3 className="font-semibold text-sm text-gray-800">
-                    {store.name}
-                  </h3>
-                  <Badge
-                    variant="outline"
-                    className="text-xs border-gray-300 text-gray-600"
-                  >
-                    {store.type === "store"
-                      ? "Cửa hàng"
-                      : store.type === "dealer"
-                      ? "Đại lý"
-                      : "Nhà phân phối"}
-                  </Badge>
-                </div>
-                <div className="flex items-center mt-2 text-xs text-gray-600">
-                  <MapPin className="h-4 w-4 mr-2 text-blue-500 flex-shrink-0" />
-                  <span className="truncate">{store.address}</span>
-                </div>
-                <div className="flex items-center justify-between mt-2">
-                  <div className="flex items-center">
+            {filteredInventories.map((inventory) => {
+              const rating = calculateInventoryRating(inventory);
+              const storeName =
+                inventory.name || inventory.distributor.full_name || "Cửa hàng";
+              const storeAddress =
+                inventory.invenstory_address || "Chưa có địa chỉ";
+              const storePhone =
+                inventory.distributor.phone_number || "Chưa có số điện thoại";
+
+              return (
+                <li
+                  key={inventory.invenstory_id}
+                  data-inventory-id={inventory.invenstory_id}
+                  className={`p-4 hover:bg-gray-50 transition-colors duration-200 cursor-pointer ${
+                    selectedInventory?.invenstory_id === inventory.invenstory_id
+                      ? "bg-blue-50"
+                      : ""
+                  }`}
+                  onClick={() => onStoreSelect(inventory)}
+                >
+                  <div className="flex justify-between items-start">
+                    <h3 className="font-semibold text-sm text-gray-800">
+                      {storeName}
+                    </h3>
+                    <Badge
+                      variant="outline"
+                      className="text-xs border-gray-300 text-gray-600"
+                    >
+                      Cửa hàng
+                    </Badge>
+                  </div>
+                  <div className="flex items-center mt-2 text-xs text-gray-600">
+                    <MapPin className="h-4 w-4 mr-2 text-blue-500 flex-shrink-0" />
+                    <span className="truncate">{storeAddress}</span>
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
                     <div className="flex items-center">
-                      {Array(5)
-                        .fill(0)
-                        .map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`h-4 w-4 ${
-                              i < Math.floor(store.rating)
-                                ? "text-yellow-400 fill-yellow-400"
-                                : "text-gray-300"
-                            }`}
-                          />
-                        ))}
+                      <div className="flex items-center">
+                        {Array(5)
+                          .fill(0)
+                          .map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`h-4 w-4 ${
+                                i < Math.floor(rating)
+                                  ? "text-yellow-400 fill-yellow-400"
+                                  : "text-gray-300"
+                              }`}
+                            />
+                          ))}
+                      </div>
+                      <span className="text-xs ml-1 text-gray-700">
+                        {rating.toFixed(1)}
+                      </span>
                     </div>
-                    <span className="text-xs ml-1 text-gray-700">
-                      {store.rating.toFixed(1)}
-                    </span>
+                    <div className="flex items-center text-xs text-gray-600">
+                      <Phone className="h-4 w-4 mr-1 text-green-500" />
+                      <span>{storePhone}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center text-xs text-gray-600">
-                    <Phone className="h-4 w-4 mr-1 text-green-500" />
-                    <span>{store.phone}</span>
-                  </div>
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>

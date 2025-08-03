@@ -24,8 +24,12 @@ export default function RegisterForm({
   setPhoneNumber,
   password,
   setPassword,
+  confirmPassword,
+  setConfirmPassword,
   showPassword,
   setShowPassword,
+  showConfirmPassword,
+  setShowConfirmPassword,
   error,
   loading,
   handleSubmit,
@@ -103,6 +107,24 @@ export default function RegisterForm({
               và ký tự đặc biệt.
             </p>
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="register-confirm-password">Xác nhận mật khẩu</Label>
+            <PasswordInput
+              id="register-confirm-password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              showPassword={showConfirmPassword}
+              toggleShowPassword={() =>
+                setShowConfirmPassword(!showConfirmPassword)
+              }
+              placeholder="Nhập lại mật khẩu"
+            />
+            {confirmPassword && password !== confirmPassword && (
+              <p className="text-xs text-red-500">
+                Mật khẩu xác nhận không khớp
+              </p>
+            )}
+          </div>
           <div className="flex items-center space-x-2">
             <Checkbox id="terms" required />
             <Label htmlFor="terms" className="text-sm font-normal">
@@ -119,7 +141,12 @@ export default function RegisterForm({
           <Button
             type="submit"
             className="w-full bg-primary hover:bg-primary-dark"
-            disabled={loading}
+            disabled={
+              loading ||
+              password !== confirmPassword ||
+              !password ||
+              !confirmPassword
+            }
           >
             {loading ? "Đang đăng ký..." : "Đăng ký"}
           </Button>

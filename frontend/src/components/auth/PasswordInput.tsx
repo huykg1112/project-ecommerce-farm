@@ -8,6 +8,7 @@ export default function PasswordInput({
   onChange,
   showPassword,
   toggleShowPassword,
+  placeholder,
 }: PasswordInputProps) {
   return (
     <div className="relative">
@@ -16,6 +17,7 @@ export default function PasswordInput({
         type={showPassword ? "text" : "password"}
         value={value}
         onChange={onChange}
+        placeholder={placeholder}
       />
       <button
         type="button"

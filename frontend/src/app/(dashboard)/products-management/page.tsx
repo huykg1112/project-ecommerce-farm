@@ -20,7 +20,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 interface ProductFiltersState {
   search?: string;
-  category_id?: string;
+  category_ids?: string[]; // Changed from category_id to category_ids array
   status?: "active" | "inactive" | "all";
   price_min?: number;
   price_max?: number;
@@ -76,7 +76,7 @@ export default function ProductsManagementPage() {
   // Filter states
   const [filters, setFilters] = useState<ProductFiltersState>({
     search: "",
-    category_id: "all",
+    category_ids: [], // Changed to empty array for multi-select
     status: "all",
     sort_by: "created_at",
     sort_order: "desc",
@@ -129,6 +129,10 @@ export default function ProductsManagementPage() {
 
   // Filtered and paginated products using useMemo
   const filteredProducts = useMemo(() => {
+    console.log("🔄 filteredProducts recomputing with:", {
+      sortBy: filters.sort_by,
+      sortOrder: filters.sort_order,
+    });
     let filtered = products;
 
     // Apply search filter
@@ -144,10 +148,10 @@ export default function ProductsManagementPage() {
       );
     }
 
-    // Apply category filter
-    if (filters.category_id && filters.category_id !== "all") {
+    // Apply category filter - support multiple categories
+    if (filters.category_ids && filters.category_ids.length > 0) {
       filtered = filtered.filter((product) =>
-        product.categories.some((cat) => cat.id === filters.category_id)
+        product.categories.some((cat) => filters.category_ids!.includes(cat.id))
       );
     }
 
@@ -184,6 +188,24 @@ export default function ProductsManagementPage() {
               new Date(b.created_at).getTime()) *
             order
           );
+        case "rating":
+          // Calculate rating from reviews instead of using avg_rating
+          const getCalculatedRating = (product: Product) => {
+            if (!product.reviews || product.reviews.length === 0) return 0;
+            const reviewsWithRating = product.reviews.filter(
+              (review) => review.rating != null
+            );
+            if (reviewsWithRating.length === 0) return 0;
+            const totalRating = reviewsWithRating.reduce(
+              (sum, review) => sum + (review.rating || 0),
+              0
+            );
+            return totalRating / reviewsWithRating.length;
+          };
+
+          const ratingA = getCalculatedRating(a);
+          const ratingB = getCalculatedRating(b);
+          return (ratingA - ratingB) * order;
         default:
           return 0;
       }
@@ -208,14 +230,14 @@ export default function ProductsManagementPage() {
     }));
   }, [filteredProducts, filters.limit]);
 
-  // Statistics using useMemo
+  // Statistics using useMemo - calculated from filtered products instead of API stats
   const stats = useMemo(
     () => ({
-      total: productStats.total_products,
-      active: productStats.active_products,
-      inactive: productStats.inactive_products,
+      total: filteredProducts.length,
+      active: filteredProducts.filter((product) => product.is_active).length,
+      inactive: filteredProducts.filter((product) => !product.is_active).length,
     }),
-    [productStats]
+    [filteredProducts]
   );
 
   // Filter handlers
@@ -231,9 +253,9 @@ export default function ProductsManagementPage() {
   );
 
   const handleCategoryChange = useCallback(
-    (category_id: string) => {
+    (category_ids: string[]) => {
       updateFilters({
-        category_id: category_id === "all" ? "all" : category_id,
+        category_ids: category_ids,
         page: 1,
       });
     },
@@ -264,7 +286,7 @@ export default function ProductsManagementPage() {
   const resetFilters = useCallback(() => {
     setFilters({
       search: "",
-      category_id: "all",
+      category_ids: [],
       status: "all",
       sort_by: "created_at",
       sort_order: "desc",
@@ -290,7 +312,7 @@ export default function ProductsManagementPage() {
 
   const handleSortChange = useCallback(
     (sortBy: string, sortOrder: "asc" | "desc") => {
-      updateFilters({ sort_by: sortBy as any, sort_order: sortOrder });
+      updateFilters({ sort_by: sortBy as any, sort_order: sortOrder, page: 1 });
     },
     [updateFilters]
   );
@@ -560,7 +582,7 @@ export default function ProductsManagementPage() {
       {/* Filters */}
       <ProductFilters
         search={filters.search || ""}
-        category_id={filters.category_id || "all"}
+        category_ids={filters.category_ids || []}
         status={filters.status || "all"}
         price_min={filters.price_min}
         price_max={filters.price_max}

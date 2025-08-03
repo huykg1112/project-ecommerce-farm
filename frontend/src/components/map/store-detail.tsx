@@ -2,60 +2,94 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { StoreDetailProps } from "@/interfaces";
-import {
-  Clock,
-  Globe,
-  Mail,
-  MapPin,
-  Navigation,
-  Phone,
-  Star,
-  StoreIcon,
-} from "lucide-react";
+import { InventoryDetailProps } from "@/interfaces";
+import { Mail, MapPin, Navigation, Phone, Star, StoreIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useMemo } from "react";
 
-const StoreDetail = ({ store, onClose }: StoreDetailProps) => {
+const StoreDetail = ({ inventory, onClose }: InventoryDetailProps) => {
   const router = useRouter();
+
+  console.log("StoreDetail inventory:", inventory);
+
+  // Calculate average rating for this inventory
+  const inventoryRating = useMemo(() => {
+    if (!inventory.batch_products || inventory.batch_products.length === 0) {
+      return 0;
+    }
+
+    const productRatings: number[] = [];
+
+    // Get unique products from batch_products
+    const uniqueProducts = inventory.batch_products
+      .map((batch) => batch.product)
+      .filter(
+        (product, index, self) =>
+          index === self.findIndex((p) => p.product_id === product.product_id)
+      );
+
+    uniqueProducts.forEach((product) => {
+      if (product.reviews && product.reviews.length > 0) {
+        const ratingsWithValue = product.reviews
+          .filter((review) => review.rating != null && review.rating > 0)
+          .map((review) => review.rating!);
+
+        if (ratingsWithValue.length > 0) {
+          const avgRating =
+            ratingsWithValue.reduce((sum, rating) => sum + rating, 0) /
+            ratingsWithValue.length;
+          if (avgRating > 0) {
+            productRatings.push(avgRating);
+          }
+        }
+      }
+    });
+
+    if (productRatings.length === 0) return 0;
+
+    return (
+      productRatings.reduce((sum, rating) => sum + rating, 0) /
+      productRatings.length
+    );
+  }, [inventory.batch_products]);
+
   const handleGetDirections = () => {
+    const lat = parseFloat(inventory.invenstory_lat || "16.047079");
+    const lng = parseFloat(inventory.invenstory_lng || "108.20623");
     window.open(
-      `https://www.google.com/maps/dir/?api=1&destination=${store.lat},${store.lng}`,
+      `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`,
       "_blank"
     );
   };
-  const handleGetDeteilSeller = ({ idSeller }: { idSeller: number }) => {
-    // console.log("idSeller", idSeller);
-    router.push(`/seller/${idSeller}`);
+
+  const handleGetDetailSeller = () => {
+    router.push(`/seller/${inventory.distributor.user_id}`);
   };
 
   return (
     <div className="h-full flex flex-col">
       <div className="p-4 border-b flex items-center justify-between">
         <h2 className="font-semibold">Chi tiết cửa hàng</h2>
-        {/* <Button variant="ghost" size="icon" onClick={onClose}>
-          <X className="h-4 w-4" />
-        </Button> */}
       </div>
 
       <div className="flex-1 overflow-auto p-4">
         <div className="aspect-video bg-muted rounded-lg overflow-hidden mb-4">
           <img
-            src={store.images[0] || "/placeholder.svg?height=200&width=400"}
-            alt={store.name}
+            src={
+              inventory.invenstory_img ||
+              "/placeholder.svg?height=200&width=400"
+            }
+            alt={inventory.name || inventory.distributor.full_name}
             className="w-full h-full object-cover"
           />
         </div>
 
         <div className="mb-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-semibold">{store.name}</h3>
-            <Badge>
-              {store.type === "store"
-                ? "Cửa hàng"
-                : store.type === "dealer"
-                ? "Đại lý"
-                : "Nhà phân phối"}
-            </Badge>
+            <h3 className="text-xl font-semibold">
+              {inventory.name || inventory.distributor.full_name}
+            </h3>
+            <Badge>Cửa hàng</Badge>
           </div>
 
           <div className="flex items-center mt-1">
@@ -66,61 +100,56 @@ const StoreDetail = ({ store, onClose }: StoreDetailProps) => {
                   <Star
                     key={i}
                     className={`h-4 w-4 ${
-                      i < Math.floor(store.rating)
+                      i < Math.floor(inventoryRating)
                         ? "text-yellow-500 fill-yellow-500"
                         : "text-gray-300"
                     }`}
                   />
                 ))}
             </div>
-            <span className="ml-1">{store.rating.toFixed(1)}</span>
+            <span className="ml-1">{inventoryRating.toFixed(1)}</span>
           </div>
         </div>
 
         <div className="space-y-3">
           <div className="flex items-start">
             <MapPin className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
-            <span>{store.address}</span>
+            <span>{inventory.invenstory_address || "Chưa có địa chỉ"}</span>
           </div>
 
           <div className="flex items-center">
             <Phone className="h-5 w-5 mr-3 text-muted-foreground" />
-            <a href={`tel:${store.phone}`} className="hover:underline">
-              {store.phone}
+            <a
+              href={`tel:${inventory.distributor.phone_number}`}
+              className="hover:underline"
+            >
+              {inventory.distributor.phone_number || "Chưa có số điện thoại"}
             </a>
           </div>
 
           <div className="flex items-center">
             <Mail className="h-5 w-5 mr-3 text-muted-foreground" />
-            <a href={`mailto:${store.email}`} className="hover:underline">
-              {store.email}
+            <a
+              href={`mailto:${inventory.email || inventory.distributor.email}`}
+              className="hover:underline"
+            >
+              {inventory.email ||
+                inventory.distributor.email ||
+                "Chưa có email"}
             </a>
           </div>
 
-          {store.website && (
-            <div className="flex items-center">
-              <Globe className="h-5 w-5 mr-3 text-muted-foreground" />
-              <a
-                href={store.website}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:underline"
-              >
-                {store.website}
-              </a>
-            </div>
-          )}
-
-          <div className="flex items-start">
-            <Clock className="h-5 w-5 mr-3 text-muted-foreground mt-0.5" />
-            <div>
-              {store.openingHours.map((hours, index) => (
-                <div key={index} className="flex items-center">
-                  <span className="font-semibold">{hours.days}:</span>
-                  <span className="ml-2">{hours.hours}</span>
-                </div>
-              ))}
-            </div>
+          <div className="mt-4">
+            <p className="text-sm text-gray-600">
+              <strong>Mô tả:</strong> Cửa hàng thuộc sở hữu của{" "}
+              {inventory.distributor.full_name}
+            </p>
+            {inventory.business_license && (
+              <p className="text-sm text-gray-600 mt-1">
+                <strong>Giấy phép kinh doanh:</strong>{" "}
+                {inventory.business_license}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -128,7 +157,7 @@ const StoreDetail = ({ store, onClose }: StoreDetailProps) => {
       <div className="p-4 border-t flex gap-4">
         <Button
           className="w-full bg-orange-500 hover:bg-orange-400"
-          onClick={() => handleGetDeteilSeller({ idSeller: store.id })}
+          onClick={handleGetDetailSeller}
         >
           <StoreIcon className="h-4 w-4" /> Đến cửa hàng
         </Button>

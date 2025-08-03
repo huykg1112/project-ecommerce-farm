@@ -10,13 +10,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
 } from "lucide-react";
 import { useCallback } from "react";
 
@@ -63,7 +63,8 @@ export function ProductPagination({
     (field: string) => {
       if (sortBy === field) {
         // Toggle sort order if same field
-        onSortChange(field, sortOrder === "asc" ? "desc" : "asc");
+        const newSortOrder = sortOrder === "asc" ? "desc" : "asc";
+        onSortChange(field, newSortOrder);
       } else {
         // Set new field with default desc order
         onSortChange(field, "desc");
@@ -89,20 +90,23 @@ export function ProductPagination({
   const getPageNumbers = useCallback(() => {
     const pages = [];
     const maxVisiblePages = 5;
-    
+
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
       }
     } else {
-      const startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+      const startPage = Math.max(
+        1,
+        currentPage - Math.floor(maxVisiblePages / 2)
+      );
       const endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-      
+
       for (let i = startPage; i <= endPage; i++) {
         pages.push(i);
       }
     }
-    
+
     return pages;
   }, [currentPage, totalPages]);
 
@@ -179,6 +183,7 @@ export function ProductPagination({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="5">5</SelectItem>
                 <SelectItem value="10">10</SelectItem>
                 <SelectItem value="20">20</SelectItem>
                 <SelectItem value="50">50</SelectItem>

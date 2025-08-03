@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { GoogleMapComponentProps } from "@/interfaces";
+import { GoongMapComponentProps } from "@/interfaces";
 import { Navigation } from "lucide-react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -31,14 +31,13 @@ const defaultCenter = {
   lng: 108.20623,
 };
 
-
 export default function GoongMapComponent({
-  stores,
-  selectedStore,
+  inventories,
+  selectedInventory,
   onStoreSelect,
   onLoad,
-}: GoogleMapComponentProps) {
-  const [activeMarker, setActiveMarker] = useState<number | null>(null);
+}: GoongMapComponentProps) {
+  const [activeMarker, setActiveMarker] = useState<string | null>(null);
   const [map, setMap] = useState<any>(null);
   const [currentLocation, setCurrentLocation] = useState<{
     lat: number;
@@ -81,23 +80,27 @@ export default function GoongMapComponent({
     [onLoad]
   );
 
-  // Chỉ hiển thị chi tiết khi click (selectedStore thay đổi)
+  // Chỉ hiển thị chi tiết khi click (selectedInventory thay đổi)
   useEffect(() => {
-    if (selectedStore) {
+    if (selectedInventory) {
+      const lat = parseFloat(selectedInventory.invenstory_lat || "16.047079");
+      const lng = parseFloat(selectedInventory.invenstory_lng || "108.20623");
       setViewport({
-        latitude: selectedStore.lat,
-        longitude: selectedStore.lng,
+        latitude: lat,
+        longitude: lng,
         zoom: 15,
       });
-      setActiveMarker(selectedStore.id);
+      setActiveMarker(selectedInventory.invenstory_id);
     }
-  }, [selectedStore]);
+  }, [selectedInventory]);
 
-  const handleMarkerClick = (storeId: number) => {
-    const store = stores.find((s) => s.id === storeId);
-    if (store) {
-      onStoreSelect(store);
-      setActiveMarker(storeId);
+  const handleMarkerClick = (inventoryId: string) => {
+    const inventory = inventories.find(
+      (inv) => inv.invenstory_id === inventoryId
+    );
+    if (inventory) {
+      onStoreSelect(inventory);
+      setActiveMarker(inventoryId);
     }
   };
 
@@ -111,17 +114,9 @@ export default function GoongMapComponent({
     }
   };
 
-  const getMarkerIcon = (type: string) => {
-    switch (type) {
-      case "store":
-        return "https://cdn-icons-png.flaticon.com/512/869/869636.png";
-      case "dealer":
-        return "https://cdn-icons-png.flaticon.com/512/17666/17666078.png";
-      case "distributor":
-        return "https://cdn-icons-png.flaticon.com/512/407/407826.png";
-      default:
-        return "https://cdn-icons-png.flaticon.com/512/18063/18063935.png";
-    }
+  const getMarkerIcon = () => {
+    // All stores use the same icon now
+    return "https://cdn-icons-png.flaticon.com/512/869/869636.png";
   };
 
   return (
@@ -152,54 +147,69 @@ export default function GoongMapComponent({
           </Marker>
         )}
 
-        {/* Marker cho các cửa hàng */}         
-        {stores.map((store) => (
-          <div key={store.id} onClick={() => handleMarkerClick(store.id)}>
-            <Marker
-              latitude={store.lat}
-              longitude={store.lng}
-              offsetLeft={-16}
-              offsetTop={-16}
-              captureClick
+        {/* Marker cho các cửa hàng */}
+        {inventories.map((inventory) => {
+          const lat = parseFloat(inventory.invenstory_lat || "16.047079");
+          const lng = parseFloat(inventory.invenstory_lng || "108.20623");
+          const storeName =
+            inventory.name || inventory.distributor.full_name || "Cửa hàng";
+
+          return (
+            <div
+              key={inventory.invenstory_id}
+              onClick={() => handleMarkerClick(inventory.invenstory_id)}
             >
-              <div
-                style={{ cursor: "pointer" }}
+              <Marker
+                latitude={lat}
+                longitude={lng}
+                offsetLeft={-16}
+                offsetTop={-16}
+                captureClick
               >
-                <Image
-                  src={getMarkerIcon(store.type)}
-                  alt={store.name}
-                  width={32}
-                  height={32}
-                  className={selectedStore?.id === store.id ? "animate-bounce" : ""}
-                />
-              </div>
-            </Marker>
-            {activeMarker === store.id && (
-              <Popup
-                latitude={store.lat}
-                longitude={store.lng}
-                onClose={() => setActiveMarker(null)}
-                closeButton={true}
-                closeOnClick={false}
-                anchor="bottom"
-              >
-                <div className="p-2 max-w-xs">
-                  <div className="w-full h-24 mb-2">
-                    <Image
-                      src={store.images[0] || "/placeholder.png"}
-                      alt={store.name}
-                      width={96}
-                      height={96}
-                      className="object-cover w-full h-full rounded-md"
-                    />
-                  </div>
-                  <h3 className="font-semibold text-sm">{store.name}</h3>
-                  <p className="text-xs text-gray-600 mt-1">{store.address}</p>
+                <div style={{ cursor: "pointer" }}>
+                  <Image
+                    src={getMarkerIcon()}
+                    alt={storeName}
+                    width={32}
+                    height={32}
+                    className={
+                      selectedInventory?.invenstory_id ===
+                      inventory.invenstory_id
+                        ? "animate-bounce"
+                        : ""
+                    }
+                  />
                 </div>
-              </Popup>
-            )}
-          </div>
-        ))}
+              </Marker>
+              {activeMarker === inventory.invenstory_id && (
+                <Popup
+                  latitude={lat}
+                  longitude={lng}
+                  onClose={() => setActiveMarker(null)}
+                  closeButton={true}
+                  closeOnClick={false}
+                  anchor="bottom"
+                >
+                  <div className="p-2 max-w-xs">
+                    <div className="w-full h-24 mb-2">
+                      <Image
+                        src={inventory.invenstory_img || "/placeholder.png"}
+                        alt={storeName}
+                        width={96}
+                        height={96}
+                        className="object-cover w-full h-full rounded-md"
+                      />
+                    </div>
+                    <h3 className="font-semibold text-sm">{storeName}</h3>
+                    <p className="text-xs text-gray-600 mt-1">
+                      {inventory.invenstory_address || "Chưa có địa chỉ"}
+                    </p>
+                  </div>
+                </Popup>
+              )}
+            </div>
+          );
+        })}
       </ReactMapGL>
 
       {currentLocation && (
@@ -214,4 +224,4 @@ export default function GoongMapComponent({
       )}
     </div>
   );
-} 
+}

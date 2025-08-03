@@ -28,8 +28,11 @@ export default function LoginPage() {
   const [registerUsername, setRegisterUsername] = useState("");
   const [registerEmail, setRegisterEmail] = useState("");
   const [registerPassword, setRegisterPassword] = useState("");
+  const [registerConfirmPassword, setRegisterConfirmPassword] = useState("");
   const [registerPhone, setRegisterPhone] = useState("");
   const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showRegisterConfirmPassword, setShowRegisterConfirmPassword] =
+    useState(false);
 
   const [activeTab, setActiveTab] = useState("login");
 
@@ -130,6 +133,13 @@ export default function LoginPage() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Kiểm tra mật khẩu xác nhận
+    if (registerPassword !== registerConfirmPassword) {
+      showToast.error("Mật khẩu xác nhận không khớp!");
+      return;
+    }
+
     const result = await dispatch(
       registerUser({
         username: registerUsername,
@@ -143,6 +153,8 @@ export default function LoginPage() {
       setActiveTab("login");
       setLoginUsername(registerUsername);
       setLoginPassword("");
+      // Reset confirm password
+      setRegisterConfirmPassword("");
     }
   };
 
@@ -184,8 +196,12 @@ export default function LoginPage() {
               setPhoneNumber={setRegisterPhone}
               password={registerPassword}
               setPassword={setRegisterPassword}
+              confirmPassword={registerConfirmPassword}
+              setConfirmPassword={setRegisterConfirmPassword}
               showPassword={showRegisterPassword}
               setShowPassword={setShowRegisterPassword}
+              showConfirmPassword={showRegisterConfirmPassword}
+              setShowConfirmPassword={setShowRegisterConfirmPassword}
               error={error}
               loading={loading}
               handleSubmit={handleRegister}

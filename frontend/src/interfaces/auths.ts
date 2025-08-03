@@ -19,6 +19,7 @@ export interface PasswordInputProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   showPassword: boolean;
   toggleShowPassword: () => void;
+  placeholder?: string;
 }
 
 export interface RegisterFormProps {
@@ -30,8 +31,12 @@ export interface RegisterFormProps {
   setPhoneNumber: (value: string) => void;
   password: string;
   setPassword: (value: string) => void;
+  confirmPassword: string;
+  setConfirmPassword: (value: string) => void;
   showPassword: boolean;
   setShowPassword: (value: boolean) => void;
+  showConfirmPassword: boolean;
+  setShowConfirmPassword: (value: boolean) => void;
   error: string | string[] | null;
   loading: boolean;
   handleSubmit: (e: React.FormEvent) => void;

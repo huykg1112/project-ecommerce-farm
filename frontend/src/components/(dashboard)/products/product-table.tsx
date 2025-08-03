@@ -263,23 +263,48 @@ export function ProductTable({
                   <TableCell>{getStatusBadge(product.is_active)}</TableCell>
                   <TableCell>
                     <div className="space-y-1">
-                      {product.avg_rating ? (
-                        <>
-                          <div className="flex items-center space-x-1">
-                            <span className="text-yellow-500">★</span>
-                            <span className="text-sm font-medium">
-                              {product.avg_rating.toFixed(1)}
+                      {(() => {
+                        // Calculate rating from reviews instead of using avg_rating
+                        if (!product.reviews || product.reviews.length === 0) {
+                          return (
+                            <span className="text-sm text-gray-400">
+                              Chưa có đánh giá
                             </span>
-                          </div>
-                          <p className="text-xs text-gray-500">
-                            {product.reviews?.length || 0} đánh giá
-                          </p>
-                        </>
-                      ) : (
-                        <span className="text-sm text-gray-400">
-                          Chưa có đánh giá
-                        </span>
-                      )}
+                          );
+                        }
+
+                        const reviewsWithRating = product.reviews.filter(
+                          (review) => review.rating != null
+                        );
+                        if (reviewsWithRating.length === 0) {
+                          return (
+                            <span className="text-sm text-gray-400">
+                              Chưa có đánh giá
+                            </span>
+                          );
+                        }
+
+                        const totalRating = reviewsWithRating.reduce(
+                          (sum, review) => sum + (review.rating || 0),
+                          0
+                        );
+                        const averageRating =
+                          totalRating / reviewsWithRating.length;
+
+                        return (
+                          <>
+                            <div className="flex items-center space-x-1">
+                              <span className="text-yellow-500">★</span>
+                              <span className="text-sm font-medium">
+                                {averageRating.toFixed(1)}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500">
+                              {reviewsWithRating.length} đánh giá
+                            </p>
+                          </>
+                        );
+                      })()}
                     </div>
                   </TableCell>
                   <TableCell>

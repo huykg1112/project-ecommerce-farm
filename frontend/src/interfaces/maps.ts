@@ -1,20 +1,21 @@
-import { Store } from "./stores";
+import { InvenstoryClient } from "@/lib_dashboard/types/product";
 
-export interface GoogleMapComponentProps {
-  stores: Store[];
-  selectedStore: Store | null;
-  onStoreSelect: (store: Store) => void;
-  onLoad?: (map: google.maps.Map) => void;
+export interface GoongMapComponentProps {
+  inventories: InvenstoryClient[];
+  selectedInventory: InvenstoryClient | null;
+  onStoreSelect: (inventory: InvenstoryClient) => void;
+  onLoad?: (map: any) => void;
 }
 
-export interface StoreDetailProps {
-  store: Store;
+export interface InventoryDetailProps {
+  inventory: InvenstoryClient;
   onClose: () => void;
 }
+
 export interface StoreListProps {
-  stores: Store[];
-  onStoreSelect: (store: Store) => void;
-  selectedStore: Store | null;
-  mapInstance?: google.maps.Map | null;
+  inventories: InvenstoryClient[];
+  onStoreSelect: (inventory: InvenstoryClient) => void;
+  selectedInventory: InvenstoryClient | null;
+  mapInstance?: any | null;
   initialSearchTerm?: string;
 }

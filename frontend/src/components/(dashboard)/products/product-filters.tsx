@@ -1,4 +1,5 @@
 "use client";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -7,8 +8,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -17,17 +24,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCategories } from "@/hooks/use-categories";
-import { RotateCcw, Search } from "lucide-react";
+import { ChevronDown, RotateCcw, Search, X } from "lucide-react";
 import { useCallback, useState } from "react";
 
 interface ProductFiltersProps {
   search: string;
-  category_id: string;
+  category_ids: string[];
   status: string;
   price_min?: number;
   price_max?: number;
   onSearchChange: (search: string) => void;
-  onCategoryChange: (category_id: string) => void;
+  onCategoryChange: (category_ids: string[]) => void;
   onStatusChange: (status: string) => void;
   onPriceRangeChange: (priceRange: { min?: number; max?: number }) => void;
   onReset: () => void;
@@ -35,7 +42,7 @@ interface ProductFiltersProps {
 
 export function ProductFilters({
   search,
-  category_id,
+  category_ids,
   status,
   price_min,
   price_max,
@@ -54,6 +61,38 @@ export function ProductFilters({
   const [localPriceMax, setLocalPriceMax] = useState<string>(
     price_max?.toString() || ""
   );
+
+  // Category selection handlers
+  const handleCategoryToggle = useCallback(
+    (categoryId: string) => {
+      const updatedCategories = category_ids.includes(categoryId)
+        ? category_ids.filter((id) => id !== categoryId)
+        : [...category_ids, categoryId];
+      onCategoryChange(updatedCategories);
+    },
+    [category_ids, onCategoryChange]
+  );
+
+  const handleClearCategory = useCallback(
+    (categoryId: string) => {
+      const updatedCategories = category_ids.filter((id) => id !== categoryId);
+      onCategoryChange(updatedCategories);
+    },
+    [category_ids, onCategoryChange]
+  );
+
+  const handleClearAllCategories = useCallback(() => {
+    onCategoryChange([]);
+  }, [onCategoryChange]);
+
+  // Get selected category names for display
+  const getSelectedCategoryNames = useCallback(() => {
+    return (
+      categories
+        ?.filter((cat) => category_ids.includes(cat.id))
+        .map((cat) => cat.name) || []
+    );
+  }, [categories, category_ids]);
 
   // Handle price range changes with debouncing
   const handlePriceChange = useCallback(() => {
@@ -118,23 +157,81 @@ export function ProductFilters({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Category Filter */}
+          {/* Multi-Category Filter */}
           <div className="space-y-2">
-            <Label htmlFor="category">Danh mục</Label>
-            <Select value={category_id} onValueChange={onCategoryChange}>
-              <SelectTrigger>
-                <SelectValue placeholder="Chọn danh mục" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tất cả danh mục</SelectItem>
-                {!categoriesLoading &&
-                  categories?.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="categories">Danh mục</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-between"
+                  id="categories"
+                >
+                  {category_ids.length === 0 ? (
+                    "Chọn danh mục"
+                  ) : (
+                    <span className="truncate">
+                      {category_ids.length === 1
+                        ? getSelectedCategoryNames()[0]
+                        : `${category_ids.length} danh mục được chọn`}
+                    </span>
+                  )}
+                  <ChevronDown className="h-4 w-4 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[300px] p-0">
+                <div className="p-3 border-b">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Chọn danh mục</span>
+                    {category_ids.length > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleClearAllCategories}
+                        className="h-auto p-1 text-xs"
+                      >
+                        Xóa tất cả
+                      </Button>
+                    )}
+                  </div>
+                  {category_ids.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {getSelectedCategoryNames().map((categoryName, index) => (
+                        <Badge
+                          key={category_ids[index]}
+                          variant="secondary"
+                          className="text-xs"
+                        >
+                          {categoryName}
+                          <X
+                            className="h-3 w-3 ml-1 cursor-pointer"
+                            onClick={() =>
+                              handleClearCategory(category_ids[index])
+                            }
+                          />
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="max-h-[200px] overflow-y-auto">
+                  {!categoriesLoading &&
+                    categories?.map((category) => (
+                      <div
+                        key={category.id}
+                        className="flex items-center space-x-2 p-2 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => handleCategoryToggle(category.id)}
+                      >
+                        <Checkbox
+                          checked={category_ids.includes(category.id)}
+                          onChange={() => {}} // Handled by onClick above
+                        />
+                        <span className="text-sm">{category.name}</span>
+                      </div>
+                    ))}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* Status Filter */}

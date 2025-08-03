@@ -58,7 +58,7 @@ export default function SellerPage() {
     const total = products.reduce((acc = 0, product) => {
       if (!product.reviews || product.reviews.length === 0) return acc;
       const totalRatingProduct = product.reviews.reduce(
-        (sum, review) => sum + review.rating,
+        (sum, review) => sum + (review.rating || 0),
         0
       );
       return acc + totalRatingProduct;
