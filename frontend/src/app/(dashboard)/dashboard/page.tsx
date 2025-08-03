@@ -3,25 +3,24 @@
 import { ActivityFeed } from "@/components/(dashboard)/dashboard/activity-feed";
 import { DashboardCharts } from "@/components/(dashboard)/dashboard/dashboard-charts";
 import { DistributorContent } from "@/components/(dashboard)/dashboard/distributor-content";
+import { ExportDropdown } from "@/components/(dashboard)/dashboard/export-report-modal";
 import { QuickStats } from "@/components/(dashboard)/dashboard/quick-stats";
 import { SummaryCards } from "@/components/(dashboard)/dashboard/summary-cards";
 import { TimeRangeSelector } from "@/components/(dashboard)/dashboard/time-range-selector";
+import { WarehouseAlertsSummary } from "@/components/(dashboard)/dashboard/warehouse-alerts-summary";
+import { WarningAlerts } from "@/components/(dashboard)/dashboard/warning-alerts";
 import { Button } from "@/components/ui/button";
+import { useDashboard } from "@/hooks/use-dashboard";
 import { VI_AGRICULTURAL } from "@/lib_dashboard/localization/vi";
-import { generateMockDashboardData } from "@/lib_dashboard/services/admin-dashboard";
-import {
-  dashboardDataAtom,
-  timeRangeAtom,
-} from "@/lib_dashboard/store/dashboard";
+import { timeRangeAtom } from "@/lib_dashboard/store/dashboard";
 import { useAtom } from "jotai";
-import { Download, RefreshCw } from "lucide-react";
-import { useCallback, useEffect, useMemo } from "react";
+import { RefreshCw } from "lucide-react";
+import { useCallback, useMemo } from "react";
 
 export default function DashboardPage() {
   // const [currentUser] = useAtom(currentUserAtom);
   // const [userRole] = useAtom(userRoleAtom);
   const [timeRange] = useAtom(timeRangeAtom);
-  const [dashboardData, setDashboardData] = useAtom(dashboardDataAtom);
   const userRole = "ADMIN";
   const user = {
     user_id: "1",
@@ -41,27 +40,11 @@ export default function DashboardPage() {
   };
   const currentUser = user;
 
-  // Generate dashboard data based on time range
-  const mockData = useMemo(
-    () => generateMockDashboardData(timeRange),
-    [timeRange]
-  );
-
-  // Update dashboard data when time range changes
-  useEffect(() => {
-    setDashboardData(mockData);
-  }, [mockData, setDashboardData]);
-
-  // Handlers
+  // Use real dashboard data
+  const { dashboardData, loading, error, refetch } = useDashboard(timeRange);
   const handleRefresh = useCallback(() => {
-    const newData = generateMockDashboardData(timeRange);
-    setDashboardData(newData);
-  }, [timeRange, setDashboardData]);
-
-  const handleExport = useCallback(() => {
-    console.log("Exporting dashboard data...");
-    // Export logic here
-  }, []);
+    refetch(timeRange);
+  }, [refetch, timeRange]);
 
   const timeRangeLabel = useMemo(() => {
     switch (timeRange) {
@@ -71,6 +54,8 @@ export default function DashboardPage() {
         return "tuần này";
       case "month":
         return "tháng này";
+      case "year":
+        return "năm nay";
       default:
         return "tháng này";
     }
@@ -83,6 +68,59 @@ export default function DashboardPage() {
   }, [userRole]);
 
   if (!currentUser) {
+    return null;
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-agricultural-primary">
+              🌾 {dashboardTitle}
+            </h1>
+            <p className="text-agricultural-secondary mt-1">
+              {VI_AGRICULTURAL.platform.subtitle} - {timeRangeLabel}
+            </p>
+          </div>
+        </div>
+        <div className="animate-pulse space-y-6">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-32 bg-[#accc8b]/20 rounded-lg" />
+            ))}
+          </div>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div className="h-64 bg-[#accc8b]/20 rounded-lg" />
+            <div className="h-64 bg-[#accc8b]/20 rounded-lg" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-agricultural-primary">
+              🌾 {dashboardTitle}
+            </h1>
+            <p className="text-agricultural-secondary mt-1">
+              {VI_AGRICULTURAL.platform.subtitle} - {timeRangeLabel}
+            </p>
+          </div>
+        </div>
+        <div className="text-center py-8">
+          <p className="text-red-600 mb-4">Có lỗi khi tải dữ liệu: {error}</p>
+          <Button onClick={handleRefresh}>Thử lại</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!dashboardData) {
     return null;
   }
 
@@ -110,49 +148,86 @@ export default function DashboardPage() {
               <RefreshCw className="h-4 w-4" />
               Làm mới
             </Button>
-            <Button
-              onClick={handleExport}
-              className="btn-primary flex items-center gap-2"
-            >
-              <Download className="h-4 w-4" />
-              Xuất báo cáo
-            </Button>
+            <ExportDropdown
+              dashboardData={dashboardData}
+              timeRange={timeRange}
+            />
           </div>
         </div>
       </div>
 
       {/* Summary Cards */}
       <SummaryCards
-        newUsers={dashboardData.newUsers}
-        newDistributors={dashboardData.newDistributors}
-        productsSold={dashboardData.productsSold}
-        totalRevenue={dashboardData.totalRevenue}
+        newUsers={dashboardData.stats.newUsersThisMonth}
+        newDistributors={dashboardData.stats.newDistributorsThisMonth}
+        productsSold={dashboardData.stats.totalOrders}
+        totalRevenue={dashboardData.stats.totalRevenue}
         timeRange={timeRangeLabel}
         userRole={userRole}
       />
 
+      {/* Warning Alerts - Warehouse Monitoring */}
+      <WarningAlerts warnings={dashboardData.warnings} loading={loading} />
+
       {/* Role-based Content */}
       {userRole === "ADMIN" ? (
         <>
-          {/* Charts Section */}
+          {/* Charts Section - Using real data filtered by time range */}
           <DashboardCharts
             revenueData={dashboardData.revenueData}
             userDistribution={dashboardData.userDistribution}
             timeRange={timeRange}
           />
 
-          {/* Bottom Section - Activity Feed & Quick Stats */}
+          {/* Bottom Section - Activity Feed, Quick Stats & Warehouse Alerts */}
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2">
-              <ActivityFeed activities={dashboardData.recentActivities} />
+              <ActivityFeed
+                activities={dashboardData.recentActivities}
+                loading={loading}
+              />
             </div>
-            <div>
-              <QuickStats stats={dashboardData.quickStats} />
+            <div className="space-y-6">
+              <QuickStats
+                stats={{
+                  activeUsers: Math.floor(dashboardData.stats.totalUsers * 0.7), // Mock calculation
+                  activeDistributors: Math.floor(
+                    dashboardData.stats.totalDistributors * 0.8
+                  ), // Mock calculation
+                  totalProducts: dashboardData.stats.totalProducts,
+                  pendingOrders: Math.floor(
+                    dashboardData.stats.totalOrders * 0.1
+                  ), // Mock calculation
+                }}
+              />
+              <WarehouseAlertsSummary
+                warnings={dashboardData.warnings}
+                loading={loading}
+              />
             </div>
           </div>
         </>
       ) : (
-        <DistributorContent dashboardData={dashboardData} />
+        <DistributorContent
+          dashboardData={{
+            // Convert DashboardData to mock format for DistributorContent
+            newUsers: dashboardData.stats.newUsersThisMonth,
+            newDistributors: dashboardData.stats.newDistributorsThisMonth,
+            productsSold: dashboardData.stats.totalOrders,
+            totalRevenue: dashboardData.stats.totalRevenue,
+            recentActivities: dashboardData.recentActivities,
+            revenueData: [],
+            userDistribution: [],
+            quickStats: {
+              activeUsers: Math.floor(dashboardData.stats.totalUsers * 0.7),
+              activeDistributors: Math.floor(
+                dashboardData.stats.totalDistributors * 0.8
+              ),
+              totalProducts: dashboardData.stats.totalProducts,
+              pendingOrders: Math.floor(dashboardData.stats.totalOrders * 0.1),
+            },
+          }}
+        />
       )}
     </div>
   );

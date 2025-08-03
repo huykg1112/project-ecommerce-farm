@@ -3,13 +3,14 @@
 import { Button } from "@/components/ui/button";
 import { timeRangeAtom, type TimeRange } from "@/lib_dashboard/store/dashboard";
 import { useAtom } from "jotai";
-import { Calendar, CalendarDays, Clock } from "lucide-react";
+import { Calendar, CalendarDays, CalendarRange, Clock } from "lucide-react";
 import { memo, useCallback } from "react";
 
 const timeRangeOptions = [
   { value: "day" as TimeRange, label: "Hôm nay", icon: Clock },
   { value: "week" as TimeRange, label: "Tuần này", icon: CalendarDays },
   { value: "month" as TimeRange, label: "Tháng này", icon: Calendar },
+  { value: "year" as TimeRange, label: "Năm nay", icon: CalendarRange },
 ];
 
 export const TimeRangeSelector = memo(() => {

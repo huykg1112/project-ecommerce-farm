@@ -29,7 +29,22 @@ export const DashboardCharts = memo<DashboardChartsProps>(
         ? "Xu hướng doanh thu theo giờ"
         : timeRange === "week"
         ? "Xu hướng doanh thu theo ngày"
-        : "Xu hướng doanh thu theo tháng";
+        : timeRange === "month"
+        ? "Xu hướng doanh thu theo tháng"
+        : "Xu hướng doanh thu theo năm";
+    }, [timeRange]);
+
+    const userDistributionTitle = useMemo(() => {
+      const timeLabel =
+        timeRange === "day"
+          ? "hôm nay"
+          : timeRange === "week"
+          ? "tuần này"
+          : timeRange === "month"
+          ? "tháng này"
+          : "năm nay";
+
+      return `Phân bố người dùng đăng ký ${timeLabel}`;
     }, [timeRange]);
 
     const tooltipStyle = useMemo(
@@ -102,10 +117,11 @@ export const DashboardCharts = memo<DashboardChartsProps>(
         <Card className="card-agricultural">
           <CardHeader>
             <CardTitle className="text-agricultural-primary font-bold flex items-center gap-2">
-              👥 Phân bố vai trò người dùng
+              👥 {userDistributionTitle}
             </CardTitle>
             <p className="text-sm text-agricultural-secondary">
-              Tỷ lệ phân bố giữa nông dân và nhà phân phối
+              Tỷ lệ phân bố vai trò người dùng đăng ký trong khoảng thời gian
+              được chọn
             </p>
           </CardHeader>
           <CardContent>
@@ -130,7 +146,7 @@ export const DashboardCharts = memo<DashboardChartsProps>(
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: number) => [`${value}%`, "Tỷ lệ"]}
+                  formatter={(value: number) => [`${value}`, "Người"]}
                   contentStyle={tooltipStyle}
                 />
               </PieChart>

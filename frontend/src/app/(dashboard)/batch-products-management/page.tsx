@@ -1,5 +1,6 @@
 "use client";
 
+import { BatchProductExportButton } from "@/components/(dashboard)/batch-products/batch-product-export";
 import { BatchProductFilters } from "@/components/(dashboard)/batch-products/batch-product-filters";
 import { BatchProductFormModal } from "@/components/(dashboard)/batch-products/batch-product-form-modal";
 import { BatchProductStatisticsCards } from "@/components/(dashboard)/batch-products/batch-product-statistics-cards";
@@ -20,7 +21,7 @@ import {
 } from "@/lib_dashboard/types/batch-product";
 import { Product } from "@/lib_dashboard/types/product";
 import { Promotion } from "@/lib_dashboard/types/promotion";
-import { Calendar, Download, Package, Plus, TrendingDown } from "lucide-react";
+import { Calendar, Package, Plus, TrendingDown } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 // Main component
@@ -489,11 +490,6 @@ export default function BatchProductsManagementPage() {
     }
   }, [selectedBatchProducts, handleBatchToggleStatus]);
 
-  // Handle export
-  const handleExport = useCallback(() => {
-    showToast.info("Chức năng xuất dữ liệu sẽ được phát triển");
-  }, []);
-
   // Handle create batch product click
   const handleCreateBatchProductClick = useCallback(() => {
     setFormData({
@@ -571,14 +567,11 @@ export default function BatchProductsManagementPage() {
           </p>
         </div>
         <div className="flex items-center space-x-3">
-          <Button
-            variant="outline"
-            onClick={handleExport}
-            className="flex items-center gap-2"
-          >
-            <Download className="h-4 w-4" />
-            Xuất dữ liệu
-          </Button>
+          <BatchProductExportButton
+            batchProducts={dataDatchProductsFiltered}
+            title="Danh sách lô sản phẩm"
+            variant="button"
+          />
           <Button
             onClick={handleCreateBatchProductClick}
             className="flex items-center gap-2"

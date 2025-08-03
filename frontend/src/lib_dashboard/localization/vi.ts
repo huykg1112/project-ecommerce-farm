@@ -66,7 +66,7 @@ export const VI_AGRICULTURAL = {
       pesticides: "Thuốc bảo vệ thực vật",
     },
     fields: {
-      name: "Tên sản phẩm",
+      name: "Sản phẩm",
       description: "Mô tả sản phẩm",
       usageInstructions: "Hướng dẫn sử dụng",
       unitPrice: "Giá bán (VNĐ)",
