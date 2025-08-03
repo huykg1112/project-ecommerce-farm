@@ -39,6 +39,7 @@ export class PromotionController {
   findAllByDistributor(@Req() req) {
     //kiểm tra nếu là Administrator thì trả về tất cả
     const isAdmin = req.user.role_name === Role.ADMIN;
+    console.log('User role:', req.user.role_name);
     if (isAdmin) {
       return this.promotionService.findAll();
     }

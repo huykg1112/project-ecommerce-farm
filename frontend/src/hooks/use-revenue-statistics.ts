@@ -38,6 +38,7 @@ export function useRevenueStatistics() {
     setLoading(true);
     try {
       const data = await orderServiceManagement.getAllOrders();
+      console.log("Fetched orders:", data);
       setOrders(data);
     } catch (error) {
       console.error("Error fetching orders:", error);

@@ -64,7 +64,17 @@ export class VoucherService {
     return this.voucherRepository.save(voucher);
   }
 
-  async findAll(distributorId?: string): Promise<Voucher[]> {
+  async findAll(
+    role_name?: string,
+    distributorId?: string,
+  ): Promise<Voucher[]> {
+    // If role is Admin, return all vouchers
+    if (role_name && role_name === 'Admin') {
+      return this.voucherRepository.find({
+        where: { is_deleted: false },
+        relations: ['distributor', 'users'],
+      });
+    }
     const query = this.voucherRepository
       .createQueryBuilder('voucher')
       .leftJoinAndSelect('voucher.distributor', 'distributor')

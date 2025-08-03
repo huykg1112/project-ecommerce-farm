@@ -16,6 +16,7 @@ import {
   ProductStatsResponse,
 } from "@/lib_dashboard/types/product";
 import { Download, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 interface ProductFiltersState {
@@ -38,6 +39,7 @@ interface PaginationState {
 }
 
 export default function ProductsManagementPage() {
+  const router = useRouter();
   // Data states
   const [products, setProducts] = useState<Product[]>([]);
   const [productStats, setProductStats] = useState<ProductStatsResponse>({
@@ -343,7 +345,7 @@ export default function ProductsManagementPage() {
 
   // Action handlers
   const handleViewDetails = useCallback((productId: string) => {
-    showToast.info("Tính năng xem chi tiết đang được phát triển");
+    router.push(`/products/${productId}`);
   }, []);
 
   const handleEditProduct = useCallback(

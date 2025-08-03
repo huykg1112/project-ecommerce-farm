@@ -197,7 +197,7 @@ export function AppSidebar() {
           />
         </div>
         <div className="flex flex-col">
-          <span className="text-2xl font-bold text-white">FramE</span>
+          <span className="text-2xl font-bold text-white">FarmE</span>
           <span className="text-sm text-[#accc8b]">Admin Panel</span>
         </div>
       </SidebarHeader>

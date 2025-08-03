@@ -34,7 +34,7 @@ export class VoucherController {
   @Get('my-vouchers')
   findMyVouchers(@Request() req: any) {
     const distributorId = req.user?.user_id;
-    return this.voucherService.findAll(distributorId);
+    return this.voucherService.findAll(req.user.role?.role_name, distributorId);
   }
 
   @Get('my-vouchers-for-user')

@@ -30,13 +30,12 @@ export class BatchProductController {
   @Get()
   findAll(@Req() req) {
     if (req.user.invenstory?.invenstory_id) {
-      return this.batchService.findAll(req.user.invenstory.invenstory_id);
+      return this.batchService.findAll(
+        req.user.role?.role_name,
+        req.user.invenstory.invenstory_id,
+      );
     }
 
-    console.log(
-      'Invenstory not found for user:',
-      req.user.invenstory?.invenstory_id,
-    );
     throw new Error('Invenstory not found for user');
   }
 
@@ -45,7 +44,6 @@ export class BatchProductController {
   //   return this.batchService.updateBatchs(updateBatchDtos);
   // }
 
-  @Public()
   @Get('expiring-soon')
   findExpiringSoon(@Query('days') days: number) {
     return this.batchService.findExpiringSoon(Number(days) || 7);

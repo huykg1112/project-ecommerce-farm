@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Role } from '@root/src/auth/enums/role.enum';
 import { In, LessThanOrEqual, Repository } from 'typeorm';
 import { ProductType } from '../product-type/entities/product-type.entity';
 import { Product } from '../product/entities/product.entity';
@@ -65,7 +66,22 @@ export class BatchProductService {
 
     return this.batchRepo.save(batch);
   }
-  async findAll(invenstory_id: string): Promise<BatchProduct[]> {
+  async findAll(
+    role_name: string,
+    invenstory_id: string,
+  ): Promise<BatchProduct[]> {
+    if (role_name === Role.ADMIN) {
+      return this.batchRepo.find({
+        where: { is_deleted: false },
+        relations: [
+          'product',
+          'product.images',
+          'invenstory',
+          'product_types',
+          'promotions',
+        ],
+      });
+    }
     return this.batchRepo.find({
       where: {
         is_deleted: false,

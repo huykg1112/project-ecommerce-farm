@@ -358,6 +358,7 @@ export default function VouchersManagementPage() {
             onBatchActivate={handleBatchActivate}
             onBatchDeactivate={handleBatchDeactivate}
             onBatchDelete={handleBatchDelete}
+            loading={loading}
             title="voucher"
           />
         </div>
