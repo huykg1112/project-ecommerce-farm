@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  CancelOrderModal,
+  canCancelOrder,
+} from "@/components/orders/cancel-order-modal";
 import { orderServiceManagement } from "@/lib_dashboard/services/order-service-management";
 import type { Order } from "@/lib_dashboard/types/order";
 import Image from "next/image";
@@ -21,6 +25,7 @@ import {
   Package,
   Truck,
   User,
+  X,
 } from "lucide-react";
 
 import { OrderStatusBadge } from "@/components/orders/order-status-badge";
@@ -39,6 +44,9 @@ function OrderDetailPage() {
   const router = useRouter();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Cancel order modal states
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -67,6 +75,20 @@ function OrderDetailPage() {
 
     fetchOrder();
   }, [params.id, router]);
+
+  // Handle cancel order
+  const handleCancelOrder = () => {
+    setCancelModalOpen(true);
+  };
+
+  const handleCancelSuccess = () => {
+    // Redirect to orders list after successful cancellation
+    router.push("/orders");
+  };
+
+  const handleCloseCancelModal = () => {
+    setCancelModalOpen(false);
+  };
 
   // Format date
   const formatDate = (dateString: string) => {
@@ -144,6 +166,16 @@ function OrderDetailPage() {
               Quay lại
             </Link>
           </Button>
+          {canCancelOrder(order.status.status_name) && (
+            <Button
+              variant="outline"
+              onClick={handleCancelOrder}
+              className="text-red-600 border-red-200 hover:bg-red-50"
+            >
+              <X className="mr-2 h-4 w-4" />
+              Hủy đơn hàng
+            </Button>
+          )}
           <PrintInvoice order={order} />
         </div>
       </div>
@@ -156,7 +188,7 @@ function OrderDetailPage() {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center justify-between">
                 <span>Trạng thái đơn hàng</span>
-                <OrderStatusBadge status={order.status.status_name as any} />
+                <OrderStatusBadge status={order.status} />
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -204,9 +236,13 @@ function OrderDetailPage() {
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium hover:text-primary">
-                        {detail.batch_product.product.product_name}
-                      </div>
+                      <Link
+                        href={`/products/${detail.batch_product.product.product_id}`}
+                      >
+                        <div className="font-medium hover:text-primary">
+                          {detail.batch_product.product.product_name}
+                        </div>
+                      </Link>
                       <p className="text-sm text-gray-500">
                         Đại lý: {order.distributor?.invenstory?.name || "N/A"}
                       </p>
@@ -358,6 +394,14 @@ function OrderDetailPage() {
           </Card>
         </div>
       </div>
+
+      {/* Cancel Order Modal */}
+      <CancelOrderModal
+        order={order}
+        open={cancelModalOpen}
+        onClose={handleCloseCancelModal}
+        onSuccess={handleCancelSuccess}
+      />
     </div>
   );
 }

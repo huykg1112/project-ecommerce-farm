@@ -42,10 +42,12 @@ function OrderSuccessPage() {
   const paymentFailed = isVNPayPayment && !isVNPaySuccess;
 
   const [order, setOrder] = useState<Order | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    setLoading(true);
+    setError(null);
     const fetchOrder = async () => {
       if (!actualOrderId) {
         setError("Không tìm thấy mã đơn hàng");

@@ -1,5 +1,6 @@
 "use client";
 
+import { CancelOrderModal } from "@/components/orders/cancel-order-modal";
 import { OrderCard } from "@/components/orders/order-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +33,11 @@ function OrdersPage() {
   const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>("");
   const [sortOrder, setSortOrder] = useState("newest");
   const [loading, setLoading] = useState(true);
+
+  // Cancel order modal states
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [selectedOrderToCancel, setSelectedOrderToCancel] =
+    useState<Order | null>(null);
 
   // Fetch orders
   useEffect(() => {
@@ -135,6 +141,31 @@ function OrdersPage() {
 
     setFilteredOrders(result);
   }, [orders, statusFilter, paymentMethodFilter, searchTerm, sortOrder]);
+
+  // Handle cancel order
+  const handleCancelOrder = (order: Order) => {
+    setSelectedOrderToCancel(order);
+    setCancelModalOpen(true);
+  };
+
+  const handleCancelSuccess = () => {
+    // Refresh orders after successful cancellation
+    const fetchOrders = async () => {
+      try {
+        const orderFetched = await orderServiceManagement.getOrdersByUser();
+        setOrders(orderFetched);
+        setFilteredOrders(orderFetched);
+      } catch (error) {
+        console.error("Error fetching orders:", error);
+      }
+    };
+    fetchOrders();
+  };
+
+  const handleCloseCancelModal = () => {
+    setCancelModalOpen(false);
+    setSelectedOrderToCancel(null);
+  };
 
   // If loading
   if (loading) {
@@ -272,7 +303,11 @@ function OrdersPage() {
       {filteredOrders.length > 0 ? (
         <div className="space-y-6">
           {filteredOrders.map((order) => (
-            <OrderCard key={order.order_id} order={order} />
+            <OrderCard
+              key={order.order_id}
+              order={order}
+              onCancelOrder={handleCancelOrder}
+            />
           ))}
         </div>
       ) : (
@@ -302,6 +337,14 @@ function OrdersPage() {
           </Button>
         </div>
       )}
+
+      {/* Cancel Order Modal */}
+      <CancelOrderModal
+        order={selectedOrderToCancel}
+        open={cancelModalOpen}
+        onClose={handleCloseCancelModal}
+        onSuccess={handleCancelSuccess}
+      />
     </div>
   );
 }

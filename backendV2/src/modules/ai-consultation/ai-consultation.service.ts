@@ -28,8 +28,8 @@ export class AiConsultationService {
     // tìm AI Consultation theo disease name
     const existingConsultation = await this.aiConsultationRepository.findOne({
       where: {
-        crop_type: createAiConsultationDto.crop_type,
-        growth_stage: createAiConsultationDto.growth_stage,
+        // crop_type: createAiConsultationDto.crop_type,
+        // growth_stage: createAiConsultationDto.growth_stage,
         disease: {
           disease_name: createAiConsultationDto.disease_name,
           is_deleted: false,
@@ -45,6 +45,9 @@ export class AiConsultationService {
         existing: true,
       };
     }
+    //Kiểm tra bệnh đó đã có quy trình điều trị chưa
+    //tìm quy trình điều trị theo disease name
+
     // tìm và kiểm tra user
     const user = await this.userRepository.findOne({
       where: { user_id },
