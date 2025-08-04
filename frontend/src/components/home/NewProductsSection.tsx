@@ -20,7 +20,7 @@ export default function NewProductsSection({
           <h2 className="text-2xl md:text-3xl font-bold text-primary-dark">
             Sản Phẩm Mới
           </h2>
-          <Link href="/products/new">
+          <Link href="/products">
             <Button variant="link" className="text-primary">
               Xem tất cả sản phẩm mới
             </Button>

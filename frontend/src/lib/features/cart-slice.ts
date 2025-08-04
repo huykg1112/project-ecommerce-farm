@@ -6,6 +6,7 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 export interface CartItem {
   id: string;
+  productId: string; // ID của sản phẩm
   name: string;
   price: number;
   valueDiscount?: number; // Optional value for discount

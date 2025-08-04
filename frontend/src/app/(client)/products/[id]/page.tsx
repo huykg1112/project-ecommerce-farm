@@ -225,6 +225,7 @@ export default function ProductPage() {
         dispatch(
           addToCart({
             id: product.product_id + selectedBatch?.batch_id || "",
+            productId: product.product_id,
             name: product.product_name,
             price: discountedPrice,
             valueDiscount: maxPromotion?.discount_value || 0,

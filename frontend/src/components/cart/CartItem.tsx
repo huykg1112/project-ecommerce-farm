@@ -41,7 +41,7 @@ export function CartItem({
         <div className="flex flex-col sm:flex-row sm:justify-between">
           <div>
             <Link
-              href={`/products/${item.id}`}
+              href={`/products/${item.productId}`}
               className="font-medium hover:text-primary"
             >
               {item.name}
