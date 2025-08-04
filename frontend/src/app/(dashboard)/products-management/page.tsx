@@ -1,5 +1,6 @@
 "use client";
 
+import { ExportButton } from "@/components/(dashboard)/common/export-button";
 import { ProductFilters } from "@/components/(dashboard)/products/product-filters";
 import { ProductFormModal } from "@/components/(dashboard)/products/product-form-modal";
 import { ProductPagination } from "@/components/(dashboard)/products/product-pagination";
@@ -9,13 +10,14 @@ import DeleteModal from "@/components/(dashboard)/shared/delete-modal";
 import { StatisticsCards } from "@/components/(dashboard)/shared/statistics-cards";
 import { Button } from "@/components/ui/button";
 import { showToast } from "@/lib/toast-provider";
+import { exportService } from "@/lib_dashboard/services/export-service";
 import { productServiceManagement } from "@/lib_dashboard/services/product-service-management";
 import {
   Product,
   ProductFormData,
   ProductStatsResponse,
 } from "@/lib_dashboard/types/product";
-import { Download, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -407,6 +409,15 @@ export default function ProductsManagementPage() {
     showToast.info("Tính năng xuất dữ liệu đang được phát triển");
   }, []);
 
+  // Export handlers
+  const handleExportPDF = useCallback(async () => {
+    await exportService.exportProductsToPDF(filteredProducts);
+  }, [filteredProducts]);
+
+  const handleExportExcel = useCallback(async () => {
+    await exportService.exportProductsToExcel(filteredProducts);
+  }, [filteredProducts]);
+
   // Modal handlers
   const openAddModal = useCallback(() => {
     setProductFormData({
@@ -558,15 +569,12 @@ export default function ProductsManagementPage() {
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2">
-          <Button
-            variant="outline"
-            onClick={handleExport}
-            className="border-[#90c577] text-[#44703d] hover:bg-[#accc8b]/20 bg-transparent"
-            disabled={loading}
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Xuất dữ liệu
-          </Button>
+          <ExportButton
+            onExportPDF={handleExportPDF}
+            onExportExcel={handleExportExcel}
+            loading={loading}
+            buttonText="Xuất báo cáo sản phẩm"
+          />
           <Button
             onClick={openAddModal}
             className="bg-[#90c577] hover:bg-[#74a65d] text-white"

@@ -1,9 +1,11 @@
 "use client";
 
+import { ExportButton } from "@/components/(dashboard)/common/export-button";
 import { RequestFilters } from "@/components/(dashboard)/store-requests/request-filters";
 import { RequestModals } from "@/components/(dashboard)/store-requests/request-modals";
 import { RequestTable } from "@/components/(dashboard)/store-requests/request-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { exportService } from "@/lib_dashboard/services/export-service";
 import { StoreOwnerRequests } from "@/lib_dashboard/services/store_owner_request";
 import { StoreOwnerRequest } from "@/lib_dashboard/types/store_owner_request";
 
@@ -118,6 +120,16 @@ export default function AgencyRequestsPage() {
   };
 
   const handleDelete = async (requestId: string) => {};
+
+  // Export handlers
+  const handleExportPDF = useCallback(async () => {
+    await exportService.exportAgencyRequestsToPDF(filteredRequests);
+  }, [filteredRequests]);
+
+  const handleExportExcel = useCallback(async () => {
+    await exportService.exportAgencyRequestsToExcel(filteredRequests);
+  }, [filteredRequests]);
+
   const stats = useMemo(() => {
     return {
       totalRequests: request.length,
@@ -140,6 +152,15 @@ export default function AgencyRequestsPage() {
           <p className="text-[#74a65d] mt-1">
             Xem xét và phê duyệt các yêu cầu đăng ký trở thành đại lý bán hàng
           </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-2">
+          <ExportButton
+            onExportPDF={handleExportPDF}
+            onExportExcel={handleExportExcel}
+            loading={loading}
+            buttonText="Xuất báo cáo yêu cầu"
+          />
         </div>
       </div>
 

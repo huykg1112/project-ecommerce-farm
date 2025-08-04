@@ -22,7 +22,7 @@ import { formatCurrency } from "@/lib_dashboard/utils/formatters";
 import { format } from "date-fns";
 import { vi } from "date-fns/locale";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 import { ChevronDown, Download, FileText, Table } from "lucide-react";
 import { useState } from "react";
 import * as XLSX from "xlsx";
@@ -132,7 +132,7 @@ export function BatchProductExportModal({
       doc.text("THỐNG KÊ TỔNG QUAN", 20, yPosition);
       yPosition += 10;
 
-      doc.autoTable({
+      autoTable(doc, {
         startY: yPosition,
         head: [["Chỉ số", "Giá trị"]],
         body: statsData,

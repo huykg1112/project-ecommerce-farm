@@ -1,29 +1,26 @@
 "use client";
 
+import { ExportButton } from "@/components/(dashboard)/common/export-button";
+import { OrderCancelModal } from "@/components/(dashboard)/orders/order-cancel-modal";
+import { OrderConfirmModal } from "@/components/(dashboard)/orders/order-confirm-modal";
+import { OrderDetailModal } from "@/components/(dashboard)/orders/order-detail-modal";
+import { OrderFiltersComponent } from "@/components/(dashboard)/orders/order-filters";
+import { OrderStatisticsCards } from "@/components/(dashboard)/orders/order-statistics-cards";
+import { OrderTable } from "@/components/(dashboard)/orders/order-table";
+import { OrderUpdateStatusModal } from "@/components/(dashboard)/orders/order-update-status-modal";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { showToast } from "@/lib/toast-provider";
+import { exportService } from "@/lib_dashboard/services/export-service";
 import { orderServiceManagement } from "@/lib_dashboard/services/order-service-management";
-import {
+import type {
+  Order as ImportedOrder,
+  Order,
   OrderFilters,
   OrderStatus,
   PaymentMethod,
 } from "@/lib_dashboard/types/order";
 import { useCallback, useEffect, useMemo, useState } from "react";
-
-// Import the correct Order type
-import { OrderCancelModal } from "@/components/(dashboard)/orders/order-cancel-modal";
-import { OrderConfirmModal } from "@/components/(dashboard)/orders/order-confirm-modal";
-import { OrderDetailModal } from "@/components/(dashboard)/orders/order-detail-modal";
-import { OrderExport } from "@/components/(dashboard)/orders/order-export";
-import { OrderFiltersComponent } from "@/components/(dashboard)/orders/order-filters";
-import { OrderStatisticsCards } from "@/components/(dashboard)/orders/order-statistics-cards";
-import { OrderTable } from "@/components/(dashboard)/orders/order-table";
-import { OrderUpdateStatusModal } from "@/components/(dashboard)/orders/order-update-status-modal";
-import { useToast } from "@/hooks/use-toast";
-import { showToast } from "@/lib/toast-provider";
-import type {
-  Order as ImportedOrder,
-  Order,
-} from "@/lib_dashboard/types/order";
 
 export default function OrdersManagementPage() {
   const { toast } = useToast();
@@ -351,6 +348,15 @@ export default function OrdersManagementPage() {
     [orders]
   );
 
+  // Export handlers
+  const handleExportPDF = useCallback(async () => {
+    await exportService.exportOrdersToPDF(filteredOrders);
+  }, [filteredOrders]);
+
+  const handleExportExcel = useCallback(async () => {
+    await exportService.exportOrdersToExcel(filteredOrders);
+  }, [filteredOrders]);
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -369,7 +375,12 @@ export default function OrdersManagementPage() {
             <span className="font-semibold text-[#44703d]">{stats.total}</span>{" "}
             đơn hàng
           </div>
-          <OrderExport orders={filteredOrders} loading={loading} />
+          <ExportButton
+            onExportPDF={handleExportPDF}
+            onExportExcel={handleExportExcel}
+            loading={loading}
+            buttonText="Xuất báo cáo đơn hàng"
+          />
           <Button
             onClick={() => window.location.reload()}
             variant="outline"

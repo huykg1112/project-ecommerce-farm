@@ -1,5 +1,6 @@
 "use client";
 
+import { ExportButton } from "@/components/(dashboard)/common/export-button";
 import { StatisticsCharts } from "@/components/(dashboard)/user-statistics/statistics-charts";
 import { StatisticsFilters } from "@/components/(dashboard)/user-statistics/statistics-filters";
 import { SummaryStatistics } from "@/components/(dashboard)/user-statistics/summary-statistics";
@@ -8,8 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useUserStatistics } from "@/hooks/use-user-statistics";
-import { BarChart3, Download, RefreshCw } from "lucide-react";
-import { useMemo } from "react";
+import { exportService } from "@/lib_dashboard/services/export-service";
+import { BarChart3, RefreshCw } from "lucide-react";
+import { useCallback, useMemo } from "react";
 
 export default function UserStatisticsPage() {
   const { toast } = useToast();
@@ -31,6 +33,21 @@ export default function UserStatisticsPage() {
       description: "Tính năng xuất báo cáo đang được phát triển",
     });
   };
+
+  // Export handlers
+  const handleExportPDF = useCallback(async () => {
+    await exportService.exportUserStatisticsToPDF(
+      statisticsData,
+      statisticsData.filteredUsers
+    );
+  }, [statisticsData]);
+
+  const handleExportExcel = useCallback(async () => {
+    await exportService.exportUserStatisticsToExcel(
+      statisticsData,
+      statisticsData.filteredUsers
+    );
+  }, [statisticsData]);
 
   const handleRefresh = () => {
     fetchStatistics();
@@ -78,14 +95,12 @@ export default function UserStatisticsPage() {
             />
             Làm mới
           </Button>
-          <Button
-            variant="outline"
-            onClick={handleExport}
-            className="border-[#90c577] text-[#44703d] hover:bg-[#accc8b]/20 bg-transparent"
-          >
-            <Download className="h-4 w-4 mr-2" />
-            Xuất báo cáo
-          </Button>
+          <ExportButton
+            onExportPDF={handleExportPDF}
+            onExportExcel={handleExportExcel}
+            loading={loading}
+            buttonText="Xuất báo cáo thống kê"
+          />
         </div>
       </div>
 
