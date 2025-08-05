@@ -1,18 +1,18 @@
 import { Button } from "@/components/ui/button";
 import { formatCurrency } from "@/lib/utils";
 import type { Order } from "@/lib_dashboard/types/order";
-import { ChevronRight, Package, X } from "lucide-react";
+import { ChevronRight, Package } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { canCancelOrder } from "./cancel-order-modal";
 import { OrderStatusBadge } from "./order-status-badge";
 
 interface OrderCardProps {
   order: Order;
   onCancelOrder?: (order: Order) => void;
+  isLoadingCancel?: boolean;
 }
 
-export function OrderCard({ order, onCancelOrder }: OrderCardProps) {
+export function OrderCard({ order }: OrderCardProps) {
   // Format date
   const orderDate = new Date(order.created_at);
   const formattedDate = new Intl.DateTimeFormat("vi-VN", {
@@ -100,27 +100,15 @@ export function OrderCard({ order, onCancelOrder }: OrderCardProps) {
             Tổng tiền: {formatCurrency(totalAmount)}
           </p>
         </div>
-        <div className="flex gap-4">
-          {canCancelOrder(order.status.status_name) && onCancelOrder && (
-            <Button
-              variant="outline"
-              onClick={() => onCancelOrder(order)}
-              className="text-red-600 border-red-200 hover:bg-red-50"
-            >
-              <X className="ml-1 h-4 w-4" />
-              Hủy đơn
-            </Button>
-          )}
-          <Button asChild className="bg-primary hover:bg-primary-dark">
-            <Link
-              href={`/orders/${order.order_id}`}
-              className="flex items-center"
-            >
-              Xem chi tiết
-              <ChevronRight className="ml-1 h-4 w-4" />
-            </Link>
-          </Button>
-        </div>
+        <Button asChild className="bg-primary hover:bg-primary-dark">
+          <Link
+            href={`/orders/${order.order_id}`}
+            className="flex items-center"
+          >
+            Xem chi tiết
+            <ChevronRight className="ml-1 h-4 w-4" />
+          </Link>
+        </Button>
       </div>
     </div>
   );

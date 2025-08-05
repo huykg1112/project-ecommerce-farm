@@ -1,37 +1,37 @@
 import { Delivery, Natural, Organic, Support } from "@/assets/icons";
 import {
   HeroImage1,
-  HeroImage2,
-  HeroImage3,
-  HeroImage4,
+  HeroImage5,
+  HeroImage6,
+  PhanBon,
 } from "@/assets/images/hero-img";
 import type { WhyChooseUsSectionData as WhyChooseUsSectionDataType } from "@/interfaces";
 
 export const WhyChooseUsSectionData: WhyChooseUsSectionDataType = {
-  title: "Tại Sao Chọn Nông Sàn?",
+  title: "Tại Sao Chọn Nền Tảng Thuốc BVTV Của Chúng Tôi?",
   cards: [
     {
-      title: "Sản Phẩm Tươi Ngon",
+      title: "Thuốc Chính Hãng",
       description:
-        "Cam kết cung cấp sản phẩm nông nghiệp tươi ngon, chất lượng cao từ nông trại đến bàn ăn.",
+        "Cam kết cung cấp thuốc bảo vệ thực vật chính hãng, có nguồn gốc xuất xứ rõ ràng từ các nhà sản xuất uy tín.",
       icon: Natural,
     },
     {
-      title: "Sản Phẩm Hữu Cơ",
+      title: "An Toàn & Hiệu Quả",
       description:
-        "Nhiều sản phẩm được chứng nhận hữu cơ, đảm bảo an toàn cho sức khỏe và thân thiện với môi trường.",
+        "Sản phẩm đạt tiêu chuẩn chất lượng quốc tế, đảm bảo hiệu quả diệt trừ sâu bệnh và an toàn cho người sử dụng.",
       icon: Organic,
     },
     {
-      title: "Giao Hàng Nhanh Chóng",
+      title: "Giao Hàng Toàn Quốc",
       description:
-        "Hệ thống giao hàng hiệu quả, đảm bảo sản phẩm đến tay khách hàng trong thời gian ngắn nhất.",
+        "Hệ thống phân phối rộng khắp, giao hàng nhanh chóng đến tận nơi, đảm bảo nông dân nhận được sản phẩm kịp thời.",
       icon: Delivery,
     },
     {
-      title: "Hỗ Trợ 24/7",
+      title: "Tư Vấn Chuyên Nghiệp",
       description:
-        "Đội ngũ hỗ trợ khách hàng luôn sẵn sàng giải đáp mọi thắc mắc và hỗ trợ khi cần thiết.",
+        "Đội ngũ kỹ thuật viên nông nghiệp giàu kinh nghiệm, hỗ trợ tư vấn phương án phòng trừ sâu bệnh hiệu quả.",
       icon: Support,
     },
   ],
@@ -41,33 +41,37 @@ export const slides = [
   {
     id: 1,
     image: HeroImage1,
-    title: "Sản phẩm nông nghiệp tươi ngon",
-    description: "Trực tiếp từ nông trại đến bàn ăn của bạn",
+    title: "Thuốc Bảo Vệ Thực Vật Chính Hãng",
+    description:
+      "Đa dạng sản phẩm từ các thương hiệu uy tín, đảm bảo chất lượng và hiệu quả",
     buttonText: "Mua ngay",
     buttonLink: "/products",
   },
   {
     id: 2,
-    image: HeroImage2,
-    title: "Vật tư nông nghiệp chất lượng cao",
-    description: "Đầy đủ các loại vật tư, phân bón, thuốc bảo vệ thực vật",
+    image: HeroImage5,
+    title: "Thuốc Trừ Sâu Chuyên Dụng",
+    description:
+      "Các loại thuốc diệt côn trùng, sâu bệnh hại hiệu quả cao cho mọi loại cây trồng",
     buttonText: "Khám phá",
-    buttonLink: "/products?category=Vật%20tư%20nông%20nghiệp",
+    buttonLink: "/products?category=Thuốc%20trừ%20sâu",
   },
   {
     id: 3,
-    image: HeroImage3,
-    title: "Hạt giống chất lượng",
-    description: "Đa dạng các loại hạt giống, đảm bảo tỷ lệ nảy mầm cao",
+    image: PhanBon,
+    title: "Phân Bón chât lượng cao",
+    description:
+      "Giải pháp toàn diện phòng trừ các bệnh nấm, vi khuẩn trên cây trồng",
     buttonText: "Tìm hiểu thêm",
-    buttonLink: "/products?category=Hạt%20giống",
+    buttonLink: "/products?category=Phân%20bón",
   },
   {
     id: 4,
-    image: HeroImage4,
-    title: "Sản phẩm chế biến sạch",
-    description: "Sản phẩm chế biến từ nguyên liệu sạch, an toàn",
+    image: HeroImage6,
+    title: "Thuốc Diệt Cỏ An Toàn",
+    description:
+      "Các sản phẩm diệt cỏ dại hiệu quả, không gây hại cho cây trồng chính",
     buttonText: "Xem ngay",
-    buttonLink: "/products?category=Sản%20phẩm%20chế%20biến",
+    buttonLink: "/products?category=Thuốc%20trừ%20cỏ",
   },
 ];

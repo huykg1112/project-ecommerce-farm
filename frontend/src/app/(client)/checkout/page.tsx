@@ -27,6 +27,7 @@ import {
   Mail,
   MapPin,
   Phone,
+  Truck,
   User,
 } from "lucide-react";
 import Link from "next/link";
@@ -211,9 +212,6 @@ function CheckoutPage() {
       // Wait for all orders to be created
       const createdOrders = await Promise.all(orderPromises);
 
-      // Handle successful order creation
-      showToast.success(`Đã tạo thành công ${createdOrders.length} đơn hàng`);
-
       // Clean up localStorage
       localStorage.removeItem("selectedCartItems");
       localStorage.removeItem("checkoutData");
@@ -379,7 +377,7 @@ function CheckoutPage() {
           </Card>
 
           {/* Phương thức vận chuyển */}
-          {/* <Card>
+          <Card>
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center">
                 <Truck className="mr-2 h-5 w-5" />
@@ -409,7 +407,7 @@ function CheckoutPage() {
                 * Miễn phí vận chuyển cho đơn hàng từ 300.000đ
               </p>
             </CardContent>
-          </Card> */}
+          </Card>
 
           {/* Phương thức thanh toán */}
           <Card>

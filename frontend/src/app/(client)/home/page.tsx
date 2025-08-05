@@ -1,7 +1,6 @@
 "use client";
 import BecomePartnerSection from "@/components/home/BecomePartnerSection";
 import CategoriesSection from "@/components/home/CategoriesSection";
-import DiscountBannerSection from "@/components/home/DiscountBannerSection";
 import FeaturedProductsSection from "@/components/home/FeaturedProductsSection";
 import FeaturedSellersSection from "@/components/home/FeaturedSellersSection";
 import NewProductsSection from "@/components/home/NewProductsSection";
@@ -131,7 +130,7 @@ export default function Home() {
       <CategoriesSection loading={loading} categories={fetchedCategories} />
       <FeaturedProductsSection />
       <BecomePartnerSection />
-      <DiscountBannerSection />
+      {/* <DiscountBannerSection /> */}
       <NewProductsSection loading={loading} products={newProducts} />
       <FeaturedSellersSection loading={loading} sellers={fetchedInventory} />
       {/* <SeasonalProductsSection products={discountedProducts} /> */}
