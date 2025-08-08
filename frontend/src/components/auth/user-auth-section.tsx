@@ -6,7 +6,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UserAuthSectionProps, UserProfile } from "@/interfaces";
 import type { AppDispatch, RootState } from "@/lib/features/store";
@@ -14,7 +14,7 @@ import { logoutUser } from "@/lib/features/user-slice";
 import { userService } from "@/lib/services/user-service";
 import { cn } from "@/lib/utils";
 import { DropdownMenuSeparator } from "@radix-ui/react-dropdown-menu";
-import { LogOut, Settings, ShoppingBag, User } from "lucide-react";
+import { LayoutDashboard, LogOut, ShoppingBag, User } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -38,7 +38,7 @@ export default function UserAuthSection({ isScrolled }: UserAuthSectionProps) {
     }
   };
 
- useEffect(() => {
+  useEffect(() => {
     const fetchProfile = async () => {
       const response = await userService.getProfile();
       setProfile(response);
@@ -52,36 +52,38 @@ export default function UserAuthSection({ isScrolled }: UserAuthSectionProps) {
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className="relative h-10 w-10 rounded-full">
             <Avatar className="h-12 w-12 border-2 border-[#74a65d]/30">
-            <AvatarImage
-                      src={profile?.avatar || "/avatar-placeholder.png"}
-                      alt={profile?.username || "User"}
-                    />
+              <AvatarImage
+                src={profile?.avatar || "/avatar-placeholder.png"}
+                alt={profile?.username || "User"}
+              />
             </Avatar>
           </Button>
-        </DropdownMenuTrigger >
+        </DropdownMenuTrigger>
         <DropdownMenuContent className="w-56" align="end" forceMount>
           <DropdownMenuItem asChild>
             <Link href="/profile">
-            <User className="mr-2 h-4 w-4" />
+              <User className="mr-2 h-4 w-4" />
               <span>Tài khoản</span>
             </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
             <Link href="/orders">
-            <ShoppingBag className="mr-2 h-4 w-4" />
+              <ShoppingBag className="mr-2 h-4 w-4" />
               <span>Đơn hàng</span>
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href="/settings">
-            <Settings className="mr-2 h-4 w-4" />
-              <span>Cài đặt</span>
-            </Link>
-          </DropdownMenuItem>
+          {profile?.role_name !== "Client" && (
+            <DropdownMenuItem asChild>
+              <Link href="/revenue">
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                <span>Quản lý</span>
+              </Link>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4 text-red-500" />
-              <span className="text-red-500">Đăng xuất</span>
+            <span className="text-red-500">Đăng xuất</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

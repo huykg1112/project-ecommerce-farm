@@ -129,11 +129,42 @@ export default function ProductsPage() {
     }
 
     // Filter by search term
-    if (
-      searchTerm &&
-      !product.product_name.toLowerCase().includes(searchTerm.toLowerCase())
-    ) {
-      return false;
+    if (searchTerm) {
+      const searchLower = searchTerm.toLowerCase();
+      const matchesProductName = product.product_name
+        .toLowerCase()
+        .includes(searchLower);
+
+      // Search in product description
+      const matchesDescription = product.description
+        ? product.description.toLowerCase().includes(searchLower)
+        : false;
+
+      // Search in diseases
+      const matchesDiseases =
+        product.productDiseases?.some((productDisease) =>
+          productDisease.disease?.disease_name
+            ?.toLowerCase()
+            .includes(searchLower)
+        ) || false;
+
+      // Search in ingredients
+      const matchesIngredients =
+        product.product_ingredients?.some((productIngredient) =>
+          productIngredient.ingredient?.ingredient_name
+            ?.toLowerCase()
+            .includes(searchLower)
+        ) || false;
+
+      // If none of the searches match, filter out this product
+      if (
+        !matchesProductName &&
+        !matchesDescription &&
+        !matchesDiseases &&
+        !matchesIngredients
+      ) {
+        return false;
+      }
     }
 
     return true;

@@ -99,7 +99,7 @@ export default function Header() {
     <header
       className={cn(
         "sticky top-0 z-50 w-full transition-colors duration-300",
-        isScrolled ? "bg-[#7baa66] shadow-md" : "bg-[#f1f1f1f1] border-b"
+        isScrolled ? "bg-[#557e42] shadow-md" : "bg-[#f1f1f1f1] border-b"
       )}
     >
       <div className="container flex h-[90px] items-center justify-between">

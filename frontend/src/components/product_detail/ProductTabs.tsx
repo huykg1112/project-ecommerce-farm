@@ -326,19 +326,26 @@ export default function ProductTabs({
             </div>
           )}
 
-          {/* Mô tả và hướng dẫn sử dụng */}
+          {/* Mô tả sản phẩm */}
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-3">
               Mô tả sản phẩm
             </h3>
             <div className="bg-white border rounded-lg p-4">
-              <p className="text-gray-700 mb-3">
-                <strong>Mô tả:</strong>{" "}
+              <p className="text-gray-700 whitespace-pre-wrap">
                 {product?.description || "Chưa có mô tả"}
               </p>
-              <p className="text-gray-700">
-                <strong>Hướng dẫn sử dụng:</strong>{" "}
-                {product?.usage_instructions || "Chưa có hướng dẫn"}
+            </div>
+          </div>
+
+          {/* Hướng dẫn sử dụng */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">
+              Hướng dẫn sử dụng
+            </h3>
+            <div className="bg-white border rounded-lg p-4">
+              <p className="text-gray-700 whitespace-pre-wrap">
+                {product?.usage_instructions || "Chưa có hướng dẫn sử dụng"}
               </p>
             </div>
           </div>
@@ -366,7 +373,7 @@ export default function ProductTabs({
                         {productDisease.is_primary && (
                           <Badge className="mr-2 bg-orange-500">Đặc trị</Badge>
                         )}
-                        <div className="flex-1">
+                        <div className="flex-col flex-1">
                           <h4 className="font-semibold text-gray-900 mb-2">
                             {productDisease.disease?.disease_name}
                           </h4>

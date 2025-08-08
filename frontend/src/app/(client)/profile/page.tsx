@@ -393,7 +393,7 @@ function ProfilePage() {
   };
 
   const handleRoutingDashboard = () => {
-    router.push("/dashboard");
+    router.push("/revenue");
   };
 
   return (

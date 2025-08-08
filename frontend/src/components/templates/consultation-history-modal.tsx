@@ -36,6 +36,7 @@ import {
   Leaf,
   Trash2,
 } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 interface ConsultationHistoryModalProps {
@@ -423,17 +424,20 @@ function ConsultationDetailModal({
                             key={index}
                             className="bg-green-50 p-3 rounded-lg border border-green-200"
                           >
-                            <h5 className="font-medium text-green-800">
-                              {product.name}
-                            </h5>
+                            <Link
+                              key={index}
+                              href={`/products?search=${encodeURIComponent(
+                                product.name.trim()
+                              )}`}
+                            >
+                              <h5 className="font-medium text-green-800 hover:underline">
+                                {product.name}
+                              </h5>
+                            </Link>
+
                             {product.active_ingredient && (
-                              <p className="text-sm text-gray-600">
+                              <p className="text-sm text-gray-600 hover:underline">
                                 Hoạt chất: {product.active_ingredient}
-                              </p>
-                            )}
-                            {product.concentration && (
-                              <p className="text-sm text-green-700">
-                                {product.concentration}
                               </p>
                             )}
                           </div>

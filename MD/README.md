@@ -153,6 +153,10 @@ ecommerce-farm/
   rasa shell --endpoints endpoints.yml
 ```
 
+```Run PhoBERT model
+python "D:\LUANVAN\Project\test\project-ecommerce-farm\AI\main.py"
+```
+
 VNpay demo
 
 Ngân hàng: NCB

@@ -592,33 +592,40 @@ export function PestAnalysisForm() {
                       </h4>
                       <div className="flex flex-wrap gap-2">
                         {result.recommended_products.map((product, index) => (
-                          <Link
-                            key={index}
-                            href={`/products?search=${encodeURIComponent(
-                              product.name.trim()
-                            )}`}
-                          >
-                            <div className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg p-3 min-w-[200px] hover:shadow-md transition-shadow cursor-pointer">
-                              <div className="font-medium text-blue-800 text-sm">
+                          <div className="bg-gradient-to-r from-blue-50 to-green-50 border border-blue-200 rounded-lg p-3 min-w-[200px] hover:shadow-md transition-shadow cursor-pointer">
+                            <Link
+                              key={index}
+                              href={`/products?search=${encodeURIComponent(
+                                product.name.trim()
+                              )}`}
+                            >
+                              <div className="font-medium text-blue-800 text-sm hover:text-green-900">
                                 {product.name}
                               </div>
-                              {product.active_ingredient && (
-                                <div className="text-xs text-gray-600 mt-1">
+                            </Link>
+                            {product.active_ingredient && (
+                              <Link
+                                key={index}
+                                href={`/products?search=${encodeURIComponent(
+                                  product.active_ingredient.trim()
+                                )}`}
+                              >
+                                <div className="text-xs text-gray-600 mt-1 hover:text-green-700">
                                   Hoạt chất: {product.active_ingredient}
                                 </div>
-                              )}
-                              {product.concentration && (
-                                <div className="text-xs text-green-700 font-medium">
-                                  {product.concentration}
-                                </div>
-                              )}
-                              {product.usage_note && (
-                                <div className="text-xs text-gray-500 mt-1 italic">
-                                  {product.usage_note}
-                                </div>
-                              )}
-                            </div>
-                          </Link>
+                              </Link>
+                            )}
+                            {product.concentration && (
+                              <div className="text-xs text-green-700 font-medium">
+                                {product.concentration}
+                              </div>
+                            )}
+                            {product.usage_note && (
+                              <div className="text-xs text-gray-500 mt-1 italic">
+                                {product.usage_note}
+                              </div>
+                            )}
+                          </div>
                         ))}
                       </div>
                     </div>

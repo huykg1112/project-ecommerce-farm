@@ -62,7 +62,7 @@ export function AppSidebar() {
           ...(userRole !== "Distributor"
             ? [
                 {
-                  title: "Dashboard",
+                  title: "Tổng quan",
                   url: "/dashboard",
                   icon: Home,
                 },
