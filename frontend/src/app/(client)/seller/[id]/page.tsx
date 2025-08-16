@@ -82,7 +82,7 @@ export default function SellerPage() {
           Trang chủ
         </Link>
         <span className="mx-2">/</span>
-        <Link href="/sellers" className="hover:text-primary">
+        <Link href="/stores" className="hover:text-primary">
           Đại lý
         </Link>
         <span className="mx-2">/</span>

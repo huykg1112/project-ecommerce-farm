@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Req,
 } from '@nestjs/common';
 import { AiConsultationService } from './ai-consultation.service';
@@ -41,6 +42,11 @@ export class AiConsultationController {
     return this.aiConsultationService.getStatistics();
   }
 
+  @Get('disease-name')
+  findByDiseaseName(@Query('diseaseName') diseaseName: string) {
+    return this.aiConsultationService.findByDiseaseName(diseaseName);
+  }
+
   @Get('user/:userId')
   findByUser(@Param('userId') userId: string) {
     return this.aiConsultationService.findByUser(userId);
@@ -59,11 +65,6 @@ export class AiConsultationController {
   @Get('disease/:diseaseId')
   findByDisease(@Param('diseaseId') diseaseId: string) {
     return this.aiConsultationService.findByDisease(diseaseId);
-  }
-
-  @Get('disease-name/:diseaseName')
-  findByDiseaseName(@Param('diseaseName') diseaseName: string) {
-    return this.aiConsultationService.findByDiseaseName(diseaseName);
   }
 
   @Get(':id')

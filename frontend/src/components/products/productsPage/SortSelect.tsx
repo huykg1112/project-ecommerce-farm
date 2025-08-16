@@ -22,7 +22,7 @@ export default function SortSelect({
         <SelectValue placeholder="Sắp xếp" />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="featured">Nổi bật</SelectItem>
+        {/* <SelectItem value="featured">Nổi bật</SelectItem> */}
         <SelectItem value="newest">Mới nhất</SelectItem>
         <SelectItem value="price-low-high">Giá: Thấp đến cao</SelectItem>
         <SelectItem value="price-high-low">Giá: Cao đến thấp</SelectItem>

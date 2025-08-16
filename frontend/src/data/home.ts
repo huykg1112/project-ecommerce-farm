@@ -1,6 +1,6 @@
 import { Delivery, Natural, Organic, Support } from "@/assets/icons";
 import {
-  HeroImage1,
+  HeroImage2,
   HeroImage5,
   HeroImage6,
   PhanBon,
@@ -40,7 +40,7 @@ export const WhyChooseUsSectionData: WhyChooseUsSectionDataType = {
 export const slides = [
   {
     id: 1,
-    image: HeroImage1,
+    image: HeroImage2,
     title: "Thuốc Bảo Vệ Thực Vật Chính Hãng",
     description:
       "Đa dạng sản phẩm từ các thương hiệu uy tín, đảm bảo chất lượng và hiệu quả",

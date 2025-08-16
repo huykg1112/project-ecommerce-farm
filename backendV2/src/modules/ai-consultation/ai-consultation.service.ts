@@ -280,14 +280,27 @@ export class AiConsultationService {
   }
 
   async findByDiseaseName(diseaseName: string): Promise<AiConsultation[]> {
-    return await this.aiConsultationRepository.find({
-      where: {
-        disease: { disease_name: diseaseName },
-        is_deleted: false,
-      },
-      relations: ['user', 'disease', 'treatment_plans'],
-      order: { created_at: 'DESC' },
-    });
+    // xóa bỏ chữ bệnh đầu tên, bỏ tất cả nội dung từ chữ "trên" trở đi
+    if (!diseaseName) {
+      return [];
+    }
+    const modifiedDiseaseName = diseaseName
+      .replace(/^bệnh\s+/i, '') // Xóa chữ "bệnh" ở đầu
+      .replace(/\s+trên.*$/i, '') // Xóa từ chữ "trên" trở đi
+      .toLowerCase()
+      .trim();
+
+    return await this.aiConsultationRepository
+      .createQueryBuilder('consultation')
+      .leftJoinAndSelect('consultation.user', 'user')
+      .leftJoinAndSelect('consultation.disease', 'disease')
+      .leftJoinAndSelect('consultation.treatment_plans', 'treatment_plans')
+      .where('consultation.is_deleted = :isDeleted', { isDeleted: false })
+      .andWhere('LOWER(disease.disease_name) LIKE :diseaseName', {
+        diseaseName: `%${modifiedDiseaseName}%`,
+      })
+      .orderBy('consultation.created_at', 'DESC')
+      .getMany();
   }
 
   async findWithFilters(filters: {

@@ -264,9 +264,9 @@ export default function ProductCard({ product }: ProductCardProps) {
               -{maxPromotion.discount_value}%
             </Badge>
           )}
-        {Math.floor(Math.random() * 999) % 2 === 0 && (
+        {/* {Math.floor(Math.random() * 999) % 2 === 0 && (
           <Badge className="absolute bottom-2 left-2 bg-primary">Nổi bật</Badge>
-        )}
+        )} */}
       </div>
       <CardContent className="p-4">
         <div className="flex justify-between items-center mb-2">
@@ -318,7 +318,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
         <div className="flex items-center mt-2">
           <Link
-            href={`/seller/${product.distributor?.invenstory?.invenstory_id}`}
+            href={`/seller/${product.distributor?.user_id}`}
             className="text-sm text-primary hover:underline"
           >
             {product.distributor?.invenstory?.name || "Nhà cung cấp"}

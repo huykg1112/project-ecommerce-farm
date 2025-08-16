@@ -1,6 +1,7 @@
 "use client";
 
 import { getPestAnalysis } from "@/adapter/pest-analysis";
+import { predictPlantDisease } from "@/adapter/plant-disease-ai";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,7 +15,10 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getCookie } from "@/lib/utils";
 import { ai_ConsultationServiceManagement } from "@/lib_dashboard/services/ai-consultation-service";
-import { AIConsultationCreateRequest } from "@/lib_dashboard/types/ai-consultation";
+import {
+  AIConsultationCreateRequest,
+  AiConsultation,
+} from "@/lib_dashboard/types/ai-consultation";
 import {
   AIConsultationInfo,
   PestAnalysisRequest,
@@ -54,10 +58,11 @@ export function PestAnalysisForm() {
   const userId = getCookie("user_id");
 
   const loadingWords = [
-    "🔍 Đang phân tích hình ảnh...",
+    "🤖 Đang gọi AI model cục bộ...",
+    "🔍 Đang phân tích triệu chứng...",
+    "🎯 Đang dự đoán bệnh cây...",
+    "📋 Đang tìm kiếm tư vấn có sẵn...",
     "🧠 AI đang xử lý dữ liệu...",
-    "🌿 Nhận diện triệu chứng...",
-    "📋 Đang tạo chẩn đoán...",
     "💊 Chuẩn bị phác đồ điều trị...",
     "💾 Đang lưu kết quả...",
     "✅ Hoàn thành phân tích!",
@@ -126,6 +131,44 @@ export function PestAnalysisForm() {
     []
   );
 
+  // Helper function to convert AiConsultation to AIConsultationInfo
+  const convertFromAiConsultation = useCallback(
+    (consultation: AiConsultation): AIConsultationInfo => {
+      return {
+        crop_type: consultation.crop_type,
+        symptom_description: consultation.symptom_description,
+        growth_stage: consultation.growth_stage,
+        disease_name: consultation.disease.disease_name,
+        disease_cause:
+          consultation.disease.description || "Chưa xác định nguyên nhân", // Add missing disease_cause
+        recommended_treatment: consultation.recommended_treatment,
+        treatment_duration: consultation.treatment_duration,
+        severity_level: consultation.severity_level,
+        confidence_score: 100, // Set high confidence for existing consultations
+        diagnosis_confidence: "Cao", // Add missing diagnosis_confidence
+        recommended_products: consultation.recommended_name_products.map(
+          (name) => ({ name })
+        ),
+        prevention_tips: consultation.prevention_tips,
+        monitoring_signs: consultation.monitoring_signs,
+        treatment_plans: consultation.treatment_plans.map((plan) => ({
+          day_number: plan.day_number,
+          step_title: `Ngày ${plan.day_number}`, // Add missing step_title
+          treatment_instruction: plan.treatment_instruction,
+          dosage_instruction: plan.dosage_instruction,
+          frequency: plan.frequency,
+        })),
+        self_assessment: {
+          // Add missing self_assessment
+          accuracy_check: "Chẩn đoán dựa trên dữ liệu có sẵn trong hệ thống",
+          recommendation_reliability: "Cao - Dựa trên tư vấn đã được lưu trữ",
+          need_expert_consultation: false,
+        },
+      };
+    },
+    []
+  );
+
   const onSubmit = useCallback(
     async (data: PestAnalysisFormData) => {
       setLoading(true);
@@ -135,59 +178,254 @@ export function PestAnalysisForm() {
       setLowConfidenceWarning(false);
 
       try {
-        // Step 1: Get pest analysis from AI
-        const requestData: PestAnalysisRequest = {
-          cropType: data.cropType,
-          symptoms: data.symptoms || "",
-          analysisType: data.analysisType,
-          growthStage: data.growthStage || undefined,
-          imageBase64:
-            data.analysisType === "image"
-              ? data.imageBase64 || undefined
-              : undefined,
-          imageMimeType:
-            data.analysisType === "image"
-              ? data.imageMimeType || undefined
-              : undefined,
-        };
+        // Only process text analysis type for the new integration
+        if (data.analysisType === "text") {
+          // Step 1: Call local AI model first
+          const plantDiseaseRequest = {
+            name: data.cropType,
+            description: data.symptoms || "",
+          };
 
-        const response = await getPestAnalysis(requestData);
-        setResult(response);
+          console.log("🤖 Calling local AI model with:", plantDiseaseRequest);
+          const aiPredictions = await predictPlantDisease(plantDiseaseRequest);
+          console.log("🎯 AI model predictions:", aiPredictions);
 
-        // Save to localStorage regardless of confidence score
-        if (userId) {
-          saveConsultationToHistory(userId, response);
-        }
-
-        // Step 2: Automatically save to database only if confidence score >= 60
-        if (response.confidence_score && response.confidence_score >= 60) {
-          try {
-            const createRequest = convertToCreateRequest(response);
-            await ai_ConsultationServiceManagement.createAIConsultation(
-              createRequest
+          if (aiPredictions && aiPredictions.length > 0) {
+            const topPrediction = aiPredictions[0];
+            const confidencePercentage = parseFloat(
+              topPrediction.probability.replace("%", "")
             );
 
-            setSaveSuccess(true);
             console.log(
-              "✅ Đã lưu kết quả tư vấn vào cơ sở dữ liệu thành công!"
+              `📊 Top prediction: ${topPrediction.disease} with ${confidencePercentage}% confidence`
             );
-          } catch (saveError) {
-            // Log the error but don't interrupt the user experience
-            console.error("❌ Lỗi khi lưu kết quả tư vấn:", saveError);
-            // The analysis result is still shown to user even if save fails
+
+            if (confidencePercentage >= 60) {
+              console.log(
+                "✅ High confidence - searching existing consultations"
+              );
+
+              // Step 2: High confidence - search for existing consultations
+              try {
+                const existingConsultations =
+                  await ai_ConsultationServiceManagement.getByDiseaseName(
+                    topPrediction.disease
+                  );
+
+                if (existingConsultations && existingConsultations.length > 0) {
+                  // Step 3: Found existing consultation - use it
+                  console.log(
+                    "🎉 Found existing consultation for disease:",
+                    topPrediction.disease
+                  );
+                  const consultation = existingConsultations[0];
+                  const consultationInfo =
+                    convertFromAiConsultation(consultation);
+                  setResult(consultationInfo);
+
+                  // Save to localStorage
+                  if (userId) {
+                    saveConsultationToHistory(userId, consultationInfo);
+                  }
+
+                  setSaveSuccess(true);
+                  return;
+                } else {
+                  // Step 4: No existing consultation found - call Gemini with disease name
+                  console.log(
+                    "⚠️ No existing consultation found - calling Gemini with disease name"
+                  );
+                  const requestData: PestAnalysisRequest = {
+                    cropType: data.cropType,
+                    symptoms: topPrediction.disease, // Use disease name instead of user symptoms
+                    analysisType: data.analysisType,
+                    growthStage: data.growthStage || undefined,
+                  };
+
+                  const response = await getPestAnalysis(requestData);
+                  setResult(response);
+
+                  // Save to localStorage
+                  if (userId) {
+                    saveConsultationToHistory(userId, response);
+                  }
+
+                  // Auto-save if confidence is high
+                  if (
+                    response.confidence_score &&
+                    response.confidence_score >= 60
+                  ) {
+                    try {
+                      const createRequest = convertToCreateRequest(response);
+                      await ai_ConsultationServiceManagement.createAIConsultation(
+                        createRequest
+                      );
+                      setSaveSuccess(true);
+                      console.log(
+                        "✅ Đã lưu kết quả tư vấn vào cơ sở dữ liệu thành công!"
+                      );
+                    } catch (saveError) {
+                      console.error(
+                        "❌ Lỗi khi lưu kết quả tư vấn:",
+                        saveError
+                      );
+                    }
+                  }
+                }
+              } catch (searchError) {
+                console.error(
+                  "❌ Error searching existing consultations:",
+                  searchError
+                );
+                // Fallback to Gemini with disease name
+                console.log("🔄 Fallback - calling Gemini with disease name");
+                const requestData: PestAnalysisRequest = {
+                  cropType: data.cropType,
+                  symptoms: topPrediction.disease,
+                  analysisType: data.analysisType,
+                  growthStage: data.growthStage || undefined,
+                };
+
+                const response = await getPestAnalysis(requestData);
+                setResult(response);
+
+                if (userId) {
+                  saveConsultationToHistory(userId, response);
+                }
+              }
+            } else {
+              // Step 1 alternative: Low confidence - call Gemini with original user input
+              console.log(
+                "⚠️ Low confidence - calling Gemini with original user symptoms"
+              );
+              setLowConfidenceWarning(true);
+
+              const requestData: PestAnalysisRequest = {
+                cropType: data.cropType,
+                symptoms: data.symptoms || "",
+                analysisType: data.analysisType,
+                growthStage: data.growthStage || undefined,
+              };
+
+              const response = await getPestAnalysis(requestData);
+              setResult(response);
+
+              // Save to localStorage
+              if (userId) {
+                saveConsultationToHistory(userId, response);
+              }
+
+              // Auto-save if Gemini confidence is high
+              if (
+                response.confidence_score &&
+                response.confidence_score >= 60
+              ) {
+                try {
+                  const createRequest = convertToCreateRequest(response);
+                  await ai_ConsultationServiceManagement.createAIConsultation(
+                    createRequest
+                  );
+                  setSaveSuccess(true);
+                  console.log(
+                    "✅ Đã lưu kết quả tư vấn vào cơ sở dữ liệu thành công!"
+                  );
+                } catch (saveError) {
+                  console.error("❌ Lỗi khi lưu kết quả tư vấn:", saveError);
+                }
+              }
+            }
+          } else {
+            // No predictions from AI model - fallback to Gemini
+            console.log("⚠️ No predictions from AI model - fallback to Gemini");
+            throw new Error("AI model không trả về kết quả");
           }
         } else {
-          setLowConfidenceWarning(true);
-          console.log(
-            `⚠️ Kết quả không được lưu tự động vì độ tin cậy (${response.confidence_score}%) thấp hơn 60%`
-          );
+          // For image analysis, use the original flow
+          console.log("📸 Processing image analysis with original flow");
+          const requestData: PestAnalysisRequest = {
+            cropType: data.cropType,
+            symptoms: data.symptoms || "",
+            analysisType: data.analysisType,
+            growthStage: data.growthStage || undefined,
+            imageBase64: data.imageBase64 || undefined,
+            imageMimeType: data.imageMimeType || undefined,
+          };
+
+          const response = await getPestAnalysis(requestData);
+          setResult(response);
+
+          // Save to localStorage
+          if (userId) {
+            saveConsultationToHistory(userId, response);
+          }
+
+          // Auto-save if confidence is high
+          if (response.confidence_score && response.confidence_score >= 60) {
+            try {
+              const createRequest = convertToCreateRequest(response);
+              await ai_ConsultationServiceManagement.createAIConsultation(
+                createRequest
+              );
+              setSaveSuccess(true);
+              console.log(
+                "✅ Đã lưu kết quả tư vấn vào cơ sở dữ liệu thành công!"
+              );
+            } catch (saveError) {
+              console.error("❌ Lỗi khi lưu kết quả tư vấn:", saveError);
+            }
+          } else {
+            setLowConfidenceWarning(true);
+            console.log(
+              `⚠️ Kết quả không được lưu tự động vì độ tin cậy (${response.confidence_score}%) thấp hơn 60%`
+            );
+          }
         }
       } catch (error) {
-        setError(
-          error instanceof Error
-            ? error.message
-            : "Có lỗi xảy ra khi phân tích. Vui lòng thử lại."
-        );
+        console.error("❌ Error in analysis:", error);
+
+        // Fallback to original Gemini flow if AI model fails
+        try {
+          console.log("🔄 Fallback to original Gemini flow");
+          const requestData: PestAnalysisRequest = {
+            cropType: data.cropType,
+            symptoms: data.symptoms || "",
+            analysisType: data.analysisType,
+            growthStage: data.growthStage || undefined,
+            imageBase64:
+              data.analysisType === "image"
+                ? data.imageBase64 || undefined
+                : undefined,
+            imageMimeType:
+              data.analysisType === "image"
+                ? data.imageMimeType || undefined
+                : undefined,
+          };
+
+          const response = await getPestAnalysis(requestData);
+          setResult(response);
+
+          if (userId) {
+            saveConsultationToHistory(userId, response);
+          }
+
+          if (response.confidence_score && response.confidence_score >= 60) {
+            try {
+              const createRequest = convertToCreateRequest(response);
+              await ai_ConsultationServiceManagement.createAIConsultation(
+                createRequest
+              );
+              setSaveSuccess(true);
+            } catch (saveError) {
+              console.error("❌ Lỗi khi lưu kết quả tư vấn:", saveError);
+            }
+          }
+        } catch (fallbackError) {
+          setError(
+            error instanceof Error
+              ? error.message
+              : "Có lỗi xảy ra khi phân tích. Vui lòng thử lại."
+          );
+        }
       } finally {
         setLoading(false);
       }
@@ -199,6 +437,8 @@ export function PestAnalysisForm() {
       setSaveSuccess,
       setLowConfidenceWarning,
       convertToCreateRequest,
+      convertFromAiConsultation,
+      userId,
     ]
   );
 

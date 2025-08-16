@@ -42,4 +42,19 @@ export const ai_ConsultationServiceManagement = {
       throw error;
     }
   },
+  async getByDiseaseName(diseaseName: string) {
+    try {
+      const response = await axiosInstance.get(
+        `/ai-consultation/disease-name?diseaseName=${diseaseName}`
+      );
+      return response.data as AiConsultation[];
+    } catch (error) {
+      let msg = "Lỗi khi lấy tư vấn AI theo tên bệnh";
+      if (axios.isAxiosError(error) && error.response?.data?.message) {
+        msg = error.response.data.message;
+      }
+      showToast.error(msg);
+      throw error;
+    }
+  },
 };

@@ -98,14 +98,12 @@ export default function ProductsPage() {
     }
   }, [categoryParam]);
 
+  // Removed duplicate filteredProducts declaration
   const filteredProducts = fetchedProducts.filter((product) => {
     // Filter by category
     if (
-      (filters.categories.length > 0 &&
-        !product.categories?.some((cat) =>
-          filters.categories.includes(cat.name)
-        )) ||
-      ""
+      filters.categories.length > 0 &&
+      !product.categories?.some((cat) => filters.categories.includes(cat.name))
     ) {
       return false;
     }
@@ -118,6 +116,29 @@ export default function ProductsPage() {
       return false;
     }
 
+    // Filter by rating (average rating from reviews)
+    if (filters.rating) {
+      let avgRating = 0;
+      if (product.reviews && product.reviews.length > 0) {
+        const ratings = product.reviews
+          .filter((r) => typeof r.rating === "number")
+          .map((r) => r.rating as number);
+        if (ratings.length > 0) {
+          avgRating =
+            ratings.reduce(
+              (sum, r) =>
+                typeof sum === "number" && typeof r === "number"
+                  ? sum + r
+                  : sum,
+              0
+            ) / ratings.length;
+        }
+      }
+      if (avgRating < filters.rating) {
+        return false;
+      }
+    }
+
     // Filter by inventory
     if (
       filters.inventory_ids.length > 0 &&
@@ -128,35 +149,46 @@ export default function ProductsPage() {
       return false;
     }
 
+    // Filter by onSale (discount active)
+    if (filters.onSale) {
+      // Check if any batch has active promotion/discount
+      const hasDiscount = product.batches?.some((batch) => {
+        if (!batch || batch.is_deleted || !batch.is_active) return false;
+        if (batch.promotions && batch.promotions.length > 0) {
+          return batch.promotions.some(
+            (promo) =>
+              promo.is_active &&
+              !promo.is_deleted &&
+              typeof promo.discount_value === "number" &&
+              promo.discount_value > 0
+          );
+        }
+        return false;
+      });
+      if (!hasDiscount) return false;
+    }
+
     // Filter by search term
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       const matchesProductName = product.product_name
-        .toLowerCase()
+        ?.toLowerCase()
         .includes(searchLower);
-
-      // Search in product description
       const matchesDescription = product.description
         ? product.description.toLowerCase().includes(searchLower)
         : false;
-
-      // Search in diseases
       const matchesDiseases =
         product.productDiseases?.some((productDisease) =>
           productDisease.disease?.disease_name
             ?.toLowerCase()
             .includes(searchLower)
         ) || false;
-
-      // Search in ingredients
       const matchesIngredients =
         product.product_ingredients?.some((productIngredient) =>
           productIngredient.ingredient?.ingredient_name
             ?.toLowerCase()
             .includes(searchLower)
         ) || false;
-
-      // If none of the searches match, filter out this product
       if (
         !matchesProductName &&
         !matchesDescription &&
@@ -166,7 +198,6 @@ export default function ProductsPage() {
         return false;
       }
     }
-
     return true;
   });
 
@@ -180,6 +211,26 @@ export default function ProductsPage() {
         return a.unit_product_price - b.unit_product_price;
       case "price-high-low":
         return b.unit_product_price - a.unit_product_price;
+      case "rating": {
+        // Sort by average rating (highest first)
+        const getAvgRating = (product: Product) => {
+          if (!product.reviews || product.reviews.length === 0) return 0;
+          const ratings = product.reviews
+            .filter((r) => typeof r.rating === "number")
+            .map((r) => r.rating as number);
+          if (ratings.length === 0) return 0;
+          return (
+            ratings.reduce(
+              (sum, r) =>
+                typeof sum === "number" && typeof r === "number"
+                  ? sum + r
+                  : sum,
+              0
+            ) / ratings.length
+          );
+        };
+        return getAvgRating(b) - getAvgRating(a);
+      }
       default:
         return 0;
     }
