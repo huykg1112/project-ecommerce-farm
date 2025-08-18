@@ -287,6 +287,7 @@ export default function UsersPage() {
         setOpen={closeModals}
         title="Xoá người dùng"
         nameDelete={selectedUserName}
+        requireReason={true}
       />
     </div>
   );

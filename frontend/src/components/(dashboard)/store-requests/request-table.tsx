@@ -59,6 +59,8 @@ export const RequestTable = memo<RequestTableProps>(
       () => [
         {
           name: "Thông tin người đăng ký",
+          selector: (row) => row.user.full_name,
+          sortable: true,
           cell: (row) => (
             <div className="flex items-center gap-3 py-4">
               <Avatar className="h-10 w-10">
@@ -89,6 +91,7 @@ export const RequestTable = memo<RequestTableProps>(
         },
         {
           name: "Thông tin cửa hàng",
+          sortable: true,
           cell: (row) => (
             <div className="py-4">
               <div className="font-semibold text-[#44703d]">{row.name}</div>
@@ -107,6 +110,8 @@ export const RequestTable = memo<RequestTableProps>(
         },
         {
           name: "Ngày đăng ký",
+          selector: (row) => row.request_date || new Date(""),
+          sortable: true,
           cell: (row) => (
             <div className="text-[#44703d] py-4">
               {formatDate(new Date(row?.request_date || ""))}
@@ -116,6 +121,8 @@ export const RequestTable = memo<RequestTableProps>(
         },
         {
           name: "Trạng thái",
+          selector: (row) => getStatusBadge(row).label,
+          sortable: true,
           cell: (row) => (
             <div className="py-4">
               <Badge

@@ -76,14 +76,15 @@ function CartPage() {
     setExpandedSellers(Object.keys(itemsBySeller));
   }, [items]);
 
-  // Calculate selected total with discounted prices
+  // Calculate selected total with discounted prices (discount_value is percent)
   const calculateSelectedTotal = () =>
     items
       .filter((item) => selectedItems.includes(item.id))
       .reduce((total, item) => {
         const originalPrice = item.price;
-        const discountValue = item.promotion?.discount_value || 0;
-        const finalPrice = originalPrice - discountValue;
+        const discountPercent = item.promotion?.discount_value || 0;
+        const finalPrice =
+          originalPrice - (originalPrice * discountPercent) / 100;
         return total + finalPrice * item.quantity;
       }, 0);
 
@@ -211,16 +212,22 @@ function CartPage() {
       // Prepare order details for each seller
       ordersByDistributor: Object.entries(itemsBySeller).map(
         ([sellerId, { sellerName, items: sellerItems }]) => {
-          const orderDetails = sellerItems.map((item) => ({
-            batch_id: item.batch?.batch_id || "",
-            quantity: item.quantity,
-            unit_price: item.price - (item.promotion?.discount_value || 0), // Use discounted price
-            notes: "",
-          }));
+          const orderDetails = sellerItems.map((item) => {
+            const discountPercent = item.promotion?.discount_value || 0;
+            const finalPrice =
+              item.price - (item.price * discountPercent) / 100;
+            return {
+              batch_id: item.batch?.batch_id || "",
+              quantity: item.quantity,
+              unit_price: finalPrice,
+              notes: "",
+            };
+          });
 
           const sellerTotal = sellerItems.reduce((total, item) => {
+            const discountPercent = item.promotion?.discount_value || 0;
             const finalPrice =
-              item.price - (item.promotion?.discount_value || 0);
+              item.price - (item.price * discountPercent) / 100;
             return total + finalPrice * item.quantity;
           }, 0);
 

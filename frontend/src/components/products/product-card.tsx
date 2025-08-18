@@ -77,6 +77,25 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { startAnimation: startWishlistAnimation } = useWishlistAnimation();
   const productRef = useRef<HTMLDivElement>(null);
   const [selectedBatch, setSelectedBatch] = useState<BatchProduct | null>(null);
+
+  // Chọn mặc định loại đầu tiên nếu có
+  useMemo(() => {
+    if (!selectedBatch && product.batches && product.batches.length > 0) {
+      const validBatches = product.batches.filter(
+        (batch) =>
+          batch.is_active &&
+          !batch.is_deleted &&
+          batch.product_types &&
+          batch.product_types.is_active &&
+          !batch.product_types.is_deleted &&
+          batch.quantity > 0 &&
+          batch.expiry_date > new Date()
+      );
+      if (validBatches.length > 0) {
+        setSelectedBatch(validBatches[0]);
+      }
+    }
+  }, [product.batches, selectedBatch]);
   const [totalRating, setTotalRating] = useState(0);
 
   // chỉ tính trung bình rating của review nào có rating
@@ -324,7 +343,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             {product.distributor?.invenstory?.name || "Nhà cung cấp"}
           </Link>
         </div>
-        {differentProductTypes.length > 0 && (
+        {differentProductTypes.length > 0 ? (
           <Select
             value={selectedBatch?.batch_id}
             onValueChange={(value) => {
@@ -349,7 +368,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               ))}
             </SelectContent>
           </Select>
-        )}
+        ) : null}
       </CardContent>
       <CardFooter className="p-4 pt-0 flex items-center justify-between">
         <div className="flex flex-col justify-start items-start">

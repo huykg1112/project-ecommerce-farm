@@ -131,8 +131,8 @@ function CheckoutPage() {
     ? checkoutData.selectedTotal
     : selectedItems.reduce((total, item) => {
         const originalPrice = item.price;
-        const discountValue = item.promotion?.discount_value || 0;
-        const finalPrice = originalPrice - discountValue;
+        const discountPercent = item.promotion?.discount_value || 0;
+        const finalPrice = originalPrice * (1 - discountPercent / 100);
         return total + finalPrice * item.quantity;
       }, 0);
 
@@ -268,17 +268,17 @@ function CheckoutPage() {
     [paymentMethods]
   );
 
-  // Nếu không có sản phẩm nào được chọn, chuyển hướng về trang giỏ hàng
-  if (selectedItems.length === 0) {
-    return (
-      <div className="container py-12 text-center">
-        <p className="mb-4">Bạn chưa chọn sản phẩm nào để thanh toán.</p>
-        <Button asChild>
-          <Link href="/cart">Quay lại giỏ hàng</Link>
-        </Button>
-      </div>
-    );
-  }
+  // // Nếu không có sản phẩm nào được chọn, chuyển hướng về trang giỏ hàng
+  // if (selectedItems.length === 0) {
+  //   return (
+  //     <div className="container py-12 text-center">
+  //       <p className="mb-4">Bạn chưa chọn sản phẩm nào để thanh toán.</p>
+  //       <Button asChild>
+  //         <Link href="/cart">Quay lại giỏ hàng</Link>
+  //       </Button>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="container py-8">
@@ -453,8 +453,9 @@ function CheckoutPage() {
                 <div className="space-y-3">
                   {selectedItems.map((item) => {
                     const originalPrice = item.price;
-                    const discountValue = item.promotion?.discount_value || 0;
-                    const finalPrice = originalPrice - discountValue;
+                    const discountPercent = item.promotion?.discount_value || 0;
+                    const finalPrice =
+                      originalPrice * (1 - discountPercent / 100);
 
                     return (
                       <div key={item.id} className="flex justify-between">
@@ -468,14 +469,14 @@ function CheckoutPage() {
                               {item.batch.product_types.type_name}
                             </div>
                           )}
-                          {discountValue > 0 && (
+                          {discountPercent > 0 && (
                             <div className="text-xs text-red-500">
-                              Giảm {formatCurrency(discountValue)}/sp
+                              Giảm {discountPercent}%/sp
                             </div>
                           )}
                         </div>
                         <div className="text-right">
-                          {discountValue > 0 && (
+                          {discountPercent > 0 && (
                             <div className="text-xs text-gray-400 line-through">
                               {formatCurrency(originalPrice * item.quantity)}
                             </div>

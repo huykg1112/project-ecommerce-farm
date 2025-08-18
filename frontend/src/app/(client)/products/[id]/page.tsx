@@ -224,7 +224,7 @@ export default function ProductPage() {
       requireAuth(() => {
         dispatch(
           addToCart({
-            id: product.product_id + selectedBatch?.batch_id || "",
+            id: product.product_id + "/" + selectedBatch?.batch_id || "",
             productId: product.product_id,
             name: product.product_name,
             price: discountedPrice,
@@ -232,7 +232,7 @@ export default function ProductPage() {
             quantity: 1,
             image: product.images[0]?.image_url || "",
             sellerId:
-              product.distributor?.invenstory?.invenstory_id ||
+              product.distributor?.user_id ||
               (Math.floor(Math.random() * 999) + 1).toString(),
             sellerName: product.distributor?.invenstory?.name || "N/A",
             promotion: maxPromotion,
@@ -378,7 +378,7 @@ export default function ProductPage() {
             }
             discount={maxPromotion?.discount_value}
             seller={{
-              id: product.distributor?.invenstory?.invenstory_id || "",
+              id: product.distributor?.user_id || "",
               name: product.distributor?.invenstory?.name || "N/A",
             }}
             selectedBatch={selectedBatch}

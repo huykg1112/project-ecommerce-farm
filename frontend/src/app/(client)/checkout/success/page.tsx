@@ -63,12 +63,11 @@ function OrderSuccessPage() {
       } catch (err) {
         console.error("Error fetching order:", err);
         setError("Không thể tải thông tin đơn hàng");
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchOrder();
+    setLoading(false);
   }, [actualOrderId]);
 
   if (loading) {
@@ -102,7 +101,7 @@ function OrderSuccessPage() {
   }
 
   // Handle VNPay payment failure
-  if (paymentFailed) {
+  if (paymentFailed && !loading) {
     return (
       <div className="container py-12">
         <div className="max-w-2xl mx-auto">
