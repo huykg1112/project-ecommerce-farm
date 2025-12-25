@@ -58,7 +58,7 @@ async function bootstrap() {
     );
 
     const port = process.env.PORT ?? 4200; // Gán biến port để tái sử dụng
-    await app.listen(port);
+    await app.listen(port, '0.0.0.0');
 
     // Lý do: Thông báo sau khi listen thành công để tránh báo sai trạng thái
     console.log(`Application is running on: http://localhost:${port}`);

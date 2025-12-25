@@ -440,9 +440,9 @@ Nếu gặp vấn đề trong quá trình cài đặt:
 ## Migration Commands
 
 ```bash
+# Tạo migration mới
+npx typeorm-ts-node-commonjs migration:generate src/migrations/updateBatchProduct -d src/ormconfig.ts
+
 # Chạy migration
 npx typeorm-ts-node-commonjs migration:run -d src/ormconfig.ts
-
-# Tạo migration mới
-npx typeorm-ts-node-commonjs migration:generate src/migrations/MigrationName -d src/ormconfig.ts
 ```

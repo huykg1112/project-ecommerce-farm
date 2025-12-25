@@ -151,16 +151,15 @@ export default function ProductsPage() {
 
     // Filter by onSale (discount active)
     if (filters.onSale) {
-      // Check if any batch has active promotion/discount
+      // Check if any batch has active promotion/discount (discount_value is percent)
       const hasDiscount = product.batches?.some((batch) => {
         if (!batch || batch.is_deleted || !batch.is_active) return false;
         if (batch.promotions && batch.promotions.length > 0) {
           return batch.promotions.some(
-            (promo) =>
-              promo.is_active &&
-              !promo.is_deleted &&
-              typeof promo.discount_value === "number" &&
-              promo.discount_value > 0
+            (promo) => promo.is_active && !promo.is_deleted
+            // typeof promo.discount_value === "number" &&
+            // promo.discount_value > 0 &&
+            // promo.discount_value <= 100 // phần trăm giảm giá hợp lệ
           );
         }
         return false;
