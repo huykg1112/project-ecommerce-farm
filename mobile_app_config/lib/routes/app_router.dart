@@ -8,7 +8,12 @@ import '../features/auth/presentation/pages/splash_page.dart';
 import '../features/auth/presentation/pages/login_page.dart';
 import '../features/auth/presentation/pages/register_page.dart';
 import '../features/profile/presentation/pages/profile_page.dart';
+import '../features/profile/presentation/pages/edit_profile_page.dart';
+import '../features/profile/presentation/pages/change_password_page.dart';
+import '../features/profile/presentation/pages/address_list_page.dart';
+import '../features/profile/presentation/pages/settings_page.dart';
 import '../features/home/presentation/pages/main_page.dart';
+import '../features/cart/presentation/pages/cart_page.dart';
 
 /// Application router configuration
 class AppRouter {
@@ -64,6 +69,47 @@ class AppRouter {
           create: (_) => sl<AuthBloc>(),
           child: const ProfilePage(),
         ),
+      ),
+
+      // Edit Profile
+      GoRoute(
+        path: RouteNames.editProfile,
+        name: 'editProfile',
+        builder: (context, state) => BlocProvider(
+          create: (_) => sl<AuthBloc>(),
+          child: const EditProfilePage(),
+        ),
+      ),
+
+      // Change Password
+      GoRoute(
+        path: RouteNames.changePassword,
+        name: 'changePassword',
+        builder: (context, state) => const ChangePasswordPage(),
+      ),
+
+      // Addresses
+      GoRoute(
+        path: RouteNames.addresses,
+        name: 'addresses',
+        builder: (context, state) => const AddressListPage(),
+      ),
+
+      // Settings
+      GoRoute(
+        path: RouteNames.settings,
+        name: 'settings',
+        builder: (context, state) => BlocProvider(
+          create: (_) => sl<AuthBloc>(),
+          child: const SettingsPage(),
+        ),
+      ),
+
+      // Cart
+      GoRoute(
+        path: RouteNames.cart,
+        name: 'cart',
+        builder: (context, state) => const CartPage(),
       ),
     ],
 

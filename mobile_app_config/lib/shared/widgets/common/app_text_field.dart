@@ -67,6 +67,7 @@ class AppTextField extends StatefulWidget {
     String? errorText,
     ValueChanged<String>? onChanged,
     String? Function(String?)? validator,
+    bool enabled = true,
   }) {
     return AppTextField(
       controller: controller,
@@ -78,6 +79,7 @@ class AppTextField extends StatefulWidget {
       errorText: errorText,
       onChanged: onChanged,
       validator: validator,
+      enabled: enabled,
     );
   }
 
