@@ -39,7 +39,7 @@ class LocalCartPage extends StatelessWidget {
       ),
       body: BlocBuilder<LocalCartBloc, LocalCartState>(
         builder: (context, state) {
-          if (state is LocalCartLoading) {
+          if (state is LocalCartLoading || state is LocalCartInitial) {
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -95,7 +95,10 @@ class LocalCartPage extends StatelessWidget {
             );
           }
 
-          return const SizedBox();
+          // Fallback - should not happen
+          return EmptyStateView.emptyCart(
+            onShopNow: () => context.go('/home'),
+          );
         },
       ),
     );

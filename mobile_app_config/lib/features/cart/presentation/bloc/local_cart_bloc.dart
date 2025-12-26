@@ -259,28 +259,32 @@ class LocalCartBloc extends Bloc<LocalCartEvent, LocalCartState> {
     AddToLocalCart event,
     Emitter<LocalCartState> emit,
   ) async {
+    // Get current items from state or load from storage
+    List<LocalCartItem> currentItems;
     final currentState = state;
     if (currentState is LocalCartLoaded) {
-      final List<LocalCartItem> updatedItems = List.from(currentState.items);
-
-      // Check if item already exists (same id = productId/batchId)
-      final existingIndex =
-          updatedItems.indexWhere((i) => i.id == event.item.id);
-
-      if (existingIndex >= 0) {
-        // Update quantity
-        final existing = updatedItems[existingIndex];
-        updatedItems[existingIndex] = existing.copyWith(
-          quantity: existing.quantity + event.item.quantity,
-        );
-      } else {
-        // Add new item
-        updatedItems.add(event.item);
-      }
-
-      _saveToStorage(updatedItems);
-      emit(LocalCartLoaded(updatedItems));
+      currentItems = List.from(currentState.items);
+    } else {
+      // Load from storage if state is not LocalCartLoaded
+      currentItems = _loadFromStorage();
     }
+
+    // Check if item already exists (same id = productId/batchId)
+    final existingIndex = currentItems.indexWhere((i) => i.id == event.item.id);
+
+    if (existingIndex >= 0) {
+      // Update quantity
+      final existing = currentItems[existingIndex];
+      currentItems[existingIndex] = existing.copyWith(
+        quantity: existing.quantity + event.item.quantity,
+      );
+    } else {
+      // Add new item
+      currentItems.add(event.item);
+    }
+
+    _saveToStorage(currentItems);
+    emit(LocalCartLoaded(currentItems));
   }
 
   Future<void> _onUpdateQuantity(
