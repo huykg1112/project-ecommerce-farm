@@ -37,8 +37,8 @@ class ApiConstants {
   static const String users = '/user';
   static const String userProfile = '/user/profile';
   static const String getCurrentUser = '/user/profile';
-  static const String updateProfile = '/user/profile';
-  static const String changePassword = '/user/change-password';
+  static const String updateProfile = '/user/updateProfile';
+  static const String changePassword = '/user/changePassword';
   static const String uploadAvatar = '/user/avatar';
   static const String userAddresses = '/address';
   static const String addAddress = '/address';

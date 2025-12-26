@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../injection_container.dart';
 import '../../../../shared/widgets/common/app_button.dart';
 import '../../../../shared/widgets/common/app_text_field.dart';
 import '../../../../shared/widgets/common/cached_image.dart';
@@ -15,6 +16,8 @@ import '../../../auth/domain/entities/user.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../data/datasources/profile_remote_datasource.dart';
+import '../../data/models/update_profile_dto.dart';
 
 /// Edit Profile Page
 class EditProfilePage extends StatefulWidget {
@@ -33,7 +36,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController _emailController;
   late TextEditingController _cccdController;
 
-  bool _isLoading = false;
+  bool _isSaving = false;
   bool _isUploadingAvatar = false;
   File? _selectedImage;
   User? _currentUser;
@@ -92,88 +95,122 @@ class _EditProfilePageState extends State<EditProfilePage> {
       body: BlocConsumer<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is Authenticated && _currentUser == null) {
-            // Initialize user data when state becomes Authenticated
             _initializeFromUser(state.user);
           }
         },
         builder: (context, state) {
-          // Show loading if we're still fetching user
-          if (state is AuthLoading && _currentUser == null) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-
-          // Use cached user if available, or get from current state
+          // Use cached user if available
           final user =
               _currentUser ?? (state is Authenticated ? state.user : null);
 
+          // Show loading state while fetching profile
           if (user == null) {
-            // If state is not loading and no user, show error
-            if (state is! AuthLoading) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error_outline,
-                        size: 64, color: Colors.grey[400]),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Không thể tải thông tin người dùng',
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.mutedForeground,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    AppButton.primary(
-                      text: 'Thử lại',
-                      onPressed: () {
-                        context
-                            .read<AuthBloc>()
-                            .add(const GetCurrentUserRequested());
-                      },
-                    ),
-                    const SizedBox(height: 8),
-                    AppButton.secondary(
-                      text: 'Quay lại',
-                      onPressed: () => context.pop(),
-                    ),
-                  ],
-                ),
-              );
+            if (state is AuthLoading || state is AuthInitial) {
+              return _buildLoadingState();
             }
-            return const Center(child: CircularProgressIndicator());
+            return _buildErrorState();
           }
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Avatar Section
-                  _buildAvatarSection(user),
-
-                  const SizedBox(height: 32),
-
-                  // Form Fields
-                  _buildFormFields(user),
-
-                  const SizedBox(height: 32),
-
-                  // Save Button
-                  AppButton.primary(
-                    text: 'Lưu thay đổi',
-                    isLoading: _isLoading,
-                    isFullWidth: true,
-                    onPressed: _handleSave,
-                  ),
-                ],
-              ),
-            ),
-          );
+          return _buildContent(user);
         },
+      ),
+    );
+  }
+
+  /// Loading state with skeleton UI
+  Widget _buildLoadingState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Loading avatar placeholder
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.grey[200],
+            ),
+            child: const Center(
+              child: CircularProgressIndicator(),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Đang tải thông tin...',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: AppColors.mutedForeground,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Vui lòng đợi trong giây lát',
+            style: AppTextStyles.labelSmall.copyWith(
+              color: AppColors.mutedForeground,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Error state when cannot load user
+  Widget _buildErrorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              'Không thể tải thông tin người dùng',
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.mutedForeground,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            AppButton.primary(
+              text: 'Thử lại',
+              icon: const Icon(Icons.refresh, color: Colors.white, size: 18),
+              onPressed: () {
+                context.read<AuthBloc>().add(const GetCurrentUserRequested());
+              },
+            ),
+            const SizedBox(height: 12),
+            AppButton.secondary(
+              text: 'Quay lại',
+              onPressed: () => context.pop(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Main content with form
+  Widget _buildContent(User user) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _buildAvatarSection(user),
+            const SizedBox(height: 32),
+            _buildFormFields(user),
+            const SizedBox(height: 32),
+            AppButton.primary(
+              text: 'Lưu thay đổi',
+              isLoading: _isSaving,
+              isFullWidth: true,
+              onPressed: _handleSave,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -182,16 +219,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return Stack(
       alignment: Alignment.bottomRight,
       children: [
-        // Avatar
         Container(
           width: 120,
           height: 120,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(
-              color: AppColors.primary,
-              width: 3,
-            ),
+            border: Border.all(color: AppColors.primary, width: 3),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.1),
@@ -237,8 +270,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           )),
           ),
         ),
-
-        // Edit button
         Positioned(
           bottom: 0,
           right: 0,
@@ -251,11 +282,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 shape: BoxShape.circle,
                 border: Border.all(color: Colors.white, width: 2),
               ),
-              child: const Icon(
-                Icons.camera_alt,
-                color: Colors.white,
-                size: 20,
-              ),
+              child:
+                  const Icon(Icons.camera_alt, color: Colors.white, size: 20),
             ),
           ),
         ),
@@ -276,7 +304,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Widget _buildFormFields(User user) {
     return Column(
       children: [
-        // Full Name
         AppTextField(
           controller: _fullNameController,
           label: 'Họ và tên',
@@ -289,27 +316,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
             return null;
           },
         ),
-
         const SizedBox(height: 16),
-
-        // Phone Number
         AppTextField.phone(
           controller: _phoneController,
           label: 'Số điện thoại',
         ),
-
         const SizedBox(height: 16),
-
-        // Email (read only)
         AppTextField.email(
           controller: _emailController,
           label: 'Email',
           enabled: false,
         ),
-
         const SizedBox(height: 16),
-
-        // CCCD
         AppTextField(
           controller: _cccdController,
           label: 'Căn cước công dân',
@@ -317,10 +335,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           prefixIcon: const Icon(Icons.badge_outlined),
           keyboardType: TextInputType.number,
         ),
-
         const SizedBox(height: 16),
-
-        // Role (read only)
         _buildInfoRow(
           icon: Icons.verified_user_outlined,
           label: 'Vai trò',
@@ -379,7 +394,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Handle bar
               Container(
                 width: 40,
                 height: 4,
@@ -439,9 +453,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   subtitle: const Text('Sử dụng ảnh mặc định'),
                   onTap: () {
                     Navigator.pop(ctx);
-                    setState(() {
-                      _selectedImage = null;
-                    });
+                    setState(() => _selectedImage = null);
                     CustomSnackBar.showInfo(context,
                         message: 'Đã xóa ảnh đại diện');
                   },
@@ -463,9 +475,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       );
 
       if (pickedFile != null) {
-        setState(() {
-          _selectedImage = File(pickedFile.path);
-        });
+        setState(() => _selectedImage = File(pickedFile.path));
         CustomSnackBar.showSuccess(
           context,
           message: 'Đã chọn ảnh. Nhấn "Lưu thay đổi" để cập nhật.',
@@ -482,42 +492,52 @@ class _EditProfilePageState extends State<EditProfilePage> {
   void _handleSave() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
+    setState(() => _isSaving = true);
 
     try {
+      final dataSource = ProfileRemoteDataSourceImpl(sl());
+      String? avatarUrl;
+
       // Upload avatar if selected
       if (_selectedImage != null) {
         setState(() => _isUploadingAvatar = true);
-        // TODO: Implement avatar upload API
-        await Future.delayed(const Duration(seconds: 1));
-        setState(() => _isUploadingAvatar = false);
+        try {
+          final result = await dataSource.uploadAvatar(_selectedImage!.path);
+          avatarUrl = result['avatar'] as String?;
+        } finally {
+          if (mounted) {
+            setState(() => _isUploadingAvatar = false);
+          }
+        }
       }
 
-      // Update profile
-      // TODO: Call update profile API with actual data
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Create update DTO
+      final dto = UpdateProfileDto(
+        fullName: _fullNameController.text.trim(),
+        phoneNumber: _phoneController.text.trim(),
+        cccd: _cccdController.text.trim(),
+        avatar: avatarUrl,
+      );
 
-      // Refresh user data
+      // Call update profile API
+      await dataSource.updateProfile(dto);
+
       if (mounted) {
+        // Refresh user data
         context.read<AuthBloc>().add(const GetCurrentUserRequested());
-
-        CustomSnackBar.showSuccess(
-          context,
-          message: 'Cập nhật thông tin thành công',
-        );
+        CustomSnackBar.showSuccess(context,
+            message: 'Cập nhật thông tin thành công');
         context.pop();
       }
     } catch (e) {
       if (mounted) {
-        CustomSnackBar.showError(
-          context,
-          message: 'Có lỗi xảy ra: ${e.toString()}',
-        );
+        CustomSnackBar.showError(context,
+            message: 'Có lỗi xảy ra: ${e.toString()}');
       }
     } finally {
       if (mounted) {
         setState(() {
-          _isLoading = false;
+          _isSaving = false;
           _isUploadingAvatar = false;
         });
       }

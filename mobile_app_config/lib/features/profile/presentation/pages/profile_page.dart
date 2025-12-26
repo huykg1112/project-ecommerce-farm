@@ -138,8 +138,14 @@ class _ProfilePageState extends State<ProfilePage> {
                           icon: Icons.person_outline,
                           title: 'Edit Profile',
                           subtitle: 'Update your personal information',
-                          onTap: () {
-                            context.push(RouteNames.editProfile);
+                          onTap: () async {
+                            await context.push(RouteNames.editProfile);
+                            // Refresh user data when returning from edit profile
+                            if (mounted) {
+                              context
+                                  .read<AuthBloc>()
+                                  .add(const GetCurrentUserRequested());
+                            }
                           },
                         ),
                         if (user.phoneNumber != null)

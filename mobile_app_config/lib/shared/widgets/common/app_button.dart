@@ -132,7 +132,13 @@ class AppButton extends StatelessWidget {
           icon!,
           const SizedBox(width: 8),
         ],
-        Text(text),
+        Flexible(
+          child: Text(
+            text,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
+        ),
       ],
     );
 
@@ -244,13 +250,16 @@ class AppButton extends StatelessWidget {
     switch (size) {
       case ButtonSize.small:
         return const _ButtonSize(
-            height: 36, padding: EdgeInsets.symmetric(horizontal: 12));
+            height: 40,
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8));
       case ButtonSize.medium:
         return const _ButtonSize(
-            height: 44, padding: EdgeInsets.symmetric(horizontal: 16));
+            height: 48,
+            padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12));
       case ButtonSize.large:
         return const _ButtonSize(
-            height: 52, padding: EdgeInsets.symmetric(horizontal: 24));
+            height: 56,
+            padding: EdgeInsets.symmetric(horizontal: 28, vertical: 14));
     }
   }
 }
