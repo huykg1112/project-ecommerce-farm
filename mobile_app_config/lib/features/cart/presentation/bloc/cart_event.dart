@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../../domain/entities/cart_item.dart';
+
 /// Cart events
 abstract class CartEvent extends Equatable {
   const CartEvent();
@@ -13,21 +15,17 @@ class LoadCart extends CartEvent {
   const LoadCart();
 }
 
-/// Add to cart event
+/// Add to cart event with full CartItem
 class AddToCartEvent extends CartEvent {
-  final String productId;
-  final int quantity;
+  final CartItem item;
 
-  const AddToCartEvent({
-    required this.productId,
-    this.quantity = 1,
-  });
+  const AddToCartEvent(this.item);
 
   @override
-  List<Object?> get props => [productId, quantity];
+  List<Object?> get props => [item];
 }
 
-/// Update cart item event
+/// Update cart item quantity event
 class UpdateCartItemEvent extends CartEvent {
   final String cartItemId;
   final int quantity;
@@ -41,11 +39,31 @@ class UpdateCartItemEvent extends CartEvent {
   List<Object?> get props => [cartItemId, quantity];
 }
 
+/// Increment item quantity
+class IncrementQuantityEvent extends CartEvent {
+  final String cartItemId;
+
+  const IncrementQuantityEvent(this.cartItemId);
+
+  @override
+  List<Object?> get props => [cartItemId];
+}
+
+/// Decrement item quantity
+class DecrementQuantityEvent extends CartEvent {
+  final String cartItemId;
+
+  const DecrementQuantityEvent(this.cartItemId);
+
+  @override
+  List<Object?> get props => [cartItemId];
+}
+
 /// Remove from cart event
 class RemoveFromCartEvent extends CartEvent {
   final String cartItemId;
 
-  const RemoveFromCartEvent({required this.cartItemId});
+  const RemoveFromCartEvent(this.cartItemId);
 
   @override
   List<Object?> get props => [cartItemId];

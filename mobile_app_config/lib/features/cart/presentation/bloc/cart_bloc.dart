@@ -31,6 +31,8 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     on<LoadCart>(_onLoadCart);
     on<AddToCartEvent>(_onAddToCart);
     on<UpdateCartItemEvent>(_onUpdateCartItem);
+    on<IncrementQuantityEvent>(_onIncrementQuantity);
+    on<DecrementQuantityEvent>(_onDecrementQuantity);
     on<RemoveFromCartEvent>(_onRemoveFromCart);
     on<ClearCartEvent>(_onClearCart);
   }
@@ -61,8 +63,8 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     }
 
     final result = await _addToCart(AddToCartParams(
-      productId: event.productId,
-      quantity: event.quantity,
+      productId: event.item.productId,
+      quantity: event.item.quantity,
     ));
 
     result.fold(
@@ -105,6 +107,44 @@ class CartBloc extends Bloc<CartEvent, CartState> {
         emit(CartLoaded(cart));
       },
     );
+  }
+
+  Future<void> _onIncrementQuantity(
+    IncrementQuantityEvent event,
+    Emitter<CartState> emit,
+  ) async {
+    if (_currentCart == null) return;
+
+    final item = _currentCart!.items.firstWhere(
+      (item) => item.cartItemId == event.cartItemId,
+      orElse: () => throw Exception('Item not found'),
+    );
+
+    add(UpdateCartItemEvent(
+      cartItemId: event.cartItemId,
+      quantity: item.quantity + 1,
+    ));
+  }
+
+  Future<void> _onDecrementQuantity(
+    DecrementQuantityEvent event,
+    Emitter<CartState> emit,
+  ) async {
+    if (_currentCart == null) return;
+
+    final item = _currentCart!.items.firstWhere(
+      (item) => item.cartItemId == event.cartItemId,
+      orElse: () => throw Exception('Item not found'),
+    );
+
+    if (item.quantity > 1) {
+      add(UpdateCartItemEvent(
+        cartItemId: event.cartItemId,
+        quantity: item.quantity - 1,
+      ));
+    } else {
+      add(RemoveFromCartEvent(event.cartItemId));
+    }
   }
 
   Future<void> _onRemoveFromCart(

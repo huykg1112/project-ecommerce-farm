@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../routes/route_names.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -26,10 +27,12 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: Text(l10n.tr('profile')),
         centerTitle: true,
         elevation: 0,
       ),
@@ -133,11 +136,11 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: Column(
                       children: [
                         // Personal Information Section
-                        _buildSectionTitle('Personal Information'),
+                        _buildSectionTitle(l10n.tr('personal_info')),
                         _buildMenuCard(
                           icon: Icons.person_outline,
-                          title: 'Edit Profile',
-                          subtitle: 'Update your personal information',
+                          title: l10n.tr('edit_profile'),
+                          subtitle: l10n.tr('update_personal_info'),
                           onTap: () async {
                             await context.push(RouteNames.editProfile);
                             // Refresh user data when returning from edit profile
@@ -151,13 +154,15 @@ class _ProfilePageState extends State<ProfilePage> {
                         if (user.phoneNumber != null)
                           _buildInfoCard(
                             icon: Icons.phone_outlined,
-                            title: 'Phone Number',
+                            title: l10n.tr('phone_number'),
                             value: user.phoneNumber!,
                           ),
                         _buildMenuCard(
                           icon: Icons.lock_outline,
-                          title: 'Change Password',
-                          subtitle: 'Update your password',
+                          title: l10n.tr('change_password'),
+                          subtitle: l10n.isVietnamese
+                              ? 'Cập nhật mật khẩu'
+                              : 'Update your password',
                           onTap: () {
                             context.push(RouteNames.changePassword);
                           },
@@ -166,27 +171,27 @@ class _ProfilePageState extends State<ProfilePage> {
                         const Gap(20),
 
                         // Account Section
-                        _buildSectionTitle('Account'),
+                        _buildSectionTitle(l10n.tr('account')),
                         _buildMenuCard(
                           icon: Icons.shopping_bag_outlined,
-                          title: 'My Orders',
-                          subtitle: 'View your order history',
+                          title: l10n.tr('my_orders'),
+                          subtitle: l10n.tr('view_order_history'),
                           onTap: () {
                             context.push(RouteNames.orders);
                           },
                         ),
                         _buildMenuCard(
                           icon: Icons.location_on_outlined,
-                          title: 'Addresses',
-                          subtitle: 'Manage your delivery addresses',
+                          title: l10n.tr('addresses'),
+                          subtitle: l10n.tr('manage_addresses'),
                           onTap: () {
                             context.push(RouteNames.addresses);
                           },
                         ),
                         _buildMenuCard(
                           icon: Icons.favorite_outline,
-                          title: 'Wishlist',
-                          subtitle: 'View your favorite items',
+                          title: l10n.tr('wishlist'),
+                          subtitle: l10n.tr('view_favorites'),
                           onTap: () {
                             context.push(RouteNames.wishlist);
                           },
@@ -195,19 +200,23 @@ class _ProfilePageState extends State<ProfilePage> {
                         const Gap(20),
 
                         // App Settings
-                        _buildSectionTitle('Settings'),
+                        _buildSectionTitle(l10n.tr('settings')),
                         _buildMenuCard(
                           icon: Icons.notifications_outlined,
-                          title: 'Notifications',
-                          subtitle: 'Manage notification preferences',
+                          title: l10n.tr('notifications'),
+                          subtitle: l10n.isVietnamese
+                              ? 'Quản lý thông báo'
+                              : 'Manage notification preferences',
                           onTap: () {
                             // Navigate to notifications settings
                           },
                         ),
                         _buildMenuCard(
                           icon: Icons.settings_outlined,
-                          title: 'Settings',
-                          subtitle: 'App settings and preferences',
+                          title: l10n.tr('settings'),
+                          subtitle: l10n.isVietnamese
+                              ? 'Cài đặt ứng dụng'
+                              : 'App settings and preferences',
                           onTap: () {
                             context.push(RouteNames.settings);
                           },
@@ -281,7 +290,11 @@ class _ProfilePageState extends State<ProfilePage> {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey[200]!),
+        side: BorderSide(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.borderDark
+              : Colors.grey[200]!,
+        ),
       ),
       child: ListTile(
         onTap: onTap,
@@ -308,7 +321,9 @@ class _ProfilePageState extends State<ProfilePage> {
           subtitle,
           style: TextStyle(
             fontSize: 13,
-            color: Colors.grey[600],
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.mutedForegroundDark
+                : Colors.grey[600],
           ),
         ),
         trailing: const Icon(
@@ -329,7 +344,11 @@ class _ProfilePageState extends State<ProfilePage> {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey[200]!),
+        side: BorderSide(
+          color: Theme.of(context).brightness == Brightness.dark
+              ? AppColors.borderDark
+              : Colors.grey[200]!,
+        ),
       ),
       child: ListTile(
         leading: Container(
@@ -355,7 +374,9 @@ class _ProfilePageState extends State<ProfilePage> {
           value,
           style: TextStyle(
             fontSize: 13,
-            color: Colors.grey[600],
+            color: Theme.of(context).brightness == Brightness.dark
+                ? AppColors.mutedForegroundDark
+                : Colors.grey[600],
           ),
         ),
       ),

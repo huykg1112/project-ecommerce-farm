@@ -13,7 +13,7 @@ import '../features/profile/presentation/pages/change_password_page.dart';
 import '../features/profile/presentation/pages/address_list_page.dart';
 import '../features/profile/presentation/pages/settings_page.dart';
 import '../features/home/presentation/pages/main_page.dart';
-import '../features/cart/presentation/pages/cart_page.dart';
+import '../features/cart/presentation/pages/local_cart_page.dart';
 
 /// Application router configuration
 class AppRouter {
@@ -109,7 +109,7 @@ class AppRouter {
       GoRoute(
         path: RouteNames.cart,
         name: 'cart',
-        builder: (context, state) => const CartPage(),
+        builder: (context, state) => const LocalCartPage(),
       ),
     ],
 

@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/localization/locale_cubit.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_typography.dart';
+import '../../../../core/theme/theme_cubit.dart';
 import '../../../../shared/widgets/common/custom_snackbar.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
@@ -18,33 +21,39 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   bool _notificationsEnabled = true;
-  bool _darkModeEnabled = false;
-  String _selectedLanguage = 'vi';
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cài đặt'),
+        title: Text(l10n.tr('settings')),
         centerTitle: true,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           // Notifications Section
-          _buildSectionTitle('Thông báo'),
+          _buildSectionTitle(l10n.tr('notifications')),
           _buildSettingCard(
             children: [
               _buildSwitchTile(
                 icon: Icons.notifications_outlined,
-                title: 'Thông báo đẩy',
-                subtitle: 'Nhận thông báo về đơn hàng và khuyến mãi',
+                title: l10n.tr('push_notifications'),
+                subtitle: l10n.tr('push_notifications_desc'),
                 value: _notificationsEnabled,
                 onChanged: (value) {
                   setState(() => _notificationsEnabled = value);
                   CustomSnackBar.showInfo(
                     context,
-                    message: value ? 'Đã bật thông báo' : 'Đã tắt thông báo',
+                    message: value
+                        ? (l10n.isVietnamese
+                            ? 'Đã bật thông báo'
+                            : 'Notifications enabled')
+                        : (l10n.isVietnamese
+                            ? 'Đã tắt thông báo'
+                            : 'Notifications disabled'),
                   );
                 },
               ),
@@ -54,28 +63,47 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: 24),
 
           // Appearance Section
-          _buildSectionTitle('Giao diện'),
+          _buildSectionTitle(l10n.tr('appearance')),
           _buildSettingCard(
             children: [
-              _buildSwitchTile(
-                icon: Icons.dark_mode_outlined,
-                title: 'Chế độ tối',
-                subtitle: 'Giảm mỏi mắt khi sử dụng ban đêm',
-                value: _darkModeEnabled,
-                onChanged: (value) {
-                  setState(() => _darkModeEnabled = value);
-                  CustomSnackBar.showInfo(
-                    context,
-                    message: 'Tính năng đang được phát triển',
+              // Dark Mode with ThemeCubit
+              BlocBuilder<ThemeCubit, ThemeMode>(
+                builder: (context, themeMode) {
+                  return _buildSwitchTile(
+                    icon: Icons.dark_mode_outlined,
+                    title: l10n.tr('dark_mode'),
+                    subtitle: l10n.tr('dark_mode_desc'),
+                    value: themeMode == ThemeMode.dark,
+                    onChanged: (value) {
+                      context.read<ThemeCubit>().setTheme(
+                            value ? ThemeMode.dark : ThemeMode.light,
+                          );
+                      CustomSnackBar.showSuccess(
+                        context,
+                        message: value
+                            ? (l10n.isVietnamese
+                                ? 'Đã bật chế độ tối'
+                                : 'Dark mode enabled')
+                            : (l10n.isVietnamese
+                                ? 'Đã bật chế độ sáng'
+                                : 'Light mode enabled'),
+                      );
+                    },
                   );
                 },
               ),
               const Divider(height: 1),
-              _buildOptionTile(
-                icon: Icons.language_outlined,
-                title: 'Ngôn ngữ',
-                subtitle: _selectedLanguage == 'vi' ? 'Tiếng Việt' : 'English',
-                onTap: _showLanguageDialog,
+              // Language with LocaleCubit
+              BlocBuilder<LocaleCubit, Locale>(
+                builder: (context, locale) {
+                  return _buildOptionTile(
+                    icon: Icons.language_outlined,
+                    title: l10n.tr('language'),
+                    subtitle:
+                        locale.languageCode == 'vi' ? 'Tiếng Việt' : 'English',
+                    onTap: () => _showLanguageDialog(context, locale),
+                  );
+                },
               ),
             ],
           ),
@@ -83,31 +111,39 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: 24),
 
           // Privacy Section
-          _buildSectionTitle('Bảo mật & Quyền riêng tư'),
+          _buildSectionTitle(l10n.tr('privacy_security')),
           _buildSettingCard(
             children: [
               _buildOptionTile(
                 icon: Icons.lock_outline,
-                title: 'Đổi mật khẩu',
-                subtitle: 'Cập nhật mật khẩu tài khoản',
+                title: l10n.tr('change_password'),
+                subtitle: l10n.isVietnamese
+                    ? 'Cập nhật mật khẩu tài khoản'
+                    : 'Update account password',
                 onTap: () => context.push('/change-password'),
               ),
               const Divider(height: 1),
               _buildOptionTile(
                 icon: Icons.privacy_tip_outlined,
-                title: 'Chính sách bảo mật',
-                subtitle: 'Xem chính sách bảo mật của chúng tôi',
+                title: l10n.tr('privacy_policy'),
+                subtitle: l10n.isVietnamese
+                    ? 'Xem chính sách bảo mật của chúng tôi'
+                    : 'View our privacy policy',
                 onTap: () {
-                  CustomSnackBar.showInfo(context, message: 'Đang phát triển');
+                  CustomSnackBar.showInfo(context,
+                      message: l10n.tr('feature_developing'));
                 },
               ),
               const Divider(height: 1),
               _buildOptionTile(
                 icon: Icons.description_outlined,
-                title: 'Điều khoản sử dụng',
-                subtitle: 'Xem điều khoản và điều kiện',
+                title: l10n.tr('terms_of_service'),
+                subtitle: l10n.isVietnamese
+                    ? 'Xem điều khoản và điều kiện'
+                    : 'View terms and conditions',
                 onTap: () {
-                  CustomSnackBar.showInfo(context, message: 'Đang phát triển');
+                  CustomSnackBar.showInfo(context,
+                      message: l10n.tr('feature_developing'));
                 },
               ),
             ],
@@ -116,31 +152,38 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: 24),
 
           // Support Section
-          _buildSectionTitle('Hỗ trợ'),
+          _buildSectionTitle(l10n.tr('support')),
           _buildSettingCard(
             children: [
               _buildOptionTile(
                 icon: Icons.help_outline,
-                title: 'Trung tâm trợ giúp',
-                subtitle: 'Câu hỏi thường gặp và hướng dẫn',
+                title: l10n.tr('help_center'),
+                subtitle: l10n.isVietnamese
+                    ? 'Câu hỏi thường gặp và hướng dẫn'
+                    : 'FAQs and guides',
                 onTap: () {
-                  CustomSnackBar.showInfo(context, message: 'Đang phát triển');
+                  CustomSnackBar.showInfo(context,
+                      message: l10n.tr('feature_developing'));
                 },
               ),
               const Divider(height: 1),
               _buildOptionTile(
                 icon: Icons.support_agent_outlined,
-                title: 'Liên hệ hỗ trợ',
-                subtitle: 'Gửi yêu cầu hỗ trợ',
+                title: l10n.tr('contact_support'),
+                subtitle: l10n.isVietnamese
+                    ? 'Gửi yêu cầu hỗ trợ'
+                    : 'Send support request',
                 onTap: () {
-                  CustomSnackBar.showInfo(context, message: 'Đang phát triển');
+                  CustomSnackBar.showInfo(context,
+                      message: l10n.tr('feature_developing'));
                 },
               ),
               const Divider(height: 1),
               _buildOptionTile(
                 icon: Icons.info_outline,
-                title: 'Về ứng dụng',
-                subtitle: 'Phiên bản 1.0.0',
+                title: l10n.tr('about_app'),
+                subtitle:
+                    l10n.isVietnamese ? 'Phiên bản 1.0.0' : 'Version 1.0.0',
                 onTap: _showAboutDialog,
               ),
             ],
@@ -149,14 +192,16 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: 24),
 
           // Danger Zone
-          _buildSectionTitle('Vùng nguy hiểm'),
+          _buildSectionTitle(l10n.tr('danger_zone')),
           _buildSettingCard(
             borderColor: AppColors.destructive.withOpacity(0.3),
             children: [
               _buildOptionTile(
                 icon: Icons.logout,
-                title: 'Đăng xuất',
-                subtitle: 'Đăng xuất khỏi tài khoản',
+                title: l10n.tr('logout'),
+                subtitle: l10n.isVietnamese
+                    ? 'Đăng xuất khỏi tài khoản'
+                    : 'Sign out of your account',
                 iconColor: AppColors.destructive,
                 textColor: AppColors.destructive,
                 onTap: () => _showLogoutDialog(context),
@@ -164,8 +209,8 @@ class _SettingsPageState extends State<SettingsPage> {
               const Divider(height: 1),
               _buildOptionTile(
                 icon: Icons.delete_forever_outlined,
-                title: 'Xóa tài khoản',
-                subtitle: 'Xóa vĩnh viễn tài khoản và dữ liệu',
+                title: l10n.tr('delete_account'),
+                subtitle: l10n.tr('delete_account_desc'),
                 iconColor: AppColors.destructive,
                 textColor: AppColors.destructive,
                 onTap: () => _showDeleteAccountDialog(context),
@@ -198,7 +243,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: borderColor ?? AppColors.border,
@@ -301,30 +346,55 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  void _showLanguageDialog() {
+  void _showLanguageDialog(BuildContext context, Locale currentLocale) {
+    final l10n = AppLocalizations.of(context);
+
     showDialog(
       context: context,
       builder: (ctx) => SimpleDialog(
-        title: const Text('Chọn ngôn ngữ'),
+        title: Text(l10n.tr('select_language')),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         children: [
-          RadioListTile<String>(
-            title: const Text('Tiếng Việt'),
-            value: 'vi',
-            groupValue: _selectedLanguage,
+          RadioListTile<AppLanguage>(
+            title: Row(
+              children: [
+                const Text('🇻🇳', style: TextStyle(fontSize: 24)),
+                const SizedBox(width: 12),
+                const Text('Tiếng Việt'),
+              ],
+            ),
+            value: AppLanguage.vietnamese,
+            groupValue: context.read<LocaleCubit>().currentLanguage,
             onChanged: (value) {
-              setState(() => _selectedLanguage = value!);
-              Navigator.pop(ctx);
-              CustomSnackBar.showInfo(context, message: 'Đã chọn Tiếng Việt');
+              if (value != null) {
+                context.read<LocaleCubit>().setLocale(value);
+                Navigator.pop(ctx);
+                CustomSnackBar.showSuccess(
+                  context,
+                  message: 'Đã chọn Tiếng Việt',
+                );
+              }
             },
           ),
-          RadioListTile<String>(
-            title: const Text('English'),
-            value: 'en',
-            groupValue: _selectedLanguage,
+          RadioListTile<AppLanguage>(
+            title: Row(
+              children: [
+                const Text('🇺🇸', style: TextStyle(fontSize: 24)),
+                const SizedBox(width: 12),
+                const Text('English'),
+              ],
+            ),
+            value: AppLanguage.english,
+            groupValue: context.read<LocaleCubit>().currentLanguage,
             onChanged: (value) {
-              setState(() => _selectedLanguage = value!);
-              Navigator.pop(ctx);
-              CustomSnackBar.showInfo(context, message: 'Selected English');
+              if (value != null) {
+                context.read<LocaleCubit>().setLocale(value);
+                Navigator.pop(ctx);
+                CustomSnackBar.showSuccess(
+                  context,
+                  message: 'Selected English',
+                );
+              }
             },
           ),
         ],
@@ -333,6 +403,8 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _showAboutDialog() {
+    final l10n = AppLocalizations.of(context);
+
     showAboutDialog(
       context: context,
       applicationName: 'Farm E-Commerce',
@@ -347,21 +419,26 @@ class _SettingsPageState extends State<SettingsPage> {
         child: const Icon(Icons.eco, color: Colors.white, size: 36),
       ),
       children: [
-        const Text('Ứng dụng mua bán thuốc bảo vệ thực vật với tư vấn AI'),
+        Text(l10n.isVietnamese
+            ? 'Ứng dụng mua bán thuốc bảo vệ thực vật với tư vấn AI'
+            : 'Agricultural products e-commerce app with AI consultation'),
       ],
     );
   }
 
   void _showLogoutDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Đăng xuất'),
-        content: const Text('Bạn có chắc muốn đăng xuất?'),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(l10n.tr('logout')),
+        content: Text(l10n.tr('logout_confirm')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Hủy'),
+            child: Text(l10n.tr('cancel')),
           ),
           TextButton(
             onPressed: () {
@@ -369,7 +446,7 @@ class _SettingsPageState extends State<SettingsPage> {
               context.read<AuthBloc>().add(const LogoutRequested());
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.destructive),
-            child: const Text('Đăng xuất'),
+            child: Text(l10n.tr('logout')),
           ),
         ],
       ),
@@ -377,26 +454,27 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _showDeleteAccountDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Xóa tài khoản'),
-        content: const Text(
-          'Hành động này không thể hoàn tác. Tất cả dữ liệu của bạn sẽ bị xóa vĩnh viễn.',
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(l10n.tr('delete_account')),
+        content: Text(l10n.tr('delete_account_warning')),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Hủy'),
+            child: Text(l10n.tr('cancel')),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
               CustomSnackBar.showInfo(context,
-                  message: 'Tính năng đang phát triển');
+                  message: l10n.tr('feature_developing'));
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.destructive),
-            child: const Text('Xóa tài khoản'),
+            child: Text(l10n.tr('delete_account')),
           ),
         ],
       ),

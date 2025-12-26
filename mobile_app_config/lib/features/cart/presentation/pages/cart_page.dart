@@ -173,9 +173,7 @@ class _CartPageState extends State<CartPage> {
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              context.read<CartBloc>().add(RemoveFromCartEvent(
-                    cartItemId: cartItemId,
-                  ));
+              context.read<CartBloc>().add(RemoveFromCartEvent(cartItemId));
             },
             style: TextButton.styleFrom(
               foregroundColor: AppColors.destructive,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../routes/route_names.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -30,6 +31,9 @@ class _MainPageState extends State<MainPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
+
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is Unauthenticated || state is LogoutSuccess) {
@@ -59,32 +63,33 @@ class _MainPageState extends State<MainPage> {
               });
             },
             type: BottomNavigationBarType.fixed,
-            backgroundColor: Colors.white,
+            backgroundColor: isDark ? AppColors.cardDark : Colors.white,
             selectedItemColor: AppColors.primary,
-            unselectedItemColor: Colors.grey[600],
+            unselectedItemColor:
+                isDark ? AppColors.mutedForegroundDark : Colors.grey[600],
             selectedFontSize: 12,
             unselectedFontSize: 12,
             elevation: 0,
-            items: const [
+            items: [
               BottomNavigationBarItem(
-                icon: Icon(Icons.home_outlined),
-                activeIcon: Icon(Icons.home),
-                label: 'Home',
+                icon: const Icon(Icons.home_outlined),
+                activeIcon: const Icon(Icons.home),
+                label: l10n.tr('home'),
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.grid_view_outlined),
-                activeIcon: Icon(Icons.grid_view),
-                label: 'Products',
+                icon: const Icon(Icons.grid_view_outlined),
+                activeIcon: const Icon(Icons.grid_view),
+                label: l10n.tr('products'),
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.shopping_cart_outlined),
-                activeIcon: Icon(Icons.shopping_cart),
-                label: 'Cart',
+                icon: const Icon(Icons.shopping_cart_outlined),
+                activeIcon: const Icon(Icons.shopping_cart),
+                label: l10n.tr('cart'),
               ),
               BottomNavigationBarItem(
-                icon: Icon(Icons.person_outline),
-                activeIcon: Icon(Icons.person),
-                label: 'Profile',
+                icon: const Icon(Icons.person_outline),
+                activeIcon: const Icon(Icons.person),
+                label: l10n.tr('profile'),
               ),
             ],
           ),
@@ -100,8 +105,11 @@ class HomeTabContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('FarmCommerce'),
         centerTitle: false,
@@ -140,9 +148,9 @@ class HomeTabContent extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Welcome to',
-                    style: TextStyle(
+                  Text(
+                    l10n.tr('welcome_to'),
+                    style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 16,
                     ),
@@ -157,9 +165,9 @@ class HomeTabContent extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Agricultural E-commerce Platform',
-                    style: TextStyle(
+                  Text(
+                    l10n.tr('agricultural_platform'),
+                    style: const TextStyle(
                       color: Colors.white70,
                       fontSize: 14,
                     ),
@@ -176,11 +184,12 @@ class HomeTabContent extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Quick Actions',
+                  Text(
+                    l10n.tr('quick_actions'),
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -188,8 +197,9 @@ class HomeTabContent extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _buildQuickActionCard(
+                          context: context,
                           icon: Icons.agriculture,
-                          title: 'AI Consult',
+                          title: l10n.tr('ai_consult'),
                           color: Colors.green,
                           onTap: () {
                             context.push(RouteNames.aiConsultation);
@@ -199,8 +209,9 @@ class HomeTabContent extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildQuickActionCard(
+                          context: context,
                           icon: Icons.location_on,
-                          title: 'Stores',
+                          title: l10n.tr('stores'),
                           color: Colors.blue,
                           onTap: () {
                             context.push(RouteNames.storeLocator);
@@ -214,8 +225,9 @@ class HomeTabContent extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _buildQuickActionCard(
+                          context: context,
                           icon: Icons.shopping_bag,
-                          title: 'My Orders',
+                          title: l10n.tr('my_orders'),
                           color: Colors.orange,
                           onTap: () {
                             context.push(RouteNames.orders);
@@ -225,8 +237,9 @@ class HomeTabContent extends StatelessWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: _buildQuickActionCard(
+                          context: context,
                           icon: Icons.favorite,
-                          title: 'Wishlist',
+                          title: l10n.tr('wishlist'),
                           color: Colors.red,
                           onTap: () {
                             context.push(RouteNames.wishlist);
@@ -247,25 +260,28 @@ class HomeTabContent extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Featured Products',
+                  Text(
+                    l10n.tr('featured_products'),
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                   const SizedBox(height: 12),
                   Container(
                     height: 150,
                     decoration: BoxDecoration(
-                      color: Colors.grey[200],
+                      color: isDark ? AppColors.cardDark : Colors.grey[200],
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Text(
-                        'Coming Soon',
+                        l10n.tr('coming_soon'),
                         style: TextStyle(
-                          color: Colors.grey,
+                          color: isDark
+                              ? AppColors.mutedForegroundDark
+                              : Colors.grey,
                           fontSize: 16,
                         ),
                       ),
@@ -283,20 +299,25 @@ class HomeTabContent extends StatelessWidget {
   }
 
   Widget _buildQuickActionCard({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required Color color,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDark ? AppColors.cardDark : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey[200]!),
+          border: Border.all(
+            color: isDark ? AppColors.borderDark : Colors.grey[200]!,
+          ),
         ),
         child: Column(
           children: [
@@ -315,9 +336,10 @@ class HomeTabContent extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
+                color: Theme.of(context).textTheme.bodyMedium?.color,
               ),
               textAlign: TextAlign.center,
             ),
@@ -334,23 +356,35 @@ class ProductsTabContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Products'),
+        title: Text(l10n.tr('products')),
         centerTitle: true,
       ),
-      body: const Center(
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.shopping_bag, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
+            Icon(Icons.shopping_bag,
+                size: 64, color: AppColors.mutedForeground),
+            const SizedBox(height: 16),
             Text(
-              'Products Page',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              l10n.tr('products'),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
             ),
-            SizedBox(height: 8),
-            Text('Coming soon...'),
+            const SizedBox(height: 8),
+            Text(
+              l10n.tr('coming_soon'),
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodySmall?.color,
+              ),
+            ),
           ],
         ),
       ),
@@ -364,23 +398,35 @@ class CartTabContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cart'),
+        title: Text(l10n.tr('cart')),
         centerTitle: true,
       ),
-      body: const Center(
+      body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.shopping_cart, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
+            Icon(Icons.shopping_cart,
+                size: 64, color: AppColors.mutedForeground),
+            const SizedBox(height: 16),
             Text(
-              'Your Cart',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              l10n.tr('cart'),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
             ),
-            SizedBox(height: 8),
-            Text('Cart is empty'),
+            const SizedBox(height: 8),
+            Text(
+              l10n.tr('empty_cart'),
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodySmall?.color,
+              ),
+            ),
           ],
         ),
       ),

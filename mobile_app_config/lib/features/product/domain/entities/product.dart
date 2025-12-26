@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import 'product_batch.dart';
+
 /// Product entity
 class Product extends Equatable {
   final String productId;
@@ -7,6 +9,8 @@ class Product extends Equatable {
   final String? description;
   final String? usageInstructions;
   final double unitPrice;
+  final double? originalPrice; // Price before discount
+  final double? discountPercentage; // Discount percentage (0-100)
   final int totalSaled;
   final bool isActive;
   final DateTime createdAt;
@@ -14,8 +18,11 @@ class Product extends Equatable {
   final List<String> imageUrls;
   final List<String> categories;
   final String? manufacturerName;
+  final String? storeName; // Store/Dealer name
+  final String? storeId; // Store/Dealer ID
   final double? averageRating;
   final int? reviewCount;
+  final List<ProductBatch> batches; // Product batches with types
 
   const Product({
     required this.productId,
@@ -23,6 +30,8 @@ class Product extends Equatable {
     this.description,
     this.usageInstructions,
     required this.unitPrice,
+    this.originalPrice,
+    this.discountPercentage,
     this.totalSaled = 0,
     this.isActive = true,
     required this.createdAt,
@@ -30,9 +39,37 @@ class Product extends Equatable {
     this.imageUrls = const [],
     this.categories = const [],
     this.manufacturerName,
+    this.storeName,
+    this.storeId,
     this.averageRating,
     this.reviewCount,
+    this.batches = const [],
   });
+
+  /// Check if product has discount
+  bool get hasDiscount => discountPercentage != null && discountPercentage! > 0;
+
+  /// Get display price (discounted or regular)
+  double get displayPrice => unitPrice;
+
+  /// Get original price for strikethrough display
+  double? get strikethroughPrice => hasDiscount ? originalPrice : null;
+
+  /// Get valid batches (active, in-stock, not expired)
+  List<ProductBatch> get validBatches =>
+      batches.where((batch) => batch.isValid).toList();
+
+  /// Check if product has any valid batches
+  bool get hasValidBatches => validBatches.isNotEmpty;
+
+  /// Get unique product types from batches
+  List<ProductType> get productTypes {
+    final Map<String, ProductType> uniqueTypes = {};
+    for (var batch in validBatches) {
+      uniqueTypes[batch.productType.productTypeId] = batch.productType;
+    }
+    return uniqueTypes.values.toList();
+  }
 
   @override
   List<Object?> get props => [
@@ -41,6 +78,8 @@ class Product extends Equatable {
         description,
         usageInstructions,
         unitPrice,
+        originalPrice,
+        discountPercentage,
         totalSaled,
         isActive,
         createdAt,
@@ -48,7 +87,10 @@ class Product extends Equatable {
         imageUrls,
         categories,
         manufacturerName,
+        storeName,
+        storeId,
         averageRating,
         reviewCount,
+        batches,
       ];
 }
