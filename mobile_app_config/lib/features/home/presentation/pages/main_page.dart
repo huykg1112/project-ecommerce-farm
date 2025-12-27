@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../routes/route_names.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../cart/presentation/pages/local_cart_page.dart';
 import '../../../profile/presentation/pages/profile_page.dart';
 import '../../../product/presentation/pages/products_page.dart';
 
@@ -25,7 +26,7 @@ class _MainPageState extends State<MainPage> {
   final List<Widget> _pages = [
     const HomeTabContent(),
     const ProductsPage(),
-    const CartTabContent(),
+    const LocalCartPage(),
     const ProfilePage(),
   ];
 
@@ -381,48 +382,6 @@ class ProductsTabContent extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               l10n.tr('coming_soon'),
-              style: TextStyle(
-                color: Theme.of(context).textTheme.bodySmall?.color,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// Cart Tab Content (Placeholder)
-class CartTabContent extends StatelessWidget {
-  const CartTabContent({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.tr('cart')),
-        centerTitle: true,
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.shopping_cart,
-                size: 64, color: AppColors.mutedForeground),
-            const SizedBox(height: 16),
-            Text(
-              l10n.tr('cart'),
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).textTheme.bodyLarge?.color,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.tr('empty_cart'),
               style: TextStyle(
                 color: Theme.of(context).textTheme.bodySmall?.color,
               ),

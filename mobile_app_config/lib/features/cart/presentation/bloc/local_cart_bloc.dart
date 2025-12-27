@@ -178,6 +178,33 @@ class ClearLocalCart extends LocalCartEvent {
   const ClearLocalCart();
 }
 
+// Selection Events
+class ToggleCartItemSelection extends LocalCartEvent {
+  final String itemId;
+
+  const ToggleCartItemSelection(this.itemId);
+
+  @override
+  List<Object?> get props => [itemId];
+}
+
+class ToggleCartSellerSelection extends LocalCartEvent {
+  final String sellerId;
+
+  const ToggleCartSellerSelection(this.sellerId);
+
+  @override
+  List<Object?> get props => [sellerId];
+}
+
+class SelectAllCartItems extends LocalCartEvent {
+  const SelectAllCartItems();
+}
+
+class DeselectAllCartItems extends LocalCartEvent {
+  const DeselectAllCartItems();
+}
+
 // ==================== STATES ====================
 
 abstract class LocalCartState extends Equatable {
@@ -197,8 +224,12 @@ class LocalCartLoading extends LocalCartState {
 
 class LocalCartLoaded extends LocalCartState {
   final List<LocalCartItem> items;
+  final Set<String> selectedItemIds;
 
-  const LocalCartLoaded(this.items);
+  const LocalCartLoaded(
+    this.items, {
+    this.selectedItemIds = const {},
+  });
 
   int get totalItems => items.fold(0, (sum, item) => sum + item.quantity);
 
@@ -208,8 +239,26 @@ class LocalCartLoaded extends LocalCartState {
   bool get isEmpty => items.isEmpty;
   bool get isNotEmpty => items.isNotEmpty;
 
+  // Selection getters
+  int get selectedItemsCount => items
+      .where((item) => selectedItemIds.contains(item.id))
+      .fold(0, (sum, item) => sum + item.quantity);
+
+  double get selectedTotalAmount => items
+      .where((item) => selectedItemIds.contains(item.id))
+      .fold(0.0, (sum, item) => sum + item.totalPrice);
+
+  bool get isAllSelected =>
+      items.isNotEmpty && selectedItemIds.length == items.length;
+
+  bool isSellerSelected(String sellerId) {
+    final sellerItems = items.where((item) => item.sellerId == sellerId);
+    if (sellerItems.isEmpty) return false;
+    return sellerItems.every((item) => selectedItemIds.contains(item.id));
+  }
+
   @override
-  List<Object?> get props => [items];
+  List<Object?> get props => [items, selectedItemIds];
 }
 
 class LocalCartError extends LocalCartState {
@@ -237,6 +286,11 @@ class LocalCartBloc extends Bloc<LocalCartEvent, LocalCartState> {
     on<DecrementLocalCartQuantity>(_onDecrementQuantity);
     on<RemoveFromLocalCart>(_onRemoveFromCart);
     on<ClearLocalCart>(_onClearCart);
+    // Selection handlers
+    on<ToggleCartItemSelection>(_onToggleItemSelection);
+    on<ToggleCartSellerSelection>(_onToggleSellerSelection);
+    on<SelectAllCartItems>(_onSelectAll);
+    on<DeselectAllCartItems>(_onDeselectAll);
 
     // Auto-load cart on initialization
     add(const LoadLocalCart());
@@ -246,11 +300,14 @@ class LocalCartBloc extends Bloc<LocalCartEvent, LocalCartState> {
     LoadLocalCart event,
     Emitter<LocalCartState> emit,
   ) async {
+    print('DEBUG: Loading local cart...');
     emit(const LocalCartLoading());
     try {
       final items = _loadFromStorage();
+      print('DEBUG: Loaded ${items.length} items from storage');
       emit(LocalCartLoaded(items));
     } catch (e) {
+      print('DEBUG: Error loading cart: $e');
       emit(LocalCartError('Không thể tải giỏ hàng: $e'));
     }
   }
@@ -259,11 +316,16 @@ class LocalCartBloc extends Bloc<LocalCartEvent, LocalCartState> {
     AddToLocalCart event,
     Emitter<LocalCartState> emit,
   ) async {
+    print(
+        'DEBUG: Adding to cart: ${event.item.productName} (id: ${event.item.id})');
     // Get current items from state or load from storage
     List<LocalCartItem> currentItems;
+    Set<String> currentSelection = {};
+
     final currentState = state;
     if (currentState is LocalCartLoaded) {
       currentItems = List.from(currentState.items);
+      currentSelection = Set.from(currentState.selectedItemIds);
     } else {
       // Load from storage if state is not LocalCartLoaded
       currentItems = _loadFromStorage();
@@ -278,13 +340,17 @@ class LocalCartBloc extends Bloc<LocalCartEvent, LocalCartState> {
       currentItems[existingIndex] = existing.copyWith(
         quantity: existing.quantity + event.item.quantity,
       );
+      print('DEBUG: Updated quantity for existing item');
     } else {
       // Add new item
       currentItems.add(event.item);
+      // Auto-select newly added item
+      currentSelection.add(event.item.id);
+      print('DEBUG: Added new item. Total items: ${currentItems.length}');
     }
 
     _saveToStorage(currentItems);
-    emit(LocalCartLoaded(currentItems));
+    emit(LocalCartLoaded(currentItems, selectedItemIds: currentSelection));
   }
 
   Future<void> _onUpdateQuantity(
@@ -301,7 +367,8 @@ class LocalCartBloc extends Bloc<LocalCartEvent, LocalCartState> {
       }).toList();
 
       _saveToStorage(updatedItems);
-      emit(LocalCartLoaded(updatedItems));
+      emit(LocalCartLoaded(updatedItems,
+          selectedItemIds: currentState.selectedItemIds));
     }
   }
 
@@ -319,7 +386,8 @@ class LocalCartBloc extends Bloc<LocalCartEvent, LocalCartState> {
       }).toList();
 
       _saveToStorage(updatedItems);
-      emit(LocalCartLoaded(updatedItems));
+      emit(LocalCartLoaded(updatedItems,
+          selectedItemIds: currentState.selectedItemIds));
     }
   }
 
@@ -343,7 +411,11 @@ class LocalCartBloc extends Bloc<LocalCartEvent, LocalCartState> {
       }
 
       _saveToStorage(updatedItems);
-      emit(LocalCartLoaded(updatedItems));
+      // Clean up selection if item removed
+      final updatedSelection = Set<String>.from(currentState.selectedItemIds)
+        ..retainAll(updatedItems.map((e) => e.id));
+
+      emit(LocalCartLoaded(updatedItems, selectedItemIds: updatedSelection));
     }
   }
 
@@ -356,7 +428,11 @@ class LocalCartBloc extends Bloc<LocalCartEvent, LocalCartState> {
       final updatedItems =
           currentState.items.where((item) => item.id != event.itemId).toList();
       _saveToStorage(updatedItems);
-      emit(LocalCartLoaded(updatedItems));
+
+      final updatedSelection = Set<String>.from(currentState.selectedItemIds)
+        ..remove(event.itemId);
+
+      emit(LocalCartLoaded(updatedItems, selectedItemIds: updatedSelection));
     }
   }
 
@@ -368,9 +444,72 @@ class LocalCartBloc extends Bloc<LocalCartEvent, LocalCartState> {
     emit(const LocalCartLoaded([]));
   }
 
+  Future<void> _onToggleItemSelection(
+    ToggleCartItemSelection event,
+    Emitter<LocalCartState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is LocalCartLoaded) {
+      final newSelection = Set<String>.from(currentState.selectedItemIds);
+      if (newSelection.contains(event.itemId)) {
+        newSelection.remove(event.itemId);
+      } else {
+        newSelection.add(event.itemId);
+      }
+      emit(LocalCartLoaded(currentState.items, selectedItemIds: newSelection));
+    }
+  }
+
+  Future<void> _onToggleSellerSelection(
+    ToggleCartSellerSelection event,
+    Emitter<LocalCartState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is LocalCartLoaded) {
+      final sellerItems =
+          currentState.items.where((item) => item.sellerId == event.sellerId);
+      final sellerItemIds = sellerItems.map((e) => e.id).toSet();
+      final newSelection = Set<String>.from(currentState.selectedItemIds);
+
+      final allSelected =
+          sellerItemIds.every((id) => newSelection.contains(id));
+
+      if (allSelected) {
+        // Deselect all items from this seller
+        newSelection.removeAll(sellerItemIds);
+      } else {
+        // Select all items from this seller
+        newSelection.addAll(sellerItemIds);
+      }
+      emit(LocalCartLoaded(currentState.items, selectedItemIds: newSelection));
+    }
+  }
+
+  Future<void> _onSelectAll(
+    SelectAllCartItems event,
+    Emitter<LocalCartState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is LocalCartLoaded) {
+      final allIds = currentState.items.map((e) => e.id).toSet();
+      emit(LocalCartLoaded(currentState.items, selectedItemIds: allIds));
+    }
+  }
+
+  Future<void> _onDeselectAll(
+    DeselectAllCartItems event,
+    Emitter<LocalCartState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is LocalCartLoaded) {
+      emit(LocalCartLoaded(currentState.items, selectedItemIds: const {}));
+    }
+  }
+
   List<LocalCartItem> _loadFromStorage() {
     final jsonString = _prefs.getString(_storageKey);
     if (jsonString == null || jsonString.isEmpty) {
+      print('DEBUG: No cart data in storage');
       return [];
     }
 
@@ -380,13 +519,19 @@ class LocalCartBloc extends Bloc<LocalCartEvent, LocalCartState> {
           .map((item) => LocalCartItem.fromJson(item as Map<String, dynamic>))
           .toList();
     } catch (e) {
+      print('DEBUG: Error parsing cart from storage: $e');
       return [];
     }
   }
 
   void _saveToStorage(List<LocalCartItem> items) {
-    final jsonList = items.map((item) => item.toJson()).toList();
-    _prefs.setString(_storageKey, json.encode(jsonList));
+    try {
+      final jsonList = items.map((item) => item.toJson()).toList();
+      _prefs.setString(_storageKey, json.encode(jsonList));
+      print('DEBUG: Saved ${items.length} items to storage');
+    } catch (e) {
+      print('DEBUG: Error saving cart to storage: $e');
+    }
   }
 
   /// Get current cart items

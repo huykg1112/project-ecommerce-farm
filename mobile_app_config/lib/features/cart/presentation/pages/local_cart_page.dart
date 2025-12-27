@@ -74,17 +74,32 @@ class LocalCartPage extends StatelessWidget {
               );
             }
 
+            // Group items by seller
+            final itemsBySeller = <String, List<LocalCartItem>>{};
+            for (final item in state.items) {
+              if (!itemsBySeller.containsKey(item.sellerId)) {
+                itemsBySeller[item.sellerId] = [];
+              }
+              itemsBySeller[item.sellerId]!.add(item);
+            }
+
             return Column(
               children: [
-                // Cart items list
+                // Header (Select All)
+                _buildCartHeader(context, state, isDark),
+
+                // Cart items list (Grouped by Seller)
                 Expanded(
                   child: ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: state.items.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    itemCount: itemsBySeller.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 16),
                     itemBuilder: (context, index) {
-                      final item = state.items[index];
-                      return _buildCartItemCard(context, item, isDark);
+                      final sellerId = itemsBySeller.keys.elementAt(index);
+                      final items = itemsBySeller[sellerId]!;
+                      return _buildSellerGroup(
+                          context, state, sellerId, items, isDark);
                     },
                   ),
                 ),
@@ -104,186 +119,285 @@ class LocalCartPage extends StatelessWidget {
     );
   }
 
-  Widget _buildCartItemCard(
+  Widget _buildCartHeader(
     BuildContext context,
-    LocalCartItem item,
+    LocalCartLoaded state,
     bool isDark,
   ) {
-    return Card(
-      elevation: 2,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       color: isDark ? AppColors.cardDark : Colors.white,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+      child: Row(
+        children: [
+          Checkbox(
+            value: state.isAllSelected,
+            onChanged: (value) {
+              if (value == true) {
+                context.read<LocalCartBloc>().add(const SelectAllCartItems());
+              } else {
+                context.read<LocalCartBloc>().add(const DeselectAllCartItems());
+              }
+            },
+            activeColor: AppColors.primary,
+          ),
+          const Text('Chọn tất cả'),
+          const Spacer(),
+          TextButton.icon(
+            icon: const Icon(Icons.delete_outline, size: 18),
+            label: const Text('Xóa'),
+            style: TextButton.styleFrom(foregroundColor: AppColors.destructive),
+            onPressed: () => _showClearCartDialog(context),
+          ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            // Product Image
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: item.imageUrl.isNotEmpty
-                  ? Image.network(
-                      item.imageUrl,
-                      width: 80,
-                      height: 80,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        width: 80,
-                        height: 80,
-                        color: isDark ? Colors.grey[800] : Colors.grey[200],
-                        child: const Icon(Icons.image_not_supported),
-                      ),
-                    )
-                  : Container(
-                      width: 80,
-                      height: 80,
-                      color: isDark ? Colors.grey[800] : Colors.grey[200],
-                      child: const Icon(Icons.image),
-                    ),
-            ),
+    );
+  }
 
-            const SizedBox(width: 12),
+  Widget _buildSellerGroup(
+    BuildContext context,
+    LocalCartLoaded state,
+    String sellerId,
+    List<LocalCartItem> items,
+    bool isDark,
+  ) {
+    final sellerName = items.first.sellerName;
+    final isSellerSelected = state.isSellerSelected(sellerId);
 
-            // Product Info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    item.productName,
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white : Colors.black,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (item.batchName != null) ...[
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        item.batchName!,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 4),
-                  Text(
-                    item.sellerName,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: isDark ? Colors.grey[400] : Colors.grey[600],
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      if (item.hasDiscount) ...[
-                        Text(
-                          _formatPrice(item.price),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: isDark ? Colors.grey[500] : Colors.grey[600],
-                            decoration: TextDecoration.lineThrough,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                      ],
-                      Text(
-                        _formatPrice(item.finalPrice),
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            // Quantity Controls
-            Column(
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.cardDark : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Seller Header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
+            child: Row(
               children: [
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 20),
-                  color: AppColors.destructive,
-                  onPressed: () {
-                    _showRemoveItemDialog(context, item);
+                Checkbox(
+                  value: isSellerSelected,
+                  onChanged: (value) {
+                    context
+                        .read<LocalCartBloc>()
+                        .add(ToggleCartSellerSelection(sellerId));
                   },
+                  activeColor: AppColors.primary,
                 ),
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(
-                      color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
-                    ),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      InkWell(
-                        onTap: () {
-                          context
-                              .read<LocalCartBloc>()
-                              .add(DecrementLocalCartQuantity(item.id));
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          child: Icon(
-                            Icons.remove,
-                            size: 16,
-                            color: isDark ? Colors.white : Colors.black,
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Text(
-                          '${item.quantity}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: isDark ? Colors.white : Colors.black,
-                          ),
-                        ),
-                      ),
-                      InkWell(
-                        onTap: () {
-                          context
-                              .read<LocalCartBloc>()
-                              .add(IncrementLocalCartQuantity(item.id));
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          child: Icon(
-                            Icons.add,
-                            size: 16,
-                            color: isDark ? Colors.white : Colors.black,
-                          ),
-                        ),
-                      ),
-                    ],
+                Icon(Icons.store,
+                    size: 18,
+                    color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    sellerName,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+          const Divider(height: 1),
+          // Items
+          ...items
+              .map((item) => _buildCartItemCard(context, state, item, isDark)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCartItemCard(
+    BuildContext context,
+    LocalCartLoaded state,
+    LocalCartItem item,
+    bool isDark,
+  ) {
+    final isSelected = state.selectedItemIds.contains(item.id);
+
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Checkbox(
+            value: isSelected,
+            onChanged: (value) {
+              context
+                  .read<LocalCartBloc>()
+                  .add(ToggleCartItemSelection(item.id));
+            },
+            activeColor: AppColors.primary,
+          ),
+          // Product Image
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: item.imageUrl.isNotEmpty
+                ? Image.network(
+                    item.imageUrl,
+                    width: 70,
+                    height: 70,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      width: 70,
+                      height: 70,
+                      color: isDark ? Colors.grey[800] : Colors.grey[200],
+                      child: const Icon(Icons.image_not_supported),
+                    ),
+                  )
+                : Container(
+                    width: 70,
+                    height: 70,
+                    color: isDark ? Colors.grey[800] : Colors.grey[200],
+                    child: const Icon(Icons.image),
+                  ),
+          ),
+
+          const SizedBox(width: 12),
+
+          // Product Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.productName,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (item.batchName != null) ...[
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      item.batchName!,
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    if (item.hasDiscount) ...[
+                      Text(
+                        _formatPrice(item.price),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: isDark ? Colors.grey[500] : Colors.grey[600],
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+                    Text(
+                      _formatPrice(item.finalPrice),
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // Quantity Controls
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.delete_outline, size: 18),
+                color: AppColors.destructive,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+                onPressed: () {
+                  _showRemoveItemDialog(context, item);
+                },
+              ),
+              const SizedBox(height: 8),
+              Container(
+                height: 28,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+                  ),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    InkWell(
+                      onTap: () {
+                        context
+                            .read<LocalCartBloc>()
+                            .add(DecrementLocalCartQuantity(item.id));
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Icon(
+                          Icons.remove,
+                          size: 14,
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(
+                        '${item.quantity}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () {
+                        context
+                            .read<LocalCartBloc>()
+                            .add(IncrementLocalCartQuantity(item.id));
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Icon(
+                          Icons.add,
+                          size: 14,
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -314,16 +428,16 @@ class LocalCartPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Tổng (${state.totalItems} sản phẩm):',
+                  'Tổng thanh toán (${state.selectedItemsCount} sản phẩm):',
                   style: TextStyle(
                     fontSize: 14,
                     color: isDark ? Colors.grey[400] : Colors.grey[600],
                   ),
                 ),
                 Text(
-                  _formatPrice(state.totalAmount),
+                  _formatPrice(state.selectedTotalAmount),
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: AppColors.primary,
                   ),
@@ -334,15 +448,19 @@ class LocalCartPage extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  // TODO: Navigate to checkout
-                  CustomSnackBar.showInfo(
-                    context,
-                    message: 'Tính năng thanh toán đang được phát triển',
-                  );
-                },
+                onPressed: state.selectedItemsCount > 0
+                    ? () {
+                        context.push('/checkout');
+                        // CustomSnackBar.showInfo(
+                        //   context,
+                        //   message: 'Tính năng thanh toán đang được phát triển',
+                        // );
+                      }
+                    : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
+                  disabledBackgroundColor:
+                      isDark ? Colors.grey[800] : Colors.grey[300],
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
@@ -350,7 +468,7 @@ class LocalCartPage extends StatelessWidget {
                   ),
                 ),
                 child: const Text(
-                  'Tiến hành thanh toán',
+                  'Mua hàng',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

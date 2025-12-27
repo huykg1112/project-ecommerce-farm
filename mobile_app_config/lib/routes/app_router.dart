@@ -7,6 +7,8 @@ import '../features/auth/presentation/bloc/auth_bloc.dart';
 import '../features/auth/presentation/pages/splash_page.dart';
 import '../features/auth/presentation/pages/login_page.dart';
 import '../features/auth/presentation/pages/register_page.dart';
+import '../features/checkout/presentation/pages/checkout_page.dart';
+import '../features/checkout/presentation/pages/checkout_success_page.dart';
 import '../features/profile/presentation/pages/profile_page.dart';
 import '../features/profile/presentation/pages/edit_profile_page.dart';
 import '../features/profile/presentation/pages/change_password_page.dart';
@@ -14,6 +16,8 @@ import '../features/profile/presentation/pages/address_list_page.dart';
 import '../features/profile/presentation/pages/settings_page.dart';
 import '../features/home/presentation/pages/main_page.dart';
 import '../features/cart/presentation/pages/local_cart_page.dart';
+import '../features/product/presentation/bloc/product_bloc.dart';
+import '../features/product/presentation/pages/product_detail_page.dart';
 
 /// Application router configuration
 class AppRouter {
@@ -110,6 +114,40 @@ class AppRouter {
         path: RouteNames.cart,
         name: 'cart',
         builder: (context, state) => const LocalCartPage(),
+      ),
+
+      // Checkout
+      GoRoute(
+        path: RouteNames.checkout,
+        name: 'checkout',
+        builder: (context, state) => const CheckoutPage(),
+      ),
+
+      // Checkout Success
+      GoRoute(
+        path: '/checkout/success',
+        name: 'checkoutSuccess',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return CheckoutSuccessPage(
+            orderId: extra?['orderId'] as String?,
+            totalAmount: extra?['totalAmount'] as double?,
+            paymentMethod: extra?['paymentMethod'] as String?,
+          );
+        },
+      ),
+
+      // Product Detail
+      GoRoute(
+        path: '/products/:id',
+        name: 'productDetail',
+        builder: (context, state) {
+          final productId = state.pathParameters['id'] ?? '';
+          return BlocProvider(
+            create: (_) => sl<ProductBloc>(),
+            child: ProductDetailPage(productId: productId),
+          );
+        },
       ),
     ],
 

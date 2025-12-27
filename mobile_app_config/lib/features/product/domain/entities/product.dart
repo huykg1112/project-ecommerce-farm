@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 
 import 'product_batch.dart';
+import 'product_disease.dart';
+import 'product_ingredient.dart';
 
 /// Product entity
 class Product extends Equatable {
@@ -8,6 +10,8 @@ class Product extends Equatable {
   final String productName;
   final String? description;
   final String? usageInstructions;
+  final List<ProductIngredient> productIngredients; // Thành phần
+  final List<ProductDisease> productDiseases; // Đặc trị bệnh
   final double unitPrice;
   final double? originalPrice; // Price before discount
   final double? discountPercentage; // Discount percentage (0-100)
@@ -29,6 +33,8 @@ class Product extends Equatable {
     required this.productName,
     this.description,
     this.usageInstructions,
+    this.productIngredients = const [],
+    this.productDiseases = const [],
     required this.unitPrice,
     this.originalPrice,
     this.discountPercentage,
@@ -77,6 +83,8 @@ class Product extends Equatable {
         productName,
         description,
         usageInstructions,
+        productIngredients,
+        productDiseases,
         unitPrice,
         originalPrice,
         discountPercentage,

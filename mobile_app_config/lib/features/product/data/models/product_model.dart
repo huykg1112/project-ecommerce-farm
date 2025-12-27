@@ -1,5 +1,7 @@
 import '../../../product/domain/entities/product_batch.dart';
 import '../../domain/entities/product.dart';
+import '../../domain/entities/product_disease.dart';
+import '../../domain/entities/product_ingredient.dart';
 
 class ProductModel extends Product {
   const ProductModel({
@@ -7,6 +9,8 @@ class ProductModel extends Product {
     required super.productName,
     super.description,
     super.usageInstructions,
+    super.productIngredients,
+    super.productDiseases,
     required super.unitPrice,
     super.originalPrice,
     super.discountPercentage,
@@ -157,11 +161,61 @@ class ProductModel extends Product {
       finalPrice = unitPrice - (unitPrice * discountPercentage / 100);
     }
 
+    // Parse product ingredients
+    final List<ProductIngredient> productIngredients = [];
+    if (json['product_ingredients'] != null &&
+        json['product_ingredients'] is List) {
+      for (var piJson in json['product_ingredients'] as List) {
+        final ingredientJson = piJson['ingredient'];
+        if (ingredientJson != null) {
+          productIngredients.add(ProductIngredient(
+            productIngredientId:
+                piJson['product_ingredient_id'] as String? ?? '',
+            ingredient: Ingredient(
+              ingredientId: ingredientJson['ingredient_id'] as String? ?? '',
+              ingredientName:
+                  ingredientJson['ingredient_name'] as String? ?? '',
+              description: ingredientJson['description'] as String?,
+            ),
+            isPrimary: piJson['is_primary'] as bool? ?? false,
+          ));
+        }
+      }
+    }
+    // Sort: primary ingredients first
+    productIngredients
+        .sort((a, b) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0));
+
+    // Parse product diseases (API returns 'productDiseases' in camelCase)
+    final List<ProductDisease> productDiseases = [];
+    final diseasesData = json['productDiseases'] ?? json['product_diseases'];
+    if (diseasesData != null && diseasesData is List) {
+      for (var pdJson in diseasesData as List) {
+        final diseaseJson = pdJson['disease'];
+        if (diseaseJson != null) {
+          productDiseases.add(ProductDisease(
+            productDiseaseId: pdJson['product_disease_id'] as String? ?? '',
+            disease: Disease(
+              diseaseId: diseaseJson['disease_id'] as String? ?? '',
+              diseaseName: diseaseJson['disease_name'] as String? ?? '',
+              description: diseaseJson['description'] as String?,
+            ),
+            isPrimary: pdJson['is_primary'] as bool? ?? false,
+          ));
+        }
+      }
+    }
+    // Sort: primary diseases first
+    productDiseases
+        .sort((a, b) => (b.isPrimary ? 1 : 0) - (a.isPrimary ? 1 : 0));
+
     return ProductModel(
       productId: json['product_id'] as String,
       productName: json['product_name'] as String,
       description: json['description'] as String?,
       usageInstructions: json['usage_instructions'] as String?,
+      productIngredients: productIngredients,
+      productDiseases: productDiseases,
       unitPrice: finalPrice,
       originalPrice: originalPrice,
       discountPercentage: discountPercentage,
@@ -185,6 +239,28 @@ class ProductModel extends Product {
         'product_name': productName,
         'description': description,
         'usage_instructions': usageInstructions,
+        'product_ingredients': productIngredients
+            .map((pi) => {
+                  'product_ingredient_id': pi.productIngredientId,
+                  'is_primary': pi.isPrimary,
+                  'ingredient': {
+                    'ingredient_id': pi.ingredient.ingredientId,
+                    'ingredient_name': pi.ingredient.ingredientName,
+                    'description': pi.ingredient.description,
+                  },
+                })
+            .toList(),
+        'product_diseases': productDiseases
+            .map((pd) => {
+                  'product_disease_id': pd.productDiseaseId,
+                  'is_primary': pd.isPrimary,
+                  'disease': {
+                    'disease_id': pd.disease.diseaseId,
+                    'disease_name': pd.disease.diseaseName,
+                    'description': pd.disease.description,
+                  },
+                })
+            .toList(),
         'unit_product_price': unitPrice,
         'original_price': originalPrice,
         'discount_percentage': discountPercentage,
@@ -201,6 +277,8 @@ class ProductModel extends Product {
         productName: productName,
         description: description,
         usageInstructions: usageInstructions,
+        productIngredients: productIngredients,
+        productDiseases: productDiseases,
         unitPrice: unitPrice,
         originalPrice: originalPrice,
         discountPercentage: discountPercentage,
